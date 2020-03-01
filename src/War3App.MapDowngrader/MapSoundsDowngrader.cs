@@ -1,6 +1,7 @@
 ﻿using System;
 
 using War3Net.Build.Audio;
+using War3Net.Build.Common;
 
 namespace War3App.MapDowngrader
 {
