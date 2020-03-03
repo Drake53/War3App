@@ -34,6 +34,7 @@ namespace War3App.MapDowngrader
             {
                 case MapInfoFormatVersion.Reforged:
                     mapInfo.MapFlags &= ~(MapFlags.Unk0 | MapFlags.AccurateProbabilityForCalculations | MapFlags.CustomAbilitySkin);
+                    mapInfo.EditorVersion = 6072;
                     mapInfo.GameVersion = new Version(1, 31, 1, 12173);
                     var playerData = new PlayerData[mapInfo.PlayerDataCount];
                     for (var i = 0; i < mapInfo.PlayerDataCount; i++)
