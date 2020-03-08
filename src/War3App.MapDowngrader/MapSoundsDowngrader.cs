@@ -33,6 +33,11 @@ namespace War3App.MapDowngrader
             switch (mapSounds.FormatVersion)
             {
                 case MapSoundsFormatVersion.Reforged:
+                    foreach (var sound in mapSounds)
+                    {
+                        sound.SoundName = null;
+                    }
+
                     mapSounds.FormatVersion = MapSoundsFormatVersion.Normal;
                     break;
 
