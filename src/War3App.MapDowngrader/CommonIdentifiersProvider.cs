@@ -9,7 +9,7 @@ namespace War3App.MapDowngrader
     {
         public static IEnumerable<string> GetIdentifiers(GamePatch from, GamePatch to)
         {
-            for (var patch = from + 1; from <= to; patch++)
+            for (var patch = from + 1; patch <= to; patch++)
             {
                 foreach (var identifier in GetIdentifiers(patch))
                 {
