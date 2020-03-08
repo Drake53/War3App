@@ -22,6 +22,8 @@ namespace War3App.MapDowngrader
         {
             return patch switch
             {
+                GamePatch.v1_29_0 => GetIdentifiersPatch1_29_0(),
+                GamePatch.v1_30_0 => GetIdentifiersPatch1_30_0(),
                 GamePatch.v1_31_0 => GetIdentifiersPatch1_31_0(),
                 GamePatch.v1_32_0 => GetIdentifiersPatch1_32_0(),
                 GamePatch.v1_32_1 => GetIdentifiersPatch1_32_1(),
@@ -29,6 +31,238 @@ namespace War3App.MapDowngrader
 
                 _ => Array.Empty<string>(),
             };
+        }
+
+        private static IEnumerable<string> GetIdentifiersPatch1_29_0()
+        {
+            /*
+                type mousebuttontype                extends handle
+            */
+
+            yield return "BlzDeleteHeroAbility"; // THIS FUNCTION WAS REMOVED IN 1.30
+
+            yield return nameof(War3Api.Common.ConvertMouseButtonType);
+
+            yield return nameof(War3Api.Common.GetBJMaxPlayers);
+            yield return nameof(War3Api.Common.GetBJPlayerNeutralVictim);
+            yield return nameof(War3Api.Common.GetBJPlayerNeutralExtra);
+            yield return nameof(War3Api.Common.GetBJMaxPlayerSlots);
+            yield return nameof(War3Api.Common.GetPlayerNeutralPassive);
+            yield return nameof(War3Api.Common.GetPlayerNeutralAggressive);
+
+            yield return nameof(War3Api.Common.PLAYER_COLOR_MAROON);
+            yield return nameof(War3Api.Common.PLAYER_COLOR_NAVY);
+            yield return nameof(War3Api.Common.PLAYER_COLOR_TURQUOISE);
+            yield return nameof(War3Api.Common.PLAYER_COLOR_VIOLET);
+            yield return nameof(War3Api.Common.PLAYER_COLOR_WHEAT);
+            yield return nameof(War3Api.Common.PLAYER_COLOR_PEACH);
+            yield return nameof(War3Api.Common.PLAYER_COLOR_MINT);
+            yield return nameof(War3Api.Common.PLAYER_COLOR_LAVENDER);
+            yield return nameof(War3Api.Common.PLAYER_COLOR_COAL);
+            yield return nameof(War3Api.Common.PLAYER_COLOR_SNOW);
+            yield return nameof(War3Api.Common.PLAYER_COLOR_EMERALD);
+            yield return nameof(War3Api.Common.PLAYER_COLOR_PEANUT);
+
+            yield return nameof(War3Api.Common.MOUSE_BUTTON_TYPE_LEFT);
+            yield return nameof(War3Api.Common.MOUSE_BUTTON_TYPE_MIDDLE);
+            yield return nameof(War3Api.Common.MOUSE_BUTTON_TYPE_RIGHT);
+
+            yield return nameof(War3Api.Common.EVENT_PLAYER_MOUSE_DOWN);
+            yield return nameof(War3Api.Common.EVENT_PLAYER_MOUSE_UP);
+            yield return nameof(War3Api.Common.EVENT_PLAYER_MOUSE_MOVE);
+
+            yield return nameof(War3Api.Common.AutomationTestStart);
+            yield return nameof(War3Api.Common.AutomationTestEnd);
+
+            yield return nameof(War3Api.Common.BlzGetTriggerPlayerMouseX);
+            yield return nameof(War3Api.Common.BlzGetTriggerPlayerMouseY);
+            yield return nameof(War3Api.Common.BlzGetTriggerPlayerMousePosition);
+            yield return nameof(War3Api.Common.BlzGetTriggerPlayerMouseButton);
+            yield return nameof(War3Api.Common.BlzSetAbilityTooltip);
+            yield return nameof(War3Api.Common.BlzSetAbilityActivatedTooltip);
+            yield return nameof(War3Api.Common.BlzSetAbilityExtendedTooltip);
+            yield return nameof(War3Api.Common.BlzSetAbilityActivatedExtendedTooltip);
+            yield return nameof(War3Api.Common.BlzSetAbilityResearchTooltip);
+            yield return nameof(War3Api.Common.BlzSetAbilityResearchExtendedTooltip);
+            yield return nameof(War3Api.Common.BlzGetAbilityTooltip);
+            yield return nameof(War3Api.Common.BlzGetAbilityActivatedTooltip);
+            yield return nameof(War3Api.Common.BlzGetAbilityExtendedTooltip);
+            yield return nameof(War3Api.Common.BlzGetAbilityActivatedExtendedTooltip);
+            yield return nameof(War3Api.Common.BlzGetAbilityResearchTooltip);
+            yield return nameof(War3Api.Common.BlzGetAbilityResearchExtendedTooltip);
+            yield return nameof(War3Api.Common.BlzSetAbilityIcon);
+            yield return nameof(War3Api.Common.BlzGetAbilityIcon);
+            yield return nameof(War3Api.Common.BlzSetAbilityActivatedIcon);
+            yield return nameof(War3Api.Common.BlzGetAbilityActivatedIcon);
+            yield return nameof(War3Api.Common.BlzGetAbilityPosX);
+            yield return nameof(War3Api.Common.BlzGetAbilityPosY);
+            yield return nameof(War3Api.Common.BlzSetAbilityPosX);
+            yield return nameof(War3Api.Common.BlzSetAbilityPosY);
+            yield return nameof(War3Api.Common.BlzGetAbilityActivatedPosX);
+            yield return nameof(War3Api.Common.BlzGetAbilityActivatedPosY);
+            yield return nameof(War3Api.Common.BlzSetAbilityActivatedPosX);
+            yield return nameof(War3Api.Common.BlzSetAbilityActivatedPosY);
+            yield return nameof(War3Api.Common.BlzGetUnitMaxHP);
+            yield return nameof(War3Api.Common.BlzSetUnitMaxHP);
+            yield return nameof(War3Api.Common.BlzGetUnitMaxMana);
+            yield return nameof(War3Api.Common.BlzSetUnitMaxMana);
+            yield return nameof(War3Api.Common.BlzSetItemName);
+            yield return nameof(War3Api.Common.BlzSetItemDescription);
+            yield return nameof(War3Api.Common.BlzGetItemDescription);
+            yield return nameof(War3Api.Common.BlzSetItemTooltip);
+            yield return nameof(War3Api.Common.BlzGetItemTooltip);
+            yield return nameof(War3Api.Common.BlzSetItemExtendedTooltip);
+            yield return nameof(War3Api.Common.BlzGetItemExtendedTooltip);
+            yield return nameof(War3Api.Common.BlzSetItemIconPath);
+            yield return nameof(War3Api.Common.BlzGetItemIconPath);
+            yield return nameof(War3Api.Common.BlzSetUnitName);
+            yield return nameof(War3Api.Common.BlzSetHeroProperName);
+            yield return nameof(War3Api.Common.BlzGetUnitBaseDamage);
+            yield return nameof(War3Api.Common.BlzSetUnitBaseDamage);
+            yield return nameof(War3Api.Common.BlzGetUnitDiceNumber);
+            yield return nameof(War3Api.Common.BlzSetUnitDiceNumber);
+            yield return nameof(War3Api.Common.BlzGetUnitDiceSides);
+            yield return nameof(War3Api.Common.BlzSetUnitDiceSides);
+            yield return nameof(War3Api.Common.BlzGetUnitAttackCooldown);
+            yield return nameof(War3Api.Common.BlzSetUnitAttackCooldown);
+            yield return nameof(War3Api.Common.BlzSetSpecialEffectColorByPlayer);
+            yield return nameof(War3Api.Common.BlzSetSpecialEffectColor);
+            yield return nameof(War3Api.Common.BlzSetSpecialEffectAlpha);
+            yield return nameof(War3Api.Common.BlzSetSpecialEffectScale);
+            yield return nameof(War3Api.Common.BlzSetSpecialEffectPosition);
+            yield return nameof(War3Api.Common.BlzSetSpecialEffectHeight);
+            yield return nameof(War3Api.Common.BlzSetSpecialEffectTimeScale);
+            yield return nameof(War3Api.Common.BlzSetSpecialEffectTime);
+            yield return nameof(War3Api.Common.BlzSetSpecialEffectOrientation);
+            yield return nameof(War3Api.Common.BlzSetSpecialEffectYaw);
+            yield return nameof(War3Api.Common.BlzSetSpecialEffectPitch);
+            yield return nameof(War3Api.Common.BlzSetSpecialEffectRoll);
+            yield return nameof(War3Api.Common.BlzSetSpecialEffectX);
+            yield return nameof(War3Api.Common.BlzSetSpecialEffectY);
+            yield return nameof(War3Api.Common.BlzSetSpecialEffectZ);
+            yield return nameof(War3Api.Common.BlzSetSpecialEffectPositionLoc);
+            yield return nameof(War3Api.Common.BlzGetLocalSpecialEffectX);
+            yield return nameof(War3Api.Common.BlzGetLocalSpecialEffectY);
+            yield return nameof(War3Api.Common.BlzGetLocalSpecialEffectZ);
+            yield return nameof(War3Api.Common.BlzGetUnitArmor);
+            yield return nameof(War3Api.Common.BlzSetUnitArmor);
+            yield return nameof(War3Api.Common.BlzUnitHideAbility);
+            yield return nameof(War3Api.Common.BlzUnitDisableAbility);
+            yield return nameof(War3Api.Common.BlzUnitCancelTimedLife);
+            yield return nameof(War3Api.Common.BlzIsUnitSelectable);
+            yield return nameof(War3Api.Common.BlzIsUnitInvulnerable);
+            yield return nameof(War3Api.Common.BlzUnitInterruptAttack);
+            yield return nameof(War3Api.Common.BlzGetUnitCollisionSize);
+            yield return nameof(War3Api.Common.BlzGetAbilityManaCost);
+            yield return nameof(War3Api.Common.BlzGetAbilityCooldown);
+            yield return nameof(War3Api.Common.BlzSetUnitAbilityCooldown);
+            yield return nameof(War3Api.Common.BlzGetUnitAbilityCooldown);
+            yield return nameof(War3Api.Common.BlzGetUnitAbilityCooldownRemaining);
+            yield return nameof(War3Api.Common.BlzEndUnitAbilityCooldown);
+            yield return nameof(War3Api.Common.BlzGetUnitAbilityManaCost);
+            yield return nameof(War3Api.Common.BlzSetUnitAbilityManaCost);
+            yield return nameof(War3Api.Common.BlzGetLocalUnitZ);
+            yield return nameof(War3Api.Common.BlzDecPlayerTechResearched);
+            yield return nameof(War3Api.Common.BlzSetEventDamage);
+        }
+
+        private static IEnumerable<string> GetIdentifiersPatch1_30_0()
+        {
+            /*
+                type animtype                       extends handle
+                type subanimtype                    extends handle
+
+                // THIS FUNCTION HAD PARAMETER 'string testName' BEFORE 1.30
+                native AutomationTestEnd            takes nothing returns nothing
+
+                // THIS FUNCTION EXISTED BEFORE 1.30, BUT HAS BEEN REMOVED
+                native BlzDeleteHeroAbility         takes unit whichUnit, integer abilCode returns nothing
+            */
+
+            yield return nameof(War3Api.Common.ConvertAnimType);
+            yield return nameof(War3Api.Common.ConvertSubAnimType);
+
+            yield return nameof(War3Api.Common.ANIM_TYPE_BIRTH);
+            yield return nameof(War3Api.Common.ANIM_TYPE_DEATH);
+            yield return nameof(War3Api.Common.ANIM_TYPE_DECAY);
+            yield return nameof(War3Api.Common.ANIM_TYPE_DISSIPATE);
+            yield return nameof(War3Api.Common.ANIM_TYPE_STAND);
+            yield return nameof(War3Api.Common.ANIM_TYPE_WALK);
+            yield return nameof(War3Api.Common.ANIM_TYPE_ATTACK);
+            yield return nameof(War3Api.Common.ANIM_TYPE_MORPH);
+            yield return nameof(War3Api.Common.ANIM_TYPE_SLEEP);
+            yield return nameof(War3Api.Common.ANIM_TYPE_SPELL);
+            yield return nameof(War3Api.Common.ANIM_TYPE_PORTRAIT);
+
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_ROOTED);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_ALTERNATE_EX);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_LOOPING);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_SLAM);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_THROW);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_SPIKED);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_FAST);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_SPIN);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_READY);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_CHANNEL);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_DEFEND);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_VICTORY);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_TURN);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_LEFT);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_RIGHT);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_FIRE);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_FLESH);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_HIT);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_WOUNDED);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_LIGHT);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_MODERATE);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_SEVERE);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_CRITICAL);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_COMPLETE);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_GOLD);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_LUMBER);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_WORK);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_TALK);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_FIRST);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_SECOND);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_THIRD);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_FOURTH);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_FIFTH);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_ONE);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_TWO);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_THREE);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_FOUR);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_FIVE);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_SMALL);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_MEDIUM);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_LARGE);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_UPGRADE);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_DRAIN);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_FILL);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_CHAINLIGHTNING);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_EATTREE);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_PUKE);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_FLAIL);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_OFF);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_SWIM);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_ENTANGLE);
+            yield return nameof(War3Api.Common.SUBANIM_TYPE_BERSERK);
+
+            yield return nameof(War3Api.Common.CAMERA_FIELD_NEARZ);
+
+            yield return nameof(War3Api.Common.AutomationSetTestType);
+            yield return nameof(War3Api.Common.AutomationTestingFinished);
+
+            yield return nameof(War3Api.Common.BlzSpecialEffectClearSubAnimations);
+            yield return nameof(War3Api.Common.BlzSpecialEffectRemoveSubAnimation);
+            yield return nameof(War3Api.Common.BlzSpecialEffectAddSubAnimation);
+            yield return nameof(War3Api.Common.BlzPlaySpecialEffect);
+            yield return nameof(War3Api.Common.BlzPlaySpecialEffectWithTimeScale);
+            yield return nameof(War3Api.Common.BlzGetAnimName);
+            yield return nameof(War3Api.Common.RequestExtraIntegerData);
+            yield return nameof(War3Api.Common.RequestExtraBooleanData);
+            yield return nameof(War3Api.Common.RequestExtraStringData);
+            yield return nameof(War3Api.Common.RequestExtraRealData);
+            yield return nameof(War3Api.Common.BlzGetUnitZ);
         }
 
         private static IEnumerable<string> GetIdentifiersPatch1_31_0()
