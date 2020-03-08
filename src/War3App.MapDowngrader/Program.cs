@@ -117,14 +117,14 @@ namespace War3App.MapDowngrader
                     var incompatibleIdentifiersUsage = new Dictionary<string, int>();
                     var incompatibleIdentifiers = new HashSet<string>();
 
-                    if (targetPatch < GamePatch.v1_32_0)
-                    {
-                        incompatibleIdentifiers.UnionWith(ReforgedIdentifiersProvider.GetIdentifiers());
-                    }
+                    //var originPatch = mapInfo.GameVersion
+                    var originPatch = GamePatch.v1_32_1; // always use latest for now...
+                    var mapHasCustomBlizzardJ = false; // assume no custom Blizzard.j for now (if a map does have one, treat it like another war3map.j by downgrading it)
 
-                    if (targetPatch < GamePatch.v1_31_0)
+                    incompatibleIdentifiers.UnionWith(CommonIdentifiersProvider.GetIdentifiers(targetPatch, originPatch));
+                    if (!mapHasCustomBlizzardJ)
                     {
-                        // TODO
+                        incompatibleIdentifiers.UnionWith(BlizzardIdentifiersProvider.GetIdentifiers(targetPatch, originPatch));
                     }
 
                     using (var scriptFile = inputArchive.OpenFile(ScriptFileName))
