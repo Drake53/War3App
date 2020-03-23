@@ -510,5 +510,16 @@ namespace War3App.MapDowngrader
                 yield return "uupt".FromRawcode();
             }
         }
+
+        private static int FromRawcode(this string code)
+        {
+            if ((code?.Length ?? 0) != 4)
+            {
+                return 0;
+            }
+
+            return (code[0]) | (code[1] << 8) | (code[2] << 16) | (code[3] << 24);
+        }
+
     }
 }
