@@ -128,6 +128,7 @@ namespace War3App.MapDowngrader
                     var incompatibleIdentifiers = new HashSet<string>();
 
                     // assume no custom Blizzard.j for now (if a map does have one, treat it like another war3map.j by downgrading it)
+                    // TODO: test if custom 'Blizzard.j' is possible for lua maps
                     var mapHasCustomBlizzardJ = false;
 
                     incompatibleIdentifiers.UnionWith(CommonIdentifiersProvider.GetIdentifiers(targetPatch, originPatch));
@@ -193,6 +194,18 @@ namespace War3App.MapDowngrader
 
                     scriptFileStream = File.OpenRead(scriptFilePath);
                     replacedFiles.Add(MpqFile.New(scriptFileStream, scriptFileName));
+
+                    if (!useLua)
+                    {
+                        // TODO: validate map script using jasshelper?
+                        // - passed common.j and Blizzard.j depend on target patch
+                        // - if custom blizzard.j is used, pass that one instead
+
+                        // var jasshelper = Process.Start(...);
+                        // jasshelper.WaitForExit();
+
+                        // if (jasshelper.ExitCode != 0) return;
+                    }
                 }
 
                 // Verify object data
@@ -207,6 +220,7 @@ namespace War3App.MapDowngrader
                 }
 
                 // Verify Assets
+                // TODO: textures? (.tga/.blp/.dds)
                 foreach (var mpqEntry in inputArchive)
                 {
                     using var mpqStream = inputArchive.OpenFile(mpqEntry);
