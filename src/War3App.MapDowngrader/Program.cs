@@ -114,18 +114,21 @@ namespace War3App.MapDowngrader
 
                 // Verify MapScript
                 FileStream scriptFileStream = null;
-                if (mapInfo.ScriptLanguage == ScriptLanguage.Jass)
-                {
-                    const string OriginalScriptFileName = "war3map.original.j";
-                    const string ScriptFileName = "war3map.j";
+                var useLua = mapInfo.ScriptLanguage == ScriptLanguage.Lua;
+                var scriptFileExtension = useLua ? "lua" : "j";
+                var originalScriptFileName = $"war3map.original.{scriptFileExtension}";
+                var scriptFileName = $"war3map.{scriptFileExtension}";
 
-                    var originalScriptFilePath = Path.Combine(outputFolder, OriginalScriptFileName);
-                    var scriptFilePath = Path.Combine(outputFolder, ScriptFileName);
+                // TODO: parse jass/lua syntax instead of using regex (though as long as using regex, the code for jass and lua below can be the same)
+                {
+                    var originalScriptFilePath = Path.Combine(outputFolder, originalScriptFileName);
+                    var scriptFilePath = Path.Combine(outputFolder, scriptFileName);
 
                     var incompatibleIdentifiersUsage = new Dictionary<string, int>();
                     var incompatibleIdentifiers = new HashSet<string>();
 
-                    var mapHasCustomBlizzardJ = false; // assume no custom Blizzard.j for now (if a map does have one, treat it like another war3map.j by downgrading it)
+                    // assume no custom Blizzard.j for now (if a map does have one, treat it like another war3map.j by downgrading it)
+                    var mapHasCustomBlizzardJ = false;
 
                     incompatibleIdentifiers.UnionWith(CommonIdentifiersProvider.GetIdentifiers(targetPatch, originPatch));
                     if (!mapHasCustomBlizzardJ)
@@ -133,7 +136,7 @@ namespace War3App.MapDowngrader
                         incompatibleIdentifiers.UnionWith(BlizzardIdentifiersProvider.GetIdentifiers(targetPatch, originPatch));
                     }
 
-                    using (var scriptFile = inputArchive.OpenFile(ScriptFileName))
+                    using (var scriptFile = inputArchive.OpenFile(scriptFileName))
                     {
                         using (var reader = new StreamReader(scriptFile, leaveOpen: true))
                         {
@@ -189,11 +192,7 @@ namespace War3App.MapDowngrader
 #endif
 
                     scriptFileStream = File.OpenRead(scriptFilePath);
-                    replacedFiles.Add(MpqFile.New(scriptFileStream, ScriptFileName));
-                }
-                else
-                {
-                    throw new NotImplementedException();
+                    replacedFiles.Add(MpqFile.New(scriptFileStream, scriptFileName));
                 }
 
                 // Verify object data
