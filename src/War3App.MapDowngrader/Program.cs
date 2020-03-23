@@ -23,18 +23,26 @@ namespace War3App.MapDowngrader
 #if DEBUG
             var inputMapPath = @"";
             var outputFolder = @"";
+
             var targetPatch = GamePatch.v1_31_0;
+
+            //var originPatch = mapInfo.GameVersion
+            var originPatch = GamePatch.v1_32_1; // always use latest for now...
 #else
             throw new NotImplementedException();
 
             // TODO: get input/output from args
             var inputMapPath = "";
             var outputFolder = "";
-            var targetPatch = GamePatch.;
+            
+            var targetPatch = GamePatch.v1_31_0;
+
+            //var originPatch = mapInfo.GameVersion
+            var originPatch = GamePatch.v1_32_1; // always use latest for now...
 #endif
 
             var mapName = new FileInfo(inputMapPath).Name;
-            var newMapName = mapName[0..^4] + " for 1.31.w3x";
+            var newMapName = mapName[0..^4] + $" for {targetPatch}.w3x";
             var outputMapFilePath = Path.Combine(outputFolder, newMapName);
 
             if (!Directory.Exists(outputFolder))
@@ -117,8 +125,6 @@ namespace War3App.MapDowngrader
                     var incompatibleIdentifiersUsage = new Dictionary<string, int>();
                     var incompatibleIdentifiers = new HashSet<string>();
 
-                    //var originPatch = mapInfo.GameVersion
-                    var originPatch = GamePatch.v1_32_1; // always use latest for now...
                     var mapHasCustomBlizzardJ = false; // assume no custom Blizzard.j for now (if a map does have one, treat it like another war3map.j by downgrading it)
 
                     incompatibleIdentifiers.UnionWith(CommonIdentifiersProvider.GetIdentifiers(targetPatch, originPatch));
@@ -165,7 +171,7 @@ namespace War3App.MapDowngrader
                     if (incompatibleIdentifiersUsage.Count > 0)
                     {
                         Console.WriteLine("Before the program can continue, you must manually edit the map script to make it compatible.");
-                        Console.WriteLine("The following identifiers were detected which are not compatible with the target version:");
+                        Console.WriteLine($"The following identifiers were detected which are not compatible with the target version '{targetPatch}':");
                         Console.WriteLine();
 
                         // NOTE: results can be duplicate/incorrect (for example: when you have CreateCommandButtonEffectBJ, it will also detect CreateCommandButtonEffect)
@@ -188,6 +194,17 @@ namespace War3App.MapDowngrader
                 else
                 {
                     throw new NotImplementedException();
+                }
+
+                // Verify object data
+                // TODO: items, destructables, doodads, abilities, buffs, upgrades
+                if (inputArchive.FileExists("war3map.w3u"))
+                {
+                    using var fileStream = inputArchive.OpenFile("war3map.w3u");
+                    if (!UnitObjectDataValidator.TryValidate(fileStream, targetPatch))
+                    {
+                        return;
+                    }
                 }
 
                 // Verify Assets
@@ -259,7 +276,29 @@ namespace War3App.MapDowngrader
                 var nonReplacedFiles = inputFiles.Where(mpqFile => !replacedFiles.Where(replacedFile => replacedFile.IsSameAs(mpqFile)).Any());
                 var newFiles = nonReplacedFiles.Concat(replacedFiles).ToArray();
 
-                MpqArchive.Create(outputMapFilePath, newFiles).Dispose();
+                using var newArchive = MpqArchive.Create(outputMapFilePath, newFiles);
+
+#if DEBUG
+                foreach (var mpqEntry in newArchive)
+                {
+                    if (mpqEntry.Filename == null)
+                    {
+                        continue;
+                    }
+
+                    using var mpqStream = newArchive.OpenFile(mpqEntry);
+                    var outputFilePath = Path.Combine(outputFolder, "files", mpqEntry.Filename);
+                    var outputFileDirectoryInfo = new FileInfo(outputFilePath).Directory;
+                    if (!outputFileDirectoryInfo.Exists)
+                    {
+                        outputFileDirectoryInfo.Create();
+                    }
+
+                    using var fileStream = File.Create(outputFilePath);
+                    mpqStream.CopyTo(fileStream);
+                }
+#endif
+
                 scriptFileStream?.Dispose();
             }
         }
