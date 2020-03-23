@@ -18,6 +18,22 @@ namespace War3App.MapDowngrader
 {
     internal static class Program
     {
+        private static readonly Dictionary<string, GamePatch> _gamePatchMappings = new Dictionary<string, GamePatch>()
+        {
+            { "1.27", GamePatch.v1_27a },
+            { "1.28", GamePatch.v1_28 },
+            { "1.29", GamePatch.v1_29_0 },
+            { "1.30", GamePatch.v1_30_0 },
+
+            { "1.31", GamePatch.v1_31_0 },
+            { "1.31.0", GamePatch.v1_31_0 },
+            { "1.31.1", GamePatch.v1_31_1 },
+
+            { "1.32", GamePatch.v1_32_0 },
+            { "1.32.0", GamePatch.v1_32_0 },
+            { "1.32.1", GamePatch.v1_32_1 },
+        };
+
         private static void Main(string[] args)
         {
 #if DEBUG
@@ -26,19 +42,64 @@ namespace War3App.MapDowngrader
 
             var targetPatch = GamePatch.v1_31_0;
 
-            //var originPatch = mapInfo.GameVersion
-            var originPatch = GamePatch.v1_32_1; // always use latest for now...
+            var originPatchString = string.Empty;
+            var originPatch = GamePatch.v1_32_1;
 #else
-            throw new NotImplementedException();
+            var targetPatchString = string.Empty;
+            var originPatchString = string.Empty;
+            if (args.Length != 3 && args.Length != 4)
+            {
+                Console.WriteLine("Expect three or four arguments:");
+                Console.WriteLine("input map file");
+                Console.WriteLine("output folder");
+                Console.WriteLine("target patch");
+                Console.WriteLine("[optional] origin patch");
+                Console.WriteLine();
+                Console.WriteLine("Examples:");
+                Console.WriteLine("downgrader.exe \"C:\\input\\file.w3x\" \"C:\\output\\folder\" \"1.31\"");
+                Console.WriteLine("downgrader.exe \"C:\\input\\file.w3x\" \"C:\\output\\folder\" \"1.31\" \"1.32\"");
+            }
+            else
+            {
+                targetPatchString = args[2];
+                if (args.Length == 4)
+                {
+                    originPatchString = args[3];
+                }
+            }
 
-            // TODO: get input/output from args
-            var inputMapPath = "";
-            var outputFolder = "";
-            
-            var targetPatch = GamePatch.v1_31_0;
+            var validTargetPatch = _gamePatchMappings.TryGetValue(targetPatchString, out var targetPatch);
+            var validOriginPatch = _gamePatchMappings.TryGetValue(originPatchString, out var originPatch);
 
-            //var originPatch = mapInfo.GameVersion
-            var originPatch = GamePatch.v1_32_1; // always use latest for now...
+            if (args.Length == 3)
+            {
+                validOriginPatch = true;
+                originPatch = GamePatch.v1_32_1;
+            }
+
+            if (!validTargetPatch || !validOriginPatch)
+            {
+                if (!validTargetPatch && (args.Length == 3 || args.Length == 4))
+                {
+                    Console.WriteLine("Invalid target patch.");
+                }
+
+                if (!validOriginPatch && args.Length == 4)
+                {
+                    Console.WriteLine("Invalid origin patch.");
+                }
+
+                Console.WriteLine("Supported target patches:");
+                foreach (var patch in _gamePatchMappings)
+                {
+                    Console.WriteLine(patch.Key);
+                }
+
+                return;
+            }
+
+            var inputMapPath = args[0];
+            var outputFolder = args[1];
 #endif
 
             var mapName = new FileInfo(inputMapPath).Name;
@@ -66,6 +127,73 @@ namespace War3App.MapDowngrader
                 }
 
                 var mapInfoFile = GetSerializedMapFile(mapInfo, MapInfo.Serialize, MapInfo.FileName);
+
+                // Detect origin patch
+                if (originPatchString == string.Empty)
+                {
+                    if (mapInfo.GameVersion != null)
+                    {
+                        if (mapInfo.GameVersion.Major == 1)
+                        {
+                            if (mapInfo.GameVersion.Minor == 31)
+                            {
+                                if (mapInfo.GameVersion.Build == 0)
+                                {
+                                    originPatch = GamePatch.v1_31_0;
+                                }
+                                else if (mapInfo.GameVersion.Build == 1)
+                                {
+                                    originPatch = GamePatch.v1_31_1;
+                                }
+                            }
+                            else if (mapInfo.GameVersion.Minor == 32)
+                            {
+                                if (mapInfo.GameVersion.Build == 0)
+                                {
+                                    originPatch = GamePatch.v1_32_0;
+                                }
+                                else if (mapInfo.GameVersion.Build == 1)
+                                {
+                                    originPatch = GamePatch.v1_32_1;
+                                }
+                                else if (mapInfo.GameVersion.Build < 4)
+                                {
+                                    // todo
+                                    originPatch = GamePatch.v1_32_1;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (mapInfo.EditorVersion >= 6090 && mapInfo.EditorVersion < 7000)
+                        {
+                            originPatch = GamePatch.v1_32_0;
+                        }
+                        else if (mapInfo.EditorVersion == 6072)
+                        {
+                            originPatch = GamePatch.v1_31_0;
+                        }
+                        else if (mapInfo.EditorVersion == 6061)
+                        {
+                            originPatch = GamePatch.v1_30_0;
+                        }
+                        else if (mapInfo.EditorVersion == 6060)
+                        {
+                            originPatch = GamePatch.v1_29_0;
+                        }
+                        else if (mapInfo.EditorVersion == 6059)
+                        {
+                            originPatch = GamePatch.v1_28_5;
+                        }
+                    }
+                }
+
+                if (targetPatch == originPatch)
+                {
+                    Console.WriteLine($"Target and origin patch are the same: {targetPatch}");
+                    return;
+                }
 
                 // Downgrade MapDoodads
                 MpqFile mapDoodadsFile = null;
@@ -212,10 +340,17 @@ namespace War3App.MapDowngrader
                 // TODO: items, destructables, doodads, abilities, buffs, upgrades
                 if (inputArchive.FileExists("war3map.w3u"))
                 {
-                    using var fileStream = inputArchive.OpenFile("war3map.w3u");
-                    if (!UnitObjectDataValidator.TryValidate(fileStream, targetPatch))
+                    if (targetPatch == GamePatch.v1_31_0)
                     {
-                        return;
+                        using var fileStream = inputArchive.OpenFile("war3map.w3u");
+                        if (!UnitObjectDataValidator.TryValidate(fileStream, targetPatch))
+                        {
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Skipping war3map.w3u check, because target patch is '{targetPatch}, but this functionality is only supported for '{GamePatch.v1_31_0}'.");
                     }
                 }
 
