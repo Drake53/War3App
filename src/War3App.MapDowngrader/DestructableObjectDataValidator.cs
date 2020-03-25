@@ -5,7 +5,7 @@ using War3Net.Build.Common;
 
 namespace War3App.MapDowngrader
 {
-    public static class UnitObjectDataValidator
+    public static class DestructableObjectDataValidator
     {
         public static bool TryValidate(Stream stream, GamePatch targetPatch)
         {
@@ -23,8 +23,8 @@ namespace War3App.MapDowngrader
         {
             return ObjectDataValidator.Validate(
                 stream,
-                UnitObjectDataProvider.GetRawcodes(targetPatch).ToHashSet(),
-                UnitObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet(),
+                DestructableObjectDataProvider.GetRawcodes(targetPatch).ToHashSet(),
+                DestructableObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet(),
                 false);
         }
     }

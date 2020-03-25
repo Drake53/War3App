@@ -18,6 +18,16 @@ namespace War3App.MapDowngrader
 {
     internal static class Program
     {
+        internal static int FromRawcode(this string code)
+        {
+            if ((code?.Length ?? 0) != 4)
+            {
+                return 0;
+            }
+
+            return (code[0]) | (code[1] << 8) | (code[2] << 16) | (code[3] << 24);
+        }
+
         private static readonly Dictionary<string, GamePatch> _gamePatchMappings = new Dictionary<string, GamePatch>()
         {
             { "1.27", GamePatch.v1_27a },
@@ -42,7 +52,7 @@ namespace War3App.MapDowngrader
 
             var targetPatch = GamePatch.v1_31_0;
 
-            var originPatchString = string.Empty;
+            var originPatchString = "1.32.1";
             var originPatch = GamePatch.v1_32_1;
 #else
             var targetPatchString = string.Empty;
@@ -337,21 +347,38 @@ namespace War3App.MapDowngrader
                 }
 
                 // Verify object data
-                // TODO: items, destructables, doodads, abilities, buffs, upgrades
-                if (inputArchive.FileExists("war3map.w3u"))
+                bool ValidateObjectData(string fileName, Func<Stream, GamePatch, bool> validatorFunc)
                 {
-                    if (targetPatch == GamePatch.v1_31_0)
+                    if (inputArchive.FileExists(fileName))
                     {
-                        using var fileStream = inputArchive.OpenFile("war3map.w3u");
-                        if (!UnitObjectDataValidator.TryValidate(fileStream, targetPatch))
+                        if (targetPatch == GamePatch.v1_29_0 ||
+                            targetPatch == GamePatch.v1_29_1 ||
+                            targetPatch == GamePatch.v1_29_2 ||
+                            targetPatch == GamePatch.v1_31_0 ||
+                            targetPatch == GamePatch.v1_31_1)
                         {
-                            return;
+                            Console.WriteLine($"Checking '{fileName}'...");
+                            using var fileStream = inputArchive.OpenFile(fileName);
+                            return validatorFunc(fileStream, targetPatch);
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Skipping '{fileName}' check, because this functionality is not supported for target patch '{targetPatch}.");
                         }
                     }
-                    else
-                    {
-                        Console.WriteLine($"Skipping war3map.w3u check, because target patch is '{targetPatch}, but this functionality is only supported for '{GamePatch.v1_31_0}'.");
-                    }
+
+                    return true;
+                }
+
+                if (!ValidateObjectData("war3map.w3u", UnitObjectDataValidator.TryValidate) |
+                    !ValidateObjectData("war3map.w3t", ItemObjectDataValidator.TryValidate) |
+                    !ValidateObjectData("war3map.w3b", DestructableObjectDataValidator.TryValidate) |
+                    !ValidateObjectData("war3map.w3d", DoodadObjectDataValidator.TryValidate) |
+                    !ValidateObjectData("war3map.w3a", AbilityObjectDataValidator.TryValidate) |
+                    !ValidateObjectData("war3map.w3h", BuffObjectDataValidator.TryValidate) |
+                    !ValidateObjectData("war3map.w3q", UpgradeObjectDataValidator.TryValidate))
+                {
+                    return;
                 }
 
                 // Verify Assets

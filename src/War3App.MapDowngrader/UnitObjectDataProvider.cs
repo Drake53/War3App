@@ -23,7 +23,8 @@ namespace War3App.MapDowngrader
 
                 case GamePatch.v1_31_0:
                 case GamePatch.v1_31_1:
-                    return GetRawcodesPatch1_31_1();
+                    // return GetRawcodesPatch1_31_1();
+                    return GetRawcodesPatch1_29_2();
 
                 default:
                     throw new NotImplementedException();
@@ -41,15 +42,12 @@ namespace War3App.MapDowngrader
 
                 case GamePatch.v1_31_0:
                 case GamePatch.v1_31_1:
-                    return GetPropertyRawcodesPatch1_31_1();
+                    // return GetPropertyRawcodesPatch1_31_1();
+                    return GetPropertyRawcodesPatch1_29_2();
 
                 default:
                     throw new NotImplementedException();
             }
-
-            // Reforged?
-            // yield return "uabs".FromRawcode();
-            // yield return "uhas".FromRawcode();
         }
 
         private static IEnumerable<int> GetRawcodesPatch1_29_2()
@@ -1064,6 +1062,40 @@ namespace War3App.MapDowngrader
 
         private static IEnumerable<int> GetPropertyRawcodesPatch1_29_2()
         {
+            // TODO: filter out rawcodes that are only used by items
+            yield return "iabi".FromRawcode();
+            yield return "iarm".FromRawcode();
+            yield return "icla".FromRawcode();
+            yield return "iclb".FromRawcode();
+            yield return "iclg".FromRawcode();
+            yield return "iclr".FromRawcode();
+            yield return "icid".FromRawcode();
+            yield return "idrp".FromRawcode();
+            yield return "idro".FromRawcode();
+            yield return "ifil".FromRawcode();
+            yield return "igol".FromRawcode();
+            yield return "ihtp".FromRawcode();
+            yield return "iicd".FromRawcode();
+            yield return "ilev".FromRawcode();
+            yield return "ilum".FromRawcode();
+            yield return "imor".FromRawcode();
+            yield return "ilvo".FromRawcode();
+            yield return "iper".FromRawcode();
+            yield return "iprn".FromRawcode();
+            yield return "ipow".FromRawcode();
+            yield return "ipri".FromRawcode();
+            yield return "isca".FromRawcode();
+            yield return "issc".FromRawcode();
+            yield return "isel".FromRawcode();
+            yield return "ipaw".FromRawcode();
+            yield return "isto".FromRawcode();
+            yield return "istr".FromRawcode();
+            yield return "isst".FromRawcode();
+            yield return "iusa".FromRawcode();
+            yield return "iuse".FromRawcode();
+            yield return "uani".FromRawcode();
+            yield return "uico".FromRawcode();
+            yield return "iico".FromRawcode();
             yield return "uaap".FromRawcode();
             yield return "ualp".FromRawcode();
             yield return "uawt".FromRawcode();
@@ -1610,16 +1642,5 @@ namespace War3App.MapDowngrader
                 yield return "uupt".FromRawcode();
             }
         }
-
-        private static int FromRawcode(this string code)
-        {
-            if ((code?.Length ?? 0) != 4)
-            {
-                return 0;
-            }
-
-            return (code[0]) | (code[1] << 8) | (code[2] << 16) | (code[3] << 24);
-        }
-
     }
 }
