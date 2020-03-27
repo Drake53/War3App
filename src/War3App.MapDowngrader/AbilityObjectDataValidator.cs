@@ -27,5 +27,15 @@ namespace War3App.MapDowngrader
                 AbilityObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet(),
                 true);
         }
+
+        public static void Downgrade(Stream input, Stream output, GamePatch targetPatch)
+        {
+            ObjectDataValidator.Downgrade(
+                input,
+                output,
+                AbilityObjectDataProvider.GetRawcodes(targetPatch).ToHashSet(),
+                AbilityObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet(),
+                true);
+        }
     }
 }

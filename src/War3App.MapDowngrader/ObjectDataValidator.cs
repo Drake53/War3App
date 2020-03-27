@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 using War3Net.Common.Extensions;
 
@@ -229,6 +230,265 @@ namespace War3App.MapDowngrader
             }
 
             return !haveValidationErrors;
+        }
+
+        public static void Downgrade(Stream input, Stream output, ISet<int> ids, ISet<int> properties, bool withLevelData)
+        {
+            using var reader = new BinaryReader(input);
+            using var writer = new BinaryWriter(output, Encoding.UTF8, true);
+
+            var version = reader.ReadInt32();
+            if (version != 2)
+            {
+                throw new InvalidDataException();
+            }
+
+            writer.Write(version);
+
+            var amountModified = reader.ReadInt32();
+            var amountModifiedOffset = output.Position;
+            var amountModifiedDowngrade = 0;
+            writer.Write(0);
+
+            for (var i = 0; i < amountModified; i++)
+            {
+                var id = reader.ReadInt32();
+                var isCompatible = ids.Contains(id);
+
+                var unused = reader.ReadInt32();
+                if (unused != 0)
+                {
+                    throw new Exception();
+                }
+
+                if (isCompatible)
+                {
+                    amountModifiedDowngrade++;
+
+                    writer.Write(id);
+                    writer.Write(0);
+                }
+
+                var modCount = reader.ReadInt32();
+                var modCountOffset = output.Position;
+                var modCountDowngrade = 0;
+                if (isCompatible)
+                {
+                    writer.Write(0);
+                }
+
+                for (var m = 0; m < modCount; m++)
+                {
+                    var modId = reader.ReadInt32();
+                    var isCompatibleProperty = isCompatible && properties.Contains(modId);
+
+                    var modType = reader.ReadInt32();
+
+                    if (isCompatibleProperty)
+                    {
+                        modCountDowngrade++;
+
+                        writer.Write(modId);
+                        writer.Write(modType);
+                    }
+
+                    if (withLevelData)
+                    {
+                        var level = reader.ReadInt32();
+                        var pointer = reader.ReadInt32();
+
+                        if (isCompatibleProperty)
+                        {
+                            writer.Write(level);
+                            writer.Write(pointer);
+                        }
+                    }
+
+                    switch (modType)
+                    {
+                        case 0:
+                            var valueInt = reader.ReadInt32();
+                            if (isCompatibleProperty)
+                            {
+                                writer.Write(valueInt);
+                            }
+                            break;
+                        case 1:
+                        case 2:
+                            var valueFloat = reader.ReadSingle();
+                            if (isCompatibleProperty)
+                            {
+                                writer.Write(valueFloat);
+                            }
+                            break;
+                        case 3:
+                            var valueString = reader.ReadChars();
+                            if (isCompatibleProperty)
+                            {
+                                writer.WriteString(valueString);
+                            }
+                            break;
+                        case 4:
+                            var valueBool = reader.ReadBoolean();
+                            if (isCompatibleProperty)
+                            {
+                                writer.Write(valueBool);
+                            }
+                            break;
+                        case 5:
+                            var valueChar = reader.ReadChar();
+                            if (isCompatibleProperty)
+                            {
+                                writer.Write(valueChar);
+                            }
+                            break;
+                        default:
+                            throw new NotImplementedException();
+                    }
+
+                    var sanityCheck = reader.ReadInt32();
+                    if (sanityCheck != 0 && sanityCheck != id)
+                    {
+                        throw new Exception();
+                    }
+
+                    if (isCompatibleProperty)
+                    {
+                        writer.Write(sanityCheck);
+                    }
+                }
+
+                // Go back and write the final amount of modified properties.
+                output.Position = modCountOffset;
+                writer.Write(modCountDowngrade);
+                output.Position = output.Length;
+            }
+
+            // Go back and write the final amount of modified objects.
+            output.Position = amountModifiedOffset;
+            writer.Write(amountModifiedDowngrade);
+            output.Position = output.Length;
+
+
+
+            var amountNew = reader.ReadInt32();
+            var amountNewOffset = output.Position;
+            var amountNewDowngrade = 0;
+            writer.Write(0);
+
+            for (var i = 0; i < amountNew; i++)
+            {
+                var oldId = reader.ReadInt32();
+                var newId = reader.ReadInt32();
+                var isCompatible = ids.Contains(oldId) && !ids.Contains(newId);
+
+                if (isCompatible)
+                {
+                    amountNewDowngrade++;
+
+                    writer.Write(oldId);
+                    writer.Write(newId);
+                }
+
+                var modCount = reader.ReadInt32();
+                var modCountOffset = output.Position;
+                var modCountDowngrade = 0;
+                if (isCompatible)
+                {
+                    writer.Write(0);
+                }
+
+                for (var m = 0; m < modCount; m++)
+                {
+                    var modId = reader.ReadInt32();
+                    var isCompatibleProperty = isCompatible && properties.Contains(modId);
+
+                    var modType = reader.ReadInt32();
+
+                    if (isCompatibleProperty)
+                    {
+                        modCountDowngrade++;
+
+                        writer.Write(modId);
+                        writer.Write(modType);
+                    }
+
+                    if (withLevelData)
+                    {
+                        var level = reader.ReadInt32();
+                        var pointer = reader.ReadInt32();
+
+                        if (isCompatibleProperty)
+                        {
+                            writer.Write(level);
+                            writer.Write(pointer);
+                        }
+                    }
+
+                    switch (modType)
+                    {
+                        case 0:
+                            var valueInt = reader.ReadInt32();
+                            if (isCompatibleProperty)
+                            {
+                                writer.Write(valueInt);
+                            }
+                            break;
+                        case 1:
+                        case 2:
+                            var valueFloat = reader.ReadSingle();
+                            if (isCompatibleProperty)
+                            {
+                                writer.Write(valueFloat);
+                            }
+                            break;
+                        case 3:
+                            var valueString = reader.ReadChars();
+                            if (isCompatibleProperty)
+                            {
+                                writer.WriteString(valueString);
+                            }
+                            break;
+                        case 4:
+                            var valueBool = reader.ReadBoolean();
+                            if (isCompatibleProperty)
+                            {
+                                writer.Write(valueBool);
+                            }
+                            break;
+                        case 5:
+                            var valueChar = reader.ReadChar();
+                            if (isCompatibleProperty)
+                            {
+                                writer.Write(valueChar);
+                            }
+                            break;
+                        default:
+                            throw new NotImplementedException();
+                    }
+
+                    var sanityCheck = reader.ReadInt32();
+                    if (sanityCheck != 0 && sanityCheck != oldId && sanityCheck != newId)
+                    {
+                        throw new Exception();
+                    }
+
+                    if (isCompatibleProperty)
+                    {
+                        writer.Write(sanityCheck);
+                    }
+                }
+
+                // Go back and write the final amount of modified properties.
+                output.Position = modCountOffset;
+                writer.Write(modCountDowngrade);
+                output.Position = output.Length;
+            }
+
+            // Go back and write the final amount of new objects.
+            output.Position = amountNewOffset;
+            writer.Write(amountNewDowngrade);
+            output.Position = output.Length;
         }
 
         private static string ToRawcode(this int value)
