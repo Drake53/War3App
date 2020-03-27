@@ -1,5 +1,6 @@
 ﻿//#define SKIP_SCRIPT_EDITING
 #define DOWNGRADE_WE_ONLY_FILES
+// #define USE_FILE_BLACKLIST
 
 using System;
 using System.Collections.Generic;
@@ -18,6 +19,13 @@ namespace War3App.MapDowngrader
 {
     internal static class Program
     {
+        internal enum ObjectDataMode
+        {
+            AdaptIfIncompatible,
+            ErrorIfIncompatible,
+            WarnIfIncompatible,
+        }
+
         internal static int FromRawcode(this string code)
         {
             if ((code?.Length ?? 0) != 4)
@@ -46,6 +54,8 @@ namespace War3App.MapDowngrader
 
         private static void Main(string[] args)
         {
+            const ObjectDataMode ObjectDataMode = ObjectDataMode.AdaptIfIncompatible;
+
 #if DEBUG
             var inputMapPath = @"";
             var outputFolder = @"";
@@ -346,6 +356,36 @@ namespace War3App.MapDowngrader
                     }
                 }
 
+                // Downgrade object data
+                MpqFile DowngradeObjectData(string fileName, Action<Stream, Stream, GamePatch> downgradeFunc)
+                {
+                    if (inputArchive.FileExists(fileName))
+                    {
+                        if (targetPatch == GamePatch.v1_29_0 ||
+                            targetPatch == GamePatch.v1_29_1 ||
+                            targetPatch == GamePatch.v1_29_2 ||
+                            targetPatch == GamePatch.v1_31_0 ||
+                            targetPatch == GamePatch.v1_31_1)
+                        {
+                            Console.WriteLine($"Downgrading '{fileName}'...");
+
+                            var memoryStream = new MemoryStream();
+                            using var fileStream = inputArchive.OpenFile(fileName);
+
+                            downgradeFunc(fileStream, memoryStream, targetPatch);
+                            memoryStream.Position = 0;
+
+                            return MpqFile.New(memoryStream, fileName);
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Skipping '{fileName}' downgrade, because this functionality is not supported for target patch '{targetPatch}.");
+                        }
+                    }
+
+                    return null;
+                }
+
                 // Verify object data
                 bool ValidateObjectData(string fileName, Func<Stream, GamePatch, bool> validatorFunc)
                 {
@@ -363,6 +403,12 @@ namespace War3App.MapDowngrader
                         }
                         else
                         {
+                            if (ObjectDataMode == ObjectDataMode.ErrorIfIncompatible)
+                            {
+                                Console.WriteLine($"Unable to check '{fileName}', because this functionality is not supported for target patch '{targetPatch}.");
+                                return false;
+                            }
+
                             Console.WriteLine($"Skipping '{fileName}' check, because this functionality is not supported for target patch '{targetPatch}.");
                         }
                     }
@@ -370,15 +416,38 @@ namespace War3App.MapDowngrader
                     return true;
                 }
 
-                if (!ValidateObjectData("war3map.w3u", UnitObjectDataValidator.TryValidate) |
-                    !ValidateObjectData("war3map.w3t", ItemObjectDataValidator.TryValidate) |
-                    !ValidateObjectData("war3map.w3b", DestructableObjectDataValidator.TryValidate) |
-                    !ValidateObjectData("war3map.w3d", DoodadObjectDataValidator.TryValidate) |
-                    !ValidateObjectData("war3map.w3a", AbilityObjectDataValidator.TryValidate) |
-                    !ValidateObjectData("war3map.w3h", BuffObjectDataValidator.TryValidate) |
-                    !ValidateObjectData("war3map.w3q", UpgradeObjectDataValidator.TryValidate))
+                MpqFile mapUnitDataFile = null;
+                MpqFile mapItemDataFile = null;
+                MpqFile mapDestructableDataFile = null;
+                MpqFile mapDoodadDataFile = null;
+                MpqFile mapAbilityDataFile = null;
+                MpqFile mapBuffDataFile = null;
+                MpqFile mapUpgradeDataFile = null;
+                if (ObjectDataMode == ObjectDataMode.AdaptIfIncompatible)
                 {
-                    return;
+                    mapUnitDataFile = DowngradeObjectData("war3map.w3u", UnitObjectDataValidator.Downgrade);
+                    mapItemDataFile = DowngradeObjectData("war3map.w3t", ItemObjectDataValidator.Downgrade);
+                    mapDestructableDataFile = DowngradeObjectData("war3map.w3b", DestructableObjectDataValidator.Downgrade);
+                    mapDoodadDataFile = DowngradeObjectData("war3map.w3d", DoodadObjectDataValidator.Downgrade);
+                    mapAbilityDataFile = DowngradeObjectData("war3map.w3a", AbilityObjectDataValidator.Downgrade);
+                    mapBuffDataFile = DowngradeObjectData("war3map.w3h", BuffObjectDataValidator.Downgrade);
+                    mapUpgradeDataFile = DowngradeObjectData("war3map.w3q", UpgradeObjectDataValidator.Downgrade);
+                }
+                else
+                {
+                    if (!ValidateObjectData("war3map.w3u", UnitObjectDataValidator.TryValidate) |
+                        !ValidateObjectData("war3map.w3t", ItemObjectDataValidator.TryValidate) |
+                        !ValidateObjectData("war3map.w3b", DestructableObjectDataValidator.TryValidate) |
+                        !ValidateObjectData("war3map.w3d", DoodadObjectDataValidator.TryValidate) |
+                        !ValidateObjectData("war3map.w3a", AbilityObjectDataValidator.TryValidate) |
+                        !ValidateObjectData("war3map.w3h", BuffObjectDataValidator.TryValidate) |
+                        !ValidateObjectData("war3map.w3q", UpgradeObjectDataValidator.TryValidate))
+                    {
+                        if (ObjectDataMode == ObjectDataMode.ErrorIfIncompatible)
+                        {
+                            return;
+                        }
+                    }
                 }
 
                 // Verify Assets
@@ -446,10 +515,26 @@ namespace War3App.MapDowngrader
                     mapDoodadsFile,
                     mapUnitsFile,
                     mapSoundsFile,
+                    mapUnitDataFile,
+                    mapItemDataFile,
+                    mapDestructableDataFile,
+                    mapDoodadDataFile,
+                    mapAbilityDataFile,
+                    mapBuffDataFile,
+                    mapUpgradeDataFile,
                 }.Where(file => file != null));
 
                 var nonReplacedFiles = inputFiles.Where(mpqFile => !replacedFiles.Where(replacedFile => replacedFile.IsSameAs(mpqFile)).Any());
                 var newFiles = nonReplacedFiles.Concat(replacedFiles).ToArray();
+
+#if USE_FILE_BLACKLIST
+                var blacklist = new string[]
+                {
+                };
+                var blacklistHashes = blacklist.Select(fileName => MpqHash.GetHashedFileName(fileName)).ToHashSet();
+
+                newFiles = newFiles.Where(file => !blacklistHashes.Contains(file.Name)).ToArray();
+#endif
 
                 using var newArchive = MpqArchive.Create(outputMapFilePath, newFiles);
 
@@ -476,6 +561,8 @@ namespace War3App.MapDowngrader
 
                 scriptFileStream?.Dispose();
             }
+
+            Process.Start("explorer.exe", $"/select, {outputMapFilePath}");
         }
 
         private static MpqFile GetSerializedMapFile<TMapFile>(TMapFile mapFile, Action<TMapFile, Stream, bool> serializer, string fileName)
