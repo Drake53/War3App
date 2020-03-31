@@ -275,6 +275,9 @@ namespace War3App.MapDowngrader
                     var incompatibleIdentifiersUsage = new Dictionary<string, int>();
                     var incompatibleIdentifiers = new HashSet<string>();
 
+                    var incompatibleAudioFileUsage = new Dictionary<string, int>();
+                    var incompatibleAudioFormats = new HashSet<string>();
+
                     // assume no custom Blizzard.j for now (if a map does have one, treat it like another war3map.j by downgrading it)
                     // TODO: test if custom 'Blizzard.j' is possible for lua maps
                     var mapHasCustomBlizzardJ = false;
@@ -285,6 +288,16 @@ namespace War3App.MapDowngrader
                         incompatibleIdentifiers.UnionWith(BlizzardIdentifiersProvider.GetIdentifiers(targetPatch, originPatch));
                     }
 
+                    if (targetPatch < GamePatch.v1_32_0)
+                    {
+                        incompatibleAudioFormats.Add("flac");
+                    }
+
+                    if (targetPatch < GamePatch.v1_30_0 || targetPatch > GamePatch.v1_30_4)
+                    {
+                        incompatibleAudioFormats.Add("ogg");
+                    }
+
                     using (var scriptFile = inputArchive.OpenFile(scriptFileName))
                     {
                         using (var reader = new StreamReader(scriptFile, leaveOpen: true))
@@ -292,10 +305,31 @@ namespace War3App.MapDowngrader
                             var scriptText = reader.ReadToEnd();
                             foreach (var incompatibleIdentifier in incompatibleIdentifiers)
                             {
-                                var usageCount = new Regex(incompatibleIdentifier).Matches(scriptText).Count;
+                                var matches = new Regex($"\\b{incompatibleIdentifier}\\b").Matches(scriptText);
+                                var usageCount = matches.Count;
                                 if (usageCount > 0)
                                 {
                                     incompatibleIdentifiersUsage.Add(incompatibleIdentifier, usageCount);
+                                }
+                            }
+
+                            foreach (var incompatibleAudioFormat in incompatibleAudioFormats)
+                            {
+                                var matches = new Regex($"\"(\\w|/)+.{incompatibleAudioFormat}\"").Matches(scriptText);
+                                var usageCount = matches.Count;
+                                if (usageCount > 0)
+                                {
+                                    foreach (Match match in matches)
+                                    {
+                                        if (incompatibleAudioFileUsage.TryGetValue(match.Value, out var value))
+                                        {
+                                            incompatibleAudioFileUsage[match.Value] = value + 1;
+                                        }
+                                        else
+                                        {
+                                            incompatibleAudioFileUsage.Add(match.Value, 1);
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -320,16 +354,26 @@ namespace War3App.MapDowngrader
                     }
 
 #if !SKIP_SCRIPT_EDITING
+                    if (incompatibleAudioFileUsage.Count > 0)
+                    {
+                        Console.WriteLine("Incompatible audio files:");
+                        foreach (var incompatibleAudioFile in incompatibleAudioFileUsage)
+                        {
+                            Console.WriteLine($"  {incompatibleAudioFile.Key}{(incompatibleAudioFile.Value > 1 ? $" (used {incompatibleAudioFile.Value} times)" : string.Empty)}");
+                        }
+
+                        Console.WriteLine();
+                    }
+
                     if (incompatibleIdentifiersUsage.Count > 0)
                     {
                         Console.WriteLine("Before the program can continue, you must manually edit the map script to make it compatible.");
                         Console.WriteLine($"The following identifiers were detected which are not compatible with the target version '{targetPatch}':");
                         Console.WriteLine();
 
-                        // NOTE: results can be duplicate/incorrect (for example: when you have CreateCommandButtonEffectBJ, it will also detect CreateCommandButtonEffect)
                         foreach (var incompatibleIdentifier in incompatibleIdentifiersUsage)
                         {
-                            Console.WriteLine($"{incompatibleIdentifier.Key} (used {incompatibleIdentifier.Value} times)");
+                            Console.WriteLine($"  {incompatibleIdentifier.Key}{(incompatibleIdentifier.Value > 1 ? $" (used {incompatibleIdentifier.Value} times)" : string.Empty)}");
                         }
 
                         Process.Start("explorer.exe", $"/select, \"{scriptFilePath}\"");
