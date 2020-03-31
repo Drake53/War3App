@@ -85,7 +85,7 @@ namespace War3App.MapDowngrader
 
         private static IEnumerable<string> GetIdentifiersPatch1_32_2()
         {
-            // Could have been added in 1.31.1 as well.
+            // Could have been added in 1.32.1 as well.
             yield return nameof(War3Api.Blizzard.SetThematicMusicVolumeBJ);
         }
     }
