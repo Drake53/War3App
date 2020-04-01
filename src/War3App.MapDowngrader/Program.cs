@@ -278,6 +278,9 @@ namespace War3App.MapDowngrader
                     var incompatibleAudioFileUsage = new Dictionary<string, int>();
                     var incompatibleAudioFormats = new HashSet<string>();
 
+                    var incompatibleFrameNameUsage = new Dictionary<string, int>();
+                    var incompatibleFrameNames = new HashSet<string>();
+
                     // assume no custom Blizzard.j for now (if a map does have one, treat it like another war3map.j by downgrading it)
                     // TODO: test if custom 'Blizzard.j' is possible for lua maps
                     var mapHasCustomBlizzardJ = false;
@@ -296,6 +299,11 @@ namespace War3App.MapDowngrader
                     if (targetPatch < GamePatch.v1_30_0 || targetPatch > GamePatch.v1_30_4)
                     {
                         incompatibleAudioFormats.Add("ogg");
+                    }
+
+                    if (targetPatch >= GamePatch.v1_31_0)
+                    {
+                        incompatibleFrameNames.UnionWith(FrameNamesProvider.GetFrameNames(targetPatch, originPatch).Select(frame => frame.name));
                     }
 
                     using (var scriptFile = inputArchive.OpenFile(scriptFileName))
@@ -332,6 +340,16 @@ namespace War3App.MapDowngrader
                                     }
                                 }
                             }
+
+                            foreach (var incompatibleFrameName in incompatibleFrameNames)
+                            {
+                                var matches = new Regex($"{nameof(War3Api.Common.BlzGetFrameByName)}( |\t)*\\(\"{incompatibleFrameName}\"( |\t)*,( |\t)*").Matches(scriptText);
+                                var usageCount = matches.Count;
+                                if (usageCount > 0)
+                                {
+                                    incompatibleFrameNameUsage.Add(incompatibleFrameName, usageCount);
+                                }
+                            }
                         }
 
                         if (!File.Exists(originalScriptFilePath))
@@ -353,36 +371,68 @@ namespace War3App.MapDowngrader
                         }
                     }
 
-#if !SKIP_SCRIPT_EDITING
-                    if (incompatibleAudioFileUsage.Count > 0)
+                    if (incompatibleAudioFileUsage.Count > 0 ||
+                        incompatibleFrameNameUsage.Count > 0 ||
+                        incompatibleIdentifiersUsage.Count > 0)
                     {
-                        Console.WriteLine("Incompatible audio files:");
-                        foreach (var incompatibleAudioFile in incompatibleAudioFileUsage)
+                        Console.WriteLine("Detected compatibility issues in map script:");
+
+                        if (incompatibleAudioFileUsage.Count > 0)
                         {
-                            Console.WriteLine($"  {incompatibleAudioFile.Key}{(incompatibleAudioFile.Value > 1 ? $" (used {incompatibleAudioFile.Value} times)" : string.Empty)}");
+#if SKIP_SCRIPT_EDITING
+                            Console.WriteLine($"  Found {incompatibleAudioFileUsage.Select(incompatibleAudioFile => incompatibleAudioFile.Value).Sum()} incompatible audio files.");
+#else
+                            Console.WriteLine("  Incompatible audio files:");
+                            foreach (var incompatibleAudioFile in incompatibleAudioFileUsage)
+                            {
+                                Console.WriteLine($"    {incompatibleAudioFile.Key}{(incompatibleAudioFile.Value > 1 ? $" (used {incompatibleAudioFile.Value} times)" : string.Empty)}");
+                            }
+
+                            Console.WriteLine();
+#endif
                         }
 
-                        Console.WriteLine();
-                    }
-
-                    if (incompatibleIdentifiersUsage.Count > 0)
-                    {
-                        Console.WriteLine("Before the program can continue, you must manually edit the map script to make it compatible.");
-                        Console.WriteLine($"The following identifiers were detected which are not compatible with the target version '{targetPatch}':");
-                        Console.WriteLine();
-
-                        foreach (var incompatibleIdentifier in incompatibleIdentifiersUsage)
+                        if (incompatibleFrameNameUsage.Count > 0)
                         {
-                            Console.WriteLine($"  {incompatibleIdentifier.Key}{(incompatibleIdentifier.Value > 1 ? $" (used {incompatibleIdentifier.Value} times)" : string.Empty)}");
+#if SKIP_SCRIPT_EDITING
+                            Console.WriteLine($"  Found {incompatibleFrameNameUsage.Select(incompatibleFrameName => incompatibleFrameName.Value).Sum()} incompatible frame names.");
+#else
+                            Console.WriteLine("  Incompatible frame names:");
+                            foreach (var incompatibleFrameName in incompatibleFrameNameUsage)
+                            {
+                                Console.WriteLine($"    {incompatibleFrameName.Key}{(incompatibleFrameName.Value > 1 ? $" (used {incompatibleFrameName.Value} times)" : string.Empty)}");
+                            }
+
+                            Console.WriteLine();
+#endif
                         }
 
+                        if (incompatibleIdentifiersUsage.Count > 0)
+                        {
+#if SKIP_SCRIPT_EDITING
+                            Console.WriteLine($"  Found {incompatibleIdentifiersUsage.Select(incompatibleIdentifier => incompatibleIdentifier.Value).Sum()} incompatible identifiers.");
+#else
+                            Console.WriteLine("  Incompatible identifiers:");
+                            foreach (var incompatibleIdentifier in incompatibleIdentifiersUsage)
+                            {
+                                Console.WriteLine($"    {incompatibleIdentifier.Key}{(incompatibleIdentifier.Value > 1 ? $" (used {incompatibleIdentifier.Value} times)" : string.Empty)}");
+                            }
+
+                            Console.WriteLine();
+#endif
+                        }
+
+#if SKIP_SCRIPT_EDITING
+                        Console.WriteLine();
+#else
                         Process.Start("explorer.exe", $"/select, \"{scriptFilePath}\"");
 
-                        Console.WriteLine();
-                        Console.WriteLine("After you're done, press any key to continue.");
+                        Console.WriteLine("You can now edit the map script to fix compatibility issues.");
+                        Console.WriteLine("When you are finished, press any key to continue.");
                         Console.ReadKey();
-                    }
 #endif
+
+                    }
 
                     scriptFileStream = File.OpenRead(scriptFilePath);
                     replacedFiles.Add(MpqFile.New(scriptFileStream, scriptFileName));
