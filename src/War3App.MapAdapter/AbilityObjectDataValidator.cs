@@ -5,7 +5,7 @@ using War3Net.Build.Common;
 
 namespace War3App.MapDowngrader
 {
-    public static class DoodadObjectDataValidator
+    public static class AbilityObjectDataValidator
     {
         public static bool TryValidate(Stream stream, GamePatch targetPatch)
         {
@@ -23,18 +23,18 @@ namespace War3App.MapDowngrader
         {
             return ObjectDataValidator.Validate(
                 stream,
-                DoodadObjectDataProvider.GetRawcodes(targetPatch).ToHashSet(),
-                DoodadObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet(),
+                AbilityObjectDataProvider.GetRawcodes(targetPatch).ToHashSet(),
+                AbilityObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet(),
                 true);
         }
 
-        public static void Downgrade(Stream input, Stream output, GamePatch targetPatch)
+        public static bool Downgrade(Stream input, Stream output, GamePatch targetPatch)
         {
-            ObjectDataValidator.Downgrade(
+            return ObjectDataValidator.Downgrade(
                 input,
                 output,
-                DoodadObjectDataProvider.GetRawcodes(targetPatch).ToHashSet(),
-                DoodadObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet(),
+                AbilityObjectDataProvider.GetRawcodes(targetPatch).ToHashSet(),
+                AbilityObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet(),
                 true);
         }
     }

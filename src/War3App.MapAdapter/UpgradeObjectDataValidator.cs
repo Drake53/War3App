@@ -28,9 +28,9 @@ namespace War3App.MapDowngrader
                 true);
         }
 
-        public static void Downgrade(Stream input, Stream output, GamePatch targetPatch)
+        public static bool Downgrade(Stream input, Stream output, GamePatch targetPatch)
         {
-            ObjectDataValidator.Downgrade(
+            return ObjectDataValidator.Downgrade(
                 input,
                 output,
                 UpgradeObjectDataProvider.GetRawcodes(targetPatch).ToHashSet(),

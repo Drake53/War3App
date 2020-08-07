@@ -232,7 +232,7 @@ namespace War3App.MapDowngrader
             return !haveValidationErrors;
         }
 
-        public static void Downgrade(Stream input, Stream output, ISet<int> ids, ISet<int> properties, bool withLevelData)
+        public static bool Downgrade(Stream input, Stream output, ISet<int> ids, ISet<int> properties, bool withLevelData)
         {
             using var reader = new BinaryReader(input);
             using var writer = new BinaryWriter(output, Encoding.UTF8, true);
@@ -244,6 +244,18 @@ namespace War3App.MapDowngrader
             }
 
             writer.Write(version);
+
+            var foundAnyIncompatibleProperty = false;
+            bool IsPropertyCompatible(int id)
+            {
+                if (!properties.Contains(id))
+                {
+                    foundAnyIncompatibleProperty = true;
+                    return false;
+                }
+
+                return true;
+            }
 
             var amountModified = reader.ReadInt32();
             var amountModifiedOffset = output.Position;
@@ -280,7 +292,7 @@ namespace War3App.MapDowngrader
                 for (var m = 0; m < modCount; m++)
                 {
                     var modId = reader.ReadInt32();
-                    var isCompatibleProperty = isCompatible && properties.Contains(modId);
+                    var isCompatibleProperty = isCompatible && IsPropertyCompatible(modId);
 
                     var modType = reader.ReadInt32();
 
@@ -347,11 +359,6 @@ namespace War3App.MapDowngrader
                     }
 
                     var sanityCheck = reader.ReadInt32();
-                    if (sanityCheck != 0 && sanityCheck != id)
-                    {
-                        throw new Exception();
-                    }
-
                     if (isCompatibleProperty)
                     {
                         writer.Write(sanityCheck);
@@ -401,7 +408,7 @@ namespace War3App.MapDowngrader
                 for (var m = 0; m < modCount; m++)
                 {
                     var modId = reader.ReadInt32();
-                    var isCompatibleProperty = isCompatible && properties.Contains(modId);
+                    var isCompatibleProperty = isCompatible && IsPropertyCompatible(modId);
 
                     var modType = reader.ReadInt32();
 
@@ -468,11 +475,6 @@ namespace War3App.MapDowngrader
                     }
 
                     var sanityCheck = reader.ReadInt32();
-                    if (sanityCheck != 0 && sanityCheck != oldId && sanityCheck != newId)
-                    {
-                        throw new Exception();
-                    }
-
                     if (isCompatibleProperty)
                     {
                         writer.Write(sanityCheck);
@@ -489,6 +491,8 @@ namespace War3App.MapDowngrader
             output.Position = amountNewOffset;
             writer.Write(amountNewDowngrade);
             output.Position = output.Length;
+
+            return amountModifiedDowngrade < amountModified || amountNewDowngrade < amountNew || foundAnyIncompatibleProperty;
         }
 
         private static string ToRawcode(this int value)

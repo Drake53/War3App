@@ -3,9 +3,9 @@
 using War3Net.Build.Common;
 using War3Net.Build.Widget;
 
-namespace War3App.MapDowngrader
+namespace War3App.MapAdapter.Widget
 {
-    public static class MapDoodadsDowngrader
+    public static class MapDoodadsExtensions
     {
         public static bool TryDowngrade(this MapDoodads mapDoodads, GamePatch targetPatch)
         {

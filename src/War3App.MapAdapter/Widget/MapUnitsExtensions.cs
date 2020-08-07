@@ -3,9 +3,9 @@
 using War3Net.Build.Common;
 using War3Net.Build.Widget;
 
-namespace War3App.MapDowngrader
+namespace War3App.MapAdapter.Widget
 {
-    public static class MapUnitsDowngrader
+    public static class MapUnitsExtensions
     {
         public static bool TryDowngrade(this MapUnits mapUnits, GamePatch targetPatch)
         {
@@ -40,7 +40,8 @@ namespace War3App.MapDowngrader
                     mapUnits.FormatVersion = MapWidgetsFormatVersion.Roc;
                     break;
 
-                default: break;
+                default:
+                    break;
             }
         }
 
