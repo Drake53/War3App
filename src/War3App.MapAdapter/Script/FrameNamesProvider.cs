@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 using War3Net.Build.Common;
 
-namespace War3App.MapDowngrader
+namespace War3App.MapAdapter.Script
 {
     // https://www.hiveworkshop.com/threads/default-names-for-blzgetframebyname.315846/
     public static class FrameNamesProvider

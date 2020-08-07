@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 
 using War3Net.Build.Common;
+using War3Net.Common.Extensions;
 
-namespace War3App.MapDowngrader
+namespace War3App.MapAdapter.Object
 {
     public static class DestructableObjectDataProvider
     {

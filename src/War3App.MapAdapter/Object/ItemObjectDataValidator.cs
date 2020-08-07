@@ -3,9 +3,9 @@ using System.Linq;
 
 using War3Net.Build.Common;
 
-namespace War3App.MapDowngrader
+namespace War3App.MapAdapter.Object
 {
-    public static class DoodadObjectDataValidator
+    public static class ItemObjectDataValidator
     {
         public static bool TryValidate(Stream stream, GamePatch targetPatch)
         {
@@ -23,9 +23,9 @@ namespace War3App.MapDowngrader
         {
             return ObjectDataValidator.Validate(
                 stream,
-                DoodadObjectDataProvider.GetRawcodes(targetPatch).ToHashSet(),
-                DoodadObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet(),
-                true);
+                ItemObjectDataProvider.GetRawcodes(targetPatch).ToHashSet(),
+                ItemObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet(),
+                false);
         }
 
         public static bool Downgrade(Stream input, Stream output, GamePatch targetPatch)
@@ -33,9 +33,9 @@ namespace War3App.MapDowngrader
             return ObjectDataValidator.Downgrade(
                 input,
                 output,
-                DoodadObjectDataProvider.GetRawcodes(targetPatch).ToHashSet(),
-                DoodadObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet(),
-                true);
+                ItemObjectDataProvider.GetRawcodes(targetPatch).ToHashSet(),
+                ItemObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet(),
+                false);
         }
     }
 }

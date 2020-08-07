@@ -3,7 +3,7 @@ using System.Linq;
 
 using War3Net.Build.Common;
 
-namespace War3App.MapDowngrader
+namespace War3App.MapAdapter.Object
 {
     public static class UpgradeObjectDataValidator
     {

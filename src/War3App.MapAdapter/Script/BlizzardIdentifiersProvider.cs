@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 using War3Net.Build.Common;
 
-namespace War3App.MapDowngrader
+namespace War3App.MapAdapter.Script
 {
     public static class BlizzardIdentifiersProvider
     {
