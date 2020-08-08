@@ -7,5 +7,7 @@ namespace War3App.MapAdapter
         public MapFileStatus Status { get; set; }
 
         public Stream AdaptedFileStream { get; set; }
+
+        public string[] Diagnostics { get; set; }
     }
 }

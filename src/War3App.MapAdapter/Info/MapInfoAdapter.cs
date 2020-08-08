@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+
+using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Common;
 using War3Net.Build.Info;
@@ -7,6 +10,16 @@ namespace War3App.MapAdapter.Info
 {
     public sealed class MapInfoAdapter : IMapFileAdapter
     {
+        public bool CanAdaptFile(string s)
+        {
+            return string.Equals(s.GetFileExtension(), MapInfo.FileName.GetFileExtension(), StringComparison.OrdinalIgnoreCase);
+        }
+
+        public bool CanAdaptFile(Stream stream)
+        {
+            return false;
+        }
+
         public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch)
         {
             try

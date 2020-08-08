@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+
+using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Common;
 
@@ -9,6 +12,18 @@ namespace War3App.MapAdapter.Script
 {
     public sealed class MapScriptRegexAdapter : IMapFileAdapter
     {
+        public bool CanAdaptFile(string s)
+        {
+            var fileExtension = s.GetFileExtension();
+            return string.Equals(fileExtension, ".j", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(fileExtension, ".lua", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public bool CanAdaptFile(Stream stream)
+        {
+            return false;
+        }
+
         public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch)
         {
             try
@@ -21,7 +36,6 @@ namespace War3App.MapAdapter.Script
 
                 try
                 {
-                    // todo: add logging to adaptResult
                     var diagnostics = new List<string>();
 
                     // Find incompatible identifiers
@@ -103,6 +117,7 @@ namespace War3App.MapAdapter.Script
                         return new AdaptResult
                         {
                             Status = MapFileStatus.RequiresInput,
+                            Diagnostics = diagnostics.ToArray(),
                         };
                     }
                 }
