@@ -37,14 +37,5 @@ namespace War3App.MapAdapter.Object
                 ItemObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet(),
                 false);
         }
-
-        public static AdaptResult Adapt(Stream input, GamePatch targetPatch)
-        {
-            return ObjectDataValidator.Adapt(
-                input,
-                ItemObjectDataProvider.GetRawcodes(targetPatch).ToHashSet(),
-                ItemObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet(),
-                false);
-        }
     }
 }

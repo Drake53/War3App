@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Common;
 using War3Net.Build.Object;
+using War3Net.Common.Extensions;
 
 namespace War3App.MapAdapter.Object
 {
@@ -24,12 +27,59 @@ namespace War3App.MapAdapter.Object
         {
             try
             {
-                // TODO: use MapBuffObjectData as input
-                // var mapBuffObjectData = MapBuffObjectData.Parse(stream);
+                var mapBuffObjectData = MapBuffObjectData.Parse(stream);
 
                 try
                 {
-                    return BuffObjectDataValidator.Adapt(stream, targetPatch);
+                    var knownIds = BuffObjectDataProvider.GetRawcodes(targetPatch).ToHashSet();
+                    var knownProperties = BuffObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet();
+
+                    var diagnostics = new List<string>();
+                    var buffs = new List<ObjectModification>();
+                    foreach (var buff in mapBuffObjectData.GetData())
+                    {
+                        if (!knownIds.Contains(buff.OldId))
+                        {
+                            diagnostics.Add($"Unknown base buff: '{buff.OldId.ToRawcode()}'");
+                            continue;
+                        }
+
+                        if (knownIds.Contains(buff.NewId))
+                        {
+                            diagnostics.Add($"Conflicting buff: '{buff.NewId.ToRawcode()}'");
+                            continue;
+                        }
+
+                        if (buff.Any(property => !knownProperties.Contains(property.Id)))
+                        {
+                            diagnostics.AddRange(buff.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                            buffs.Add(new ObjectModification(buff.OldId, buff.NewId, buff.Where(property => knownProperties.Contains(property.Id)).ToArray()));
+                        }
+                        else
+                        {
+                            buffs.Add(buff);
+                        }
+                    }
+
+                    if (diagnostics.Count > 0)
+                    {
+                        var memoryStream = new MemoryStream();
+                        MapBuffObjectData.Serialize(new MapBuffObjectData(buffs.ToArray()), memoryStream, true);
+
+                        return new AdaptResult
+                        {
+                            Status = MapFileStatus.Adapted,
+                            Diagnostics = diagnostics.ToArray(),
+                            AdaptedFileStream = memoryStream,
+                        };
+                    }
+                    else
+                    {
+                        return new AdaptResult
+                        {
+                            Status = MapFileStatus.Compatible,
+                        };
+                    }
                 }
                 catch
                 {
