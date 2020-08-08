@@ -37,5 +37,14 @@ namespace War3App.MapAdapter.Object
                 UpgradeObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet(),
                 true);
         }
+
+        public static AdaptResult Adapt(Stream input, GamePatch targetPatch)
+        {
+            return ObjectDataValidator.Adapt(
+                input,
+                UpgradeObjectDataProvider.GetRawcodes(targetPatch).ToHashSet(),
+                UpgradeObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet(),
+                true);
+        }
     }
 }

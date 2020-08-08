@@ -29,23 +29,7 @@ namespace War3App.MapAdapter.Object
 
                 try
                 {
-                    var mapBuffObjectDataStream = new MemoryStream();
-                    if (BuffObjectDataValidator.Downgrade(stream, mapBuffObjectDataStream, targetPatch))
-                    {
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Adapted,
-                            AdaptedFileStream = mapBuffObjectDataStream,
-                        };
-                    }
-                    else
-                    {
-                        mapBuffObjectDataStream.Dispose();
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Compatible,
-                        };
-                    }
+                    return BuffObjectDataValidator.Adapt(stream, targetPatch);
                 }
                 catch
                 {
