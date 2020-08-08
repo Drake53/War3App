@@ -494,16 +494,5 @@ namespace War3App.MapAdapter.Object
 
             return amountModifiedDowngrade < amountModified || amountNewDowngrade < amountNew || foundAnyIncompatibleProperty;
         }
-
-        private static string ToRawcode(this int value)
-        {
-            return new string(new[]
-            {
-                (char)(value & 0x000000FF),
-                (char)((value & 0x0000FF00) >> 8),
-                (char)((value & 0x00FF0000) >> 16),
-                (char)((value & 0xFF000000) >> 24),
-            });
-        }
     }
 }
