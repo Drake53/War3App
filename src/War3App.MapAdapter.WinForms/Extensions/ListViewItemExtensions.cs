@@ -30,16 +30,6 @@ namespace War3App.MapAdapter.WinForms.Extensions
             return (ItemTag)item.Tag;
         }
 
-        public static bool IsUnknown(this ListViewItem item)
-        {
-            return item.GetTag().Status == MapFileStatus.Unknown;
-        }
-
-        public static string GetFileName(this ListViewItem item)
-        {
-            return item.GetTag().FileName;
-        }
-
         public static void Update(this ListViewItem item)
         {
             var tag = item.GetTag();
