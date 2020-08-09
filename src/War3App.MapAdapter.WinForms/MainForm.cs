@@ -269,79 +269,7 @@ namespace War3App.MapAdapter.WinForms
                 var saveFileDialogResult = saveFileDialog.ShowDialog();
                 if (saveFileDialogResult == DialogResult.OK)
                 {
-                    var originalFiles = _archive.GetMpqFiles();
-                    var adaptedFiles = new List<MpqFile>();
-                    var removedFiles = new HashSet<ulong>();
-
-                    for (var i = 0; i < _fileList.Items.Count; i++)
-                    {
-                        var item = _fileList.Items[i];
-                        var tag = item.GetTag();
-
-                        if (tag.Parent != null)
-                        {
-                            continue;
-                        }
-
-                        if (tag.Children != null)
-                        {
-                            if (tag.Children.Any(child => child.Status == MapFileStatus.Adapted))
-                            {
-                                // Assume at most one nested archive (for campaign archives), so no recursion.
-                                using var subArchive = MpqArchive.Open(_archive.OpenFile(tag.FileName));
-
-                                var subArchiveOriginalFiles = subArchive.GetMpqFiles();
-                                var subArchiveAdaptedFiles = new List<MpqFile>();
-
-                                foreach (var child in tag.Children)
-                                {
-                                    if (child.Status == MapFileStatus.Adapted)
-                                    {
-                                        subArchiveAdaptedFiles.Add(MpqFile.New(child.AdaptResult.AdaptedFileStream, child.FileName));
-                                    }
-                                }
-
-                                var subArchiveUnadaptedFiles = subArchiveOriginalFiles.Where(originalFile => !subArchiveAdaptedFiles.Where(adaptedFile => adaptedFile.IsSameAs(originalFile)).Any());
-                                var subArchiveAdaptedArchiveFiles = subArchiveUnadaptedFiles.Concat(subArchiveAdaptedFiles).ToArray();
-
-                                var adaptedSubArchiveStream = new MemoryStream();
-                                var rebuiltArchive = MpqArchive.Create(adaptedSubArchiveStream, subArchiveAdaptedArchiveFiles);
-
-                                adaptedSubArchiveStream.Position = 0;
-                                adaptedFiles.Add(MpqFile.New(adaptedSubArchiveStream, tag.FileName));
-                            }
-                            else if (tag.Children.All(child => child.Status == MapFileStatus.Removed))
-                            {
-                                if (tag.FileName is null)
-                                {
-                                    throw new NotImplementedException();
-                                }
-
-                                removedFiles.Add(MpqHash.GetHashedFileName(tag.FileName));
-                            }
-                        }
-                        else if ((tag.Status == MapFileStatus.Modified || tag.Status == MapFileStatus.Adapted) && tag.AdaptResult?.AdaptedFileStream != null)
-                        {
-                            tag.AdaptResult.AdaptedFileStream.Position = 0;
-                            var adaptedFile = MpqFile.New(tag.AdaptResult.AdaptedFileStream, tag.FileName);
-                            adaptedFile.TargetFlags = tag.MpqEntry.Flags;
-                            adaptedFiles.Add(adaptedFile);
-                        }
-                        else if (tag.Status == MapFileStatus.Removed)
-                        {
-                            if (tag.FileName is null)
-                            {
-                                throw new NotImplementedException();
-                            }
-
-                            removedFiles.Add(MpqHash.GetHashedFileName(tag.FileName));
-                        }
-                    }
-
-                    var unadaptedFiles = originalFiles.Where(originalFile => !removedFiles.Contains(originalFile.Name) && !adaptedFiles.Where(adaptedFile => adaptedFile.IsSameAs(originalFile)).Any());
-                    var adaptedArchiveFiles = unadaptedFiles.Concat(adaptedFiles).ToArray();
-
-                    MpqArchive.Create(saveFileDialog.FileName, adaptedArchiveFiles).Dispose();
+                    SaveArchive(saveFileDialog.FileName);
                 }
             };
 
@@ -562,6 +490,81 @@ namespace War3App.MapAdapter.WinForms
             _saveAsButton.Enabled = false;
 
             _fileList.Items.Clear();
+        }
+
+        private static void SaveArchive(string fileName)
+        {
+            var originalFiles = _archive.GetMpqFiles();
+            var adaptedFiles = new List<MpqFile>();
+            var removedFiles = new HashSet<ulong>();
+
+            for (var i = 0; i < _fileList.Items.Count; i++)
+            {
+                var tag = _fileList.Items[i].GetTag();
+                if (tag.Parent != null)
+                {
+                    continue;
+                }
+
+                if (tag.Children != null)
+                {
+                    if (tag.Children.Any(child => child.IsModified))
+                    {
+                        // Assume at most one nested archive (for campaign archives), so no recursion.
+                        using var subArchive = MpqArchive.Open(_archive.OpenFile(tag.FileName));
+                        var subArchiveAdaptedFiles = new List<MpqFile>();
+                        var subArchiveRemovedFiles = new HashSet<ulong>();
+
+                        foreach (var child in tag.Children)
+                        {
+                            if (child.FileName != null)
+                            {
+                                subArchive.AddFilename(child.FileName);
+                            }
+
+                            if (child.TryGetModifiedMpqFile(out var subArchiveAdaptedFile))
+                            {
+                                subArchiveAdaptedFiles.Add(subArchiveAdaptedFile);
+                            }
+                            else if (child.Status == MapFileStatus.Removed)
+                            {
+                                subArchiveRemovedFiles.Add(child.GetHashedFileName());
+                            }
+                        }
+
+                        var subArchiveOriginalFiles = subArchive.GetMpqFiles();
+
+                        var adaptedSubArchiveStream = new MemoryStream();
+                        MpqArchive.Create(adaptedSubArchiveStream, GetCreateArchiveMpqFiles(subArchiveOriginalFiles, subArchiveAdaptedFiles, subArchiveRemovedFiles).ToArray());
+
+                        adaptedSubArchiveStream.Position = 0;
+                        var adaptedFile = MpqFile.New(adaptedSubArchiveStream, tag.FileName);
+                        adaptedFile.TargetFlags = tag.MpqEntry.Flags;
+                        adaptedFiles.Add(adaptedFile);
+                    }
+                    else if (tag.Children.All(child => child.Status == MapFileStatus.Removed))
+                    {
+                        removedFiles.Add(tag.GetHashedFileName());
+                    }
+                }
+                else if (tag.TryGetModifiedMpqFile(out var adaptedFile))
+                {
+                    adaptedFiles.Add(adaptedFile);
+                }
+                else if (tag.Status == MapFileStatus.Removed)
+                {
+                    removedFiles.Add(tag.GetHashedFileName());
+                }
+            }
+
+            MpqArchive.Create(fileName, GetCreateArchiveMpqFiles(originalFiles, adaptedFiles, removedFiles).ToArray()).Dispose();
+        }
+
+        private static IEnumerable<MpqFile> GetCreateArchiveMpqFiles(IEnumerable<MpqFile> originalFiles, IEnumerable<MpqFile> modifiedFiles, IEnumerable<ulong> removedFiles)
+        {
+            return modifiedFiles.Concat(originalFiles.Where(originalFile =>
+                !removedFiles.Contains(originalFile.Name) &&
+                !modifiedFiles.Where(modifiedFile => modifiedFile.IsSameAs(originalFile)).Any()));
         }
     }
 }

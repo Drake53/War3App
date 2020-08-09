@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -70,6 +71,8 @@ namespace War3App.MapAdapter.WinForms
 
         public Stream CurrentStream => AdaptResult?.AdaptedFileStream ?? OriginalFileStream;
 
+        public bool IsModified => (Status == MapFileStatus.Modified || Status == MapFileStatus.Adapted) && AdaptResult?.AdaptedFileStream != null;
+
         public void UpdateAdaptResult(AdaptResult adaptResult)
         {
             if (adaptResult.AdaptedFileStream == null && AdaptResult?.AdaptedFileStream != null)
@@ -83,6 +86,31 @@ namespace War3App.MapAdapter.WinForms
             }
 
             ListViewItem.Update(adaptResult);
+        }
+
+        public bool TryGetModifiedMpqFile(out MpqFile mpqFile)
+        {
+            if (IsModified)
+            {
+                AdaptResult.AdaptedFileStream.Position = 0;
+                mpqFile = MpqFile.New(AdaptResult.AdaptedFileStream, FileName);
+                mpqFile.TargetFlags = MpqEntry.Flags;
+
+                return true;
+            }
+
+            mpqFile = null;
+            return false;
+        }
+
+        public ulong GetHashedFileName()
+        {
+            if (FileName is null)
+            {
+                throw new NotImplementedException();
+            }
+
+            return MpqHash.GetHashedFileName(FileName);
         }
     }
 }
