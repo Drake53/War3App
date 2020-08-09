@@ -35,11 +35,6 @@ namespace War3App.MapAdapter.WinForms.Extensions
             return item.GetTag().Status == MapFileStatus.Unknown;
         }
 
-        public static bool IsPending(this ListViewItem item)
-        {
-            return item.GetTag().Status == MapFileStatus.Pending;
-        }
-
         public static string GetFileName(this ListViewItem item)
         {
             return item.GetTag().FileName;
