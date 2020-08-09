@@ -17,9 +17,16 @@ namespace War3App.MapAdapter.WinForms
             MpqEntry = mpqEntry;
             FileName = mpqEntry.Filename;
             ArchiveName = archiveName ?? string.Empty;
-            Adapter = Program.GetAdapter(FileName);
             OriginalFileStream = archive.OpenFile(mpqEntry);
-            Status = Adapter is null ? MapFileStatus.Unknown : MapFileStatus.Pending;
+            if (FileName != null && PatchAgnosticFileProvider.IsFilePatchAgnostic(FileName))
+            {
+                Status = MapFileStatus.Compatible;
+            }
+            else
+            {
+                Adapter = AdapterProvider.GetAdapter(this);
+                Status = Adapter is null ? MapFileStatus.Unknown : MapFileStatus.Pending;
+            }
         }
 
         public ItemTag(MpqArchive archive, MpqEntry mpqEntry, ListViewItem[] children)
@@ -39,7 +46,7 @@ namespace War3App.MapAdapter.WinForms
 
         public MpqEntry MpqEntry { get; private set; }
 
-        public string FileName { get; private set; }
+        public string? FileName { get; private set; }
 
         public string ArchiveName { get; private set; }
 
@@ -59,6 +66,23 @@ namespace War3App.MapAdapter.WinForms
         {
             get => AdaptResult?.Status ?? _status;
             set => _status = value;
+        }
+
+        public Stream CurrentStream => AdaptResult?.AdaptedFileStream ?? OriginalFileStream;
+
+        public void UpdateAdaptResult(AdaptResult adaptResult)
+        {
+            if (adaptResult.AdaptedFileStream == null && AdaptResult?.AdaptedFileStream != null)
+            {
+                adaptResult.AdaptedFileStream = AdaptResult.AdaptedFileStream;
+
+                if (adaptResult.Status == MapFileStatus.Compatible && Status == MapFileStatus.Modified)
+                {
+                    adaptResult.Status = MapFileStatus.Adapted;
+                }
+            }
+
+            ListViewItem.Update(adaptResult);
         }
     }
 }

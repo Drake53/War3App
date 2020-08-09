@@ -22,11 +22,15 @@ namespace War3App.MapAdapter.WinForms.Extensions
                 }
             }
 
+            archive.AddFilename("(attributes)");
+            archive.AddFilename("conversation.json");
+
             archive.AddFilename(MapSounds.FileName);
             archive.AddFilename(MapInfo.FileName);
             archive.AddFilename(MapEnvironment.FileName);
             archive.AddFilename(MapDoodads.FileName);
             archive.AddFilename(MapUnits.FileName);
+
             archive.AddFilename(MapUnitObjectData.FileName);
             archive.AddFilename(MapItemObjectData.FileName);
             archive.AddFilename(MapDestructableObjectData.FileName);
@@ -34,6 +38,10 @@ namespace War3App.MapAdapter.WinForms.Extensions
             archive.AddFilename(MapAbilityObjectData.FileName);
             archive.AddFilename(MapBuffObjectData.FileName);
             archive.AddFilename(MapUpgradeObjectData.FileName);
+
+            archive.AddFilename(@"war3map.j");
+            archive.AddFilename(@"scripts\war3map.j");
+            archive.AddFilename(@"war3map.lua");
         }
 
         public static bool IsCampaignArchive(this MpqArchive archive, out CampaignInfo campaignInfo)
