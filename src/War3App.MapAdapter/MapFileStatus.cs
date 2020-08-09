@@ -3,6 +3,11 @@
     public enum MapFileStatus
     {
         /// <summary>
+        /// File will not be saved in adapted archive.
+        /// </summary>
+        Removed,
+
+        /// <summary>
         /// No adapter exists for the file.
         /// </summary>
         Unknown,
@@ -18,6 +23,11 @@
         Adapted,
 
         /// <summary>
+        /// The file has been modified by the user manually, but the adapter has not verified the changes yet.
+        /// </summary>
+        Modified,
+
+        /// <summary>
         /// An adapter exists for the file, but it has not been run yet.
         /// </summary>
         Pending,
@@ -25,7 +35,7 @@
         /// <summary>
         /// The adapter found incompatibilities that must be manually resolved.
         /// </summary>
-        RequiresInput,
+        Incompatible,
 
         /// <summary>
         /// The adapter found incompatibilities that cannot be resolved.

@@ -37,6 +37,7 @@ namespace War3App.MapAdapter.Script
                 try
                 {
                     var diagnostics = new List<string>();
+                    var regexDiagnostics = new List<RegexDiagnostic>();
 
                     // Find incompatible identifiers
                     var incompatibleIdentifiers = new HashSet<string>();
@@ -48,11 +49,18 @@ namespace War3App.MapAdapter.Script
 
                     foreach (var incompatibleIdentifier in incompatibleIdentifiers)
                     {
-                        var matches = new Regex($"\\b{incompatibleIdentifier}\\b").Matches(scriptText);
+                        var regex = new Regex($"\\b{incompatibleIdentifier}\\b");
+                        var matches = regex.Matches(scriptText);
                         var usageCount = matches.Count;
                         if (usageCount > 0)
                         {
                             diagnostics.Add($"Found incompatible identifier: '{incompatibleIdentifier}' ({usageCount}x)");
+                            regexDiagnostics.Add(new RegexDiagnostic
+                            {
+                                DisplayText = $"Identifier: '{incompatibleIdentifier}'",
+                                Matches = usageCount,
+                                Regex = regex,
+                            });
                         }
                     }
 
@@ -69,11 +77,18 @@ namespace War3App.MapAdapter.Script
 
                     foreach (var incompatibleAudioFormat in incompatibleAudioFormats)
                     {
-                        var matches = new Regex($"\"(\\w|/)+.{incompatibleAudioFormat}\"").Matches(scriptText);
+                        var regex = new Regex($"\"(\\w|/)+.{incompatibleAudioFormat}\"");
+                        var matches = regex.Matches(scriptText);
                         var usageCount = matches.Count;
                         if (usageCount > 0)
                         {
                             diagnostics.Add($"Found incompatible audio formats: '{incompatibleAudioFormat}' ({usageCount}x)");
+                            regexDiagnostics.Add(new RegexDiagnostic
+                            {
+                                DisplayText = $"Audio file format: '{incompatibleAudioFormat}'",
+                                Matches = usageCount,
+                                Regex = regex,
+                            });
                             //foreach (Match match in matches)
                             //{
                             //    if (incompatibleAudioFileUsage.TryGetValue(match.Value, out var value))
@@ -97,11 +112,18 @@ namespace War3App.MapAdapter.Script
 
                     foreach (var incompatibleFrameName in incompatibleFrameNames)
                     {
-                        var matches = new Regex($"{nameof(War3Api.Common.BlzGetFrameByName)}( |\t)*\\(\"{incompatibleFrameName}\"( |\t)*,( |\t)*").Matches(scriptText);
+                        var regex = new Regex($"{nameof(War3Api.Common.BlzGetFrameByName)}( |\t)*\\(\"{incompatibleFrameName}\"( |\t)*,( |\t)*");
+                        var matches = regex.Matches(scriptText);
                         var usageCount = matches.Count;
                         if (usageCount > 0)
                         {
                             diagnostics.Add($"Found incompatible frame names: '{incompatibleFrameName}' ({usageCount}x)");
+                            regexDiagnostics.Add(new RegexDiagnostic
+                            {
+                                DisplayText = $"Frame name: '{incompatibleFrameName}'",
+                                Matches = usageCount,
+                                Regex = regex,
+                            });
                         }
                     }
 
@@ -116,8 +138,9 @@ namespace War3App.MapAdapter.Script
                     {
                         return new AdaptResult
                         {
-                            Status = MapFileStatus.RequiresInput,
+                            Status = MapFileStatus.Incompatible,
                             Diagnostics = diagnostics.ToArray(),
+                            RegexDiagnostics = regexDiagnostics.ToArray(),
                         };
                     }
                 }
