@@ -29,7 +29,7 @@ namespace War3App.MapAdapter.Script
             try
             {
                 string scriptText;
-                using (var reader = new StreamReader(stream, leaveOpen: true))
+                using (var reader = new StreamReader(stream, null, true, -1, true))
                 {
                     scriptText = reader.ReadToEnd();
                 }
