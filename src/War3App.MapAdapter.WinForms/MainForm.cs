@@ -467,10 +467,7 @@ namespace War3App.MapAdapter.WinForms
                 }
                 else
                 {
-                    using (var mapInfoFileStream = _archive.OpenFile(MapInfo.FileName))
-                    {
-                        _originPatch = MapInfo.Parse(mapInfoFileStream).GetOriginGamePatch();
-                    }
+                    _originPatch = MapInfo.Parse(_archive.OpenFile(MapInfo.FileName)).GetOriginGamePatch();
                 }
 
                 var possibleOriginPatches = new HashSet<GamePatch>();
@@ -613,9 +610,13 @@ namespace War3App.MapAdapter.WinForms
                             }
                         }
 
-                        var subArchiveOriginalFiles = subArchive.GetMpqFiles();
-
                         var adaptedSubArchiveStream = new MemoryStream();
+                        if (_targetPatch.Value < GamePatch.v1_31_0)
+                        {
+                            MapInfo.Parse(subArchive.OpenFile(MapInfo.FileName)).WriteArchiveHeaderToStream(adaptedSubArchiveStream);
+                        }
+
+                        var subArchiveOriginalFiles = subArchive.GetMpqFiles();
                         MpqArchive.Create(adaptedSubArchiveStream, GetCreateArchiveMpqFiles(subArchiveOriginalFiles, subArchiveAdaptedFiles, subArchiveRemovedFiles).ToArray());
 
                         adaptedSubArchiveStream.Position = 0;
@@ -638,7 +639,22 @@ namespace War3App.MapAdapter.WinForms
                 }
             }
 
-            MpqArchive.Create(fileName, GetCreateArchiveMpqFiles(originalFiles, adaptedFiles, removedFiles).ToArray()).Dispose();
+            using (var fileStream = File.Create(fileName))
+            {
+                if (_targetPatch.Value < GamePatch.v1_31_0)
+                {
+                    if (_archive.IsCampaignArchive(out var campaignInfo))
+                    {
+                        campaignInfo.WriteArchiveHeaderToStream(fileStream);
+                    }
+                    else
+                    {
+                        MapInfo.Parse(_archive.OpenFile(MapInfo.FileName)).WriteArchiveHeaderToStream(fileStream);
+                    }
+                }
+
+                MpqArchive.Create(fileStream, GetCreateArchiveMpqFiles(originalFiles, adaptedFiles, removedFiles).ToArray()).Dispose();
+            }
         }
 
         private static IEnumerable<MpqFile> GetCreateArchiveMpqFiles(IEnumerable<MpqFile> originalFiles, IEnumerable<MpqFile> modifiedFiles, IEnumerable<ulong> removedFiles)
