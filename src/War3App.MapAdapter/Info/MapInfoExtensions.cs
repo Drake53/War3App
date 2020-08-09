@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 using War3Net.Build.Common;
 using War3Net.Build.Info;
@@ -119,7 +120,7 @@ namespace War3App.MapAdapter.Info
 
         public static void WriteArchiveHeaderToStream(this MapInfo mapInfo, Stream stream, byte[] signData = null)
         {
-            using (var writer = new BinaryWriter(stream, null, true))
+            using (var writer = new BinaryWriter(stream, new UTF8Encoding(false, true), true))
             {
                 writer.Write("HM3W".FromRawcode());
                 writer.Write(0);
