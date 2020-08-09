@@ -61,6 +61,13 @@ namespace War3App.MapAdapter.Audio
                     };
                 }
             }
+            catch (NotSupportedException)
+            {
+                return new AdaptResult
+                {
+                    Status = MapFileStatus.Unadaptable,
+                };
+            }
             catch
             {
                 return new AdaptResult

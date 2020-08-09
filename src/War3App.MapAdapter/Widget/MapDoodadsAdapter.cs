@@ -60,6 +60,13 @@ namespace War3App.MapAdapter.Widget
                     };
                 }
             }
+            catch (NotSupportedException)
+            {
+                return new AdaptResult
+                {
+                    Status = MapFileStatus.Unadaptable,
+                };
+            }
             catch
             {
                 return new AdaptResult

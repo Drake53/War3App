@@ -89,6 +89,13 @@ namespace War3App.MapAdapter.Object
                     };
                 }
             }
+            catch (NotSupportedException)
+            {
+                return new AdaptResult
+                {
+                    Status = MapFileStatus.Unadaptable,
+                };
+            }
             catch
             {
                 return new AdaptResult
