@@ -23,7 +23,7 @@ namespace War3App.MapAdapter.Object
             return false;
         }
 
-        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch)
+        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
         {
             try
             {

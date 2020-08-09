@@ -10,6 +10,6 @@ namespace War3App.MapAdapter
 
         bool CanAdaptFile(Stream stream);
 
-        AdaptResult AdaptFile(Stream stream, GamePatch targetPatch);
+        AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch);
     }
 }

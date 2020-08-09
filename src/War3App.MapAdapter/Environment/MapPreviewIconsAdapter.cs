@@ -20,7 +20,7 @@ namespace War3App.MapAdapter.PreviewIcons
             return false;
         }
 
-        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch)
+        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
         {
             try
             {

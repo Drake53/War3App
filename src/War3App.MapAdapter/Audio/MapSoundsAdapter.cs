@@ -19,7 +19,7 @@ namespace War3App.MapAdapter.Audio
             return false;
         }
 
-        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch)
+        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
         {
             try
             {

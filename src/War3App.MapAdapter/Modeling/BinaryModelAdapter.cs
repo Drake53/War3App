@@ -38,7 +38,7 @@ namespace War3App.MapAdapter.Modeling
             return new string(chars) == "MDLX";
         }
 
-        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch)
+        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
         {
             try
             {

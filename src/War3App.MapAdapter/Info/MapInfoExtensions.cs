@@ -8,7 +8,7 @@ namespace War3App.MapAdapter.Info
 {
     public static class MapInfoExtensions
     {
-        public static GamePatch GetOriginGamePatch(this MapInfo mapInfo)
+        public static GamePatch? GetOriginGamePatch(this MapInfo mapInfo)
         {
             if (mapInfo.GameVersion != null)
             {
@@ -39,24 +39,43 @@ namespace War3App.MapAdapter.Info
                         {
                             return GamePatch.v1_32_1;
                         }
-                        else if (mapInfo.GameVersion.Build < 9)
+                        else if (mapInfo.GameVersion.Build == 2)
                         {
-                            // todo
-                            return GamePatch.v1_32_1;
+                            return GamePatch.v1_32_2;
+                        }
+                        else if (mapInfo.GameVersion.Build == 3)
+                        {
+                            return GamePatch.v1_32_3;
+                        }
+                        else if (mapInfo.GameVersion.Build == 4)
+                        {
+                            return GamePatch.v1_32_4;
+                        }
+                        else if (mapInfo.GameVersion.Build == 5)
+                        {
+                            return GamePatch.v1_32_5;
+                        }
+                        else if (mapInfo.GameVersion.Build == 6)
+                        {
+                            return GamePatch.v1_32_6;
+                        }
+                        else if (mapInfo.GameVersion.Build == 7)
+                        {
+                            return GamePatch.v1_32_7;
                         }
                         else
                         {
-                            throw new NotSupportedException();
+                            return null;
                         }
                     }
                     else
                     {
-                        throw new NotSupportedException();
+                        return null;
                     }
                 }
                 else
                 {
-                    throw new NotSupportedException();
+                    return null;
                 }
             }
             // else if (mapInfo.ScriptLanguage == ScriptLanguage.Lua)

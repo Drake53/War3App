@@ -24,7 +24,7 @@ namespace War3App.MapAdapter.Script
             return false;
         }
 
-        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch)
+        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
         {
             try
             {
@@ -41,11 +41,8 @@ namespace War3App.MapAdapter.Script
 
                     // Find incompatible identifiers
                     var incompatibleIdentifiers = new HashSet<string>();
-                    if (targetPatch < GamePatch.v1_32_5)
-                    {
-                        incompatibleIdentifiers.UnionWith(CommonIdentifiersProvider.GetIdentifiers(targetPatch, GamePatch.v1_32_5 /*originPatch.Value*/));
-                        incompatibleIdentifiers.UnionWith(BlizzardIdentifiersProvider.GetIdentifiers(targetPatch, GamePatch.v1_32_5 /*originPatch.Value*/));
-                    }
+                    incompatibleIdentifiers.UnionWith(CommonIdentifiersProvider.GetIdentifiers(targetPatch, originPatch));
+                    incompatibleIdentifiers.UnionWith(BlizzardIdentifiersProvider.GetIdentifiers(targetPatch, originPatch));
 
                     foreach (var incompatibleIdentifier in incompatibleIdentifiers)
                     {
@@ -107,7 +104,7 @@ namespace War3App.MapAdapter.Script
                     var incompatibleFrameNames = new HashSet<string>();
                     if (targetPatch >= GamePatch.v1_31_0)
                     {
-                        incompatibleFrameNames.UnionWith(FrameNamesProvider.GetFrameNames(targetPatch, GamePatch.v1_32_5 /*originPatch.Value*/).Select(frame => frame.name));
+                        incompatibleFrameNames.UnionWith(FrameNamesProvider.GetFrameNames(targetPatch, originPatch).Select(frame => frame.name));
                     }
 
                     foreach (var incompatibleFrameName in incompatibleFrameNames)
