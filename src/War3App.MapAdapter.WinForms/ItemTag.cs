@@ -5,6 +5,7 @@ using System.Windows.Forms;
 
 using War3App.MapAdapter.WinForms.Extensions;
 
+using War3Net.Build.Common;
 using War3Net.IO.Mpq;
 
 namespace War3App.MapAdapter.WinForms
@@ -30,7 +31,7 @@ namespace War3App.MapAdapter.WinForms
             }
         }
 
-        public ItemTag(MpqArchive archive, MpqEntry mpqEntry, ListViewItem[] children)
+        public ItemTag(MpqArchive archive, MpqEntry mpqEntry, ListViewItem[] children, GamePatch? originPatch)
         {
             MpqEntry = mpqEntry;
             FileName = mpqEntry.Filename;
@@ -43,6 +44,8 @@ namespace War3App.MapAdapter.WinForms
             {
                 child.Parent = this;
             }
+
+            OriginPatch = originPatch;
         }
 
         public MpqEntry MpqEntry { get; private set; }
@@ -58,6 +61,8 @@ namespace War3App.MapAdapter.WinForms
         public ItemTag Parent { get; private set; }
 
         public ItemTag[] Children { get; private set; }
+
+        public GamePatch? OriginPatch { get; private set; }
 
         public ListViewItem ListViewItem { get; set; }
 
@@ -111,6 +116,11 @@ namespace War3App.MapAdapter.WinForms
             }
 
             return MpqHash.GetHashedFileName(FileName);
+        }
+
+        public GamePatch GetOriginPatch(GamePatch defaultPatch)
+        {
+            return OriginPatch ?? Parent?.OriginPatch ?? defaultPatch;
         }
     }
 }

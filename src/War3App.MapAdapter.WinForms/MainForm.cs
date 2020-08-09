@@ -5,16 +5,18 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
+using War3App.MapAdapter.Info;
 using War3App.MapAdapter.WinForms.Extensions;
 
 using War3Net.Build.Common;
+using War3Net.Build.Info;
 using War3Net.IO.Mpq;
 
 namespace War3App.MapAdapter.WinForms
 {
     internal static class MainForm
     {
-        private const GamePatch TargetPatch = GamePatch.v1_31_0;
+        private const GamePatch LatestPatch = GamePatch.v1_32_7;
 
         private static MpqArchive _archive;
 
@@ -24,6 +26,9 @@ namespace War3App.MapAdapter.WinForms
 
         private static Button _adaptAllButton;
         private static Button _saveAsButton;
+        private static ComboBox _targetPatchesComboBox;
+        private static GamePatch? _targetPatch;
+        private static GamePatch? _originPatch;
 
         private static ListView _fileList;
         private static ToolStripButton _adaptContextButton;
@@ -79,6 +84,20 @@ namespace War3App.MapAdapter.WinForms
 
             _saveAsButton.Size = _saveAsButton.PreferredSize;
             _saveAsButton.Enabled = false;
+
+            _targetPatchesComboBox = new ComboBox
+            {
+                Enabled = false,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Width = 120,
+                Dock = DockStyle.Top,
+            };
+
+            _targetPatchesComboBox.SelectedIndexChanged += (s, e) =>
+            {
+                _targetPatch = (GamePatch?)_targetPatchesComboBox.SelectedItem;
+                _adaptAllButton.Enabled = _targetPatch.HasValue && _fileList.Items.Count > 0;
+            };
 
             _archiveInput.TextChanged += (s, e) =>
             {
@@ -172,6 +191,7 @@ namespace War3App.MapAdapter.WinForms
 
             _adaptAllButton.Click += (s, e) =>
             {
+                _targetPatchesComboBox.Enabled = false;
                 var parentsToUpdate = new HashSet<ItemTag>();
                 for (var i = 0; i < _fileList.Items.Count; i++)
                 {
@@ -181,7 +201,7 @@ namespace War3App.MapAdapter.WinForms
                     var adapter = tag.Adapter;
                     if (adapter != null && (tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified))
                     {
-                        var adaptResult = adapter.AdaptFile(tag.CurrentStream, TargetPatch);
+                        var adaptResult = adapter.AdaptFile(tag.CurrentStream, _targetPatch.Value, tag.GetOriginPatch(_originPatch.Value));
                         tag.UpdateAdaptResult(adaptResult);
 
                         if (adaptResult.Status == MapFileStatus.Adapted)
@@ -209,7 +229,7 @@ namespace War3App.MapAdapter.WinForms
                 if (_fileList.SelectedItems.Count == 1)
                 {
                     var tag = _fileList.SelectedItems[0].GetTag();
-                    _adaptContextButton.Enabled = (tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified);
+                    _adaptContextButton.Enabled = _targetPatch.HasValue && (tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified);
                     _removeContextButton.Enabled = tag.Status != MapFileStatus.Removed;
                 }
                 else
@@ -290,10 +310,19 @@ namespace War3App.MapAdapter.WinForms
                 FlowDirection = FlowDirection.LeftToRight,
             };
 
+            var targetPatchLabel = new Label
+            {
+                Text = "Target patch",
+                TextAlign = ContentAlignment.BottomRight,
+            };
+
             inputArchiveFlowLayout.AddControls(_archiveInput, _archiveInputBrowseButton, _openCloseArchiveButton);
-            buttonsFlowLayout.AddControls(_adaptAllButton, _saveAsButton);
+            buttonsFlowLayout.AddControls(_adaptAllButton, _saveAsButton, targetPatchLabel, _targetPatchesComboBox);
             flowLayout.AddControls(inputArchiveFlowLayout, buttonsFlowLayout);
             form.AddControls(_diagnosticsDisplay, _fileList, flowLayout);
+
+            targetPatchLabel.Size = targetPatchLabel.PreferredSize;
+            buttonsFlowLayout.Size = buttonsFlowLayout.PreferredSize;
 
             inputArchiveFlowLayout.Size = inputArchiveFlowLayout.PreferredSize;
             flowLayout.Size = flowLayout.PreferredSize;
@@ -321,6 +350,7 @@ namespace War3App.MapAdapter.WinForms
         private static void OnClickAdaptSelected(object sender, EventArgs e)
         {
             _adaptContextButton.Enabled = false;
+            _targetPatchesComboBox.Enabled = false;
             for (var i = 0; i < _fileList.SelectedIndices.Count; i++)
             {
                 var index = _fileList.SelectedIndices[i];
@@ -334,7 +364,7 @@ namespace War3App.MapAdapter.WinForms
                         var adapter = child.Adapter;
                         if (adapter != null && (child.Status == MapFileStatus.Pending || child.Status == MapFileStatus.Modified))
                         {
-                            var adaptResult = adapter.AdaptFile(child.CurrentStream, TargetPatch);
+                            var adaptResult = adapter.AdaptFile(child.CurrentStream, _targetPatch.Value, child.GetOriginPatch(_originPatch.Value));
                             child.UpdateAdaptResult(adaptResult);
 
                             if (adaptResult.Status == MapFileStatus.Adapted)
@@ -351,7 +381,7 @@ namespace War3App.MapAdapter.WinForms
                     var adapter = tag.Adapter;
                     if (adapter != null)
                     {
-                        var adaptResult = adapter.AdaptFile(tag.CurrentStream, TargetPatch);
+                        var adaptResult = adapter.AdaptFile(tag.CurrentStream, _targetPatch.Value, tag.GetOriginPatch(_originPatch.Value));
                         tag.UpdateAdaptResult(adaptResult);
 
                         if (adaptResult.Status == MapFileStatus.Adapted)
@@ -422,7 +452,7 @@ namespace War3App.MapAdapter.WinForms
             {
                 _archiveInput.Enabled = false;
                 _archiveInputBrowseButton.Enabled = false;
-                _openCloseArchiveButton.Enabled = false;
+                _openCloseArchiveButton.Text = "Close archive";
 
                 _archive = MpqArchive.Open(fileInfo.FullName, true);
                 _archive.AddFileNames();
@@ -435,7 +465,15 @@ namespace War3App.MapAdapter.WinForms
                         mapsList.Add(campaignInfo.GetMap(i).MapFilePath);
                     }
                 }
+                else
+                {
+                    using (var mapInfoFileStream = _archive.OpenFile(MapInfo.FileName))
+                    {
+                        _originPatch = MapInfo.Parse(mapInfoFileStream).GetOriginGamePatch();
+                    }
+                }
 
+                var possibleOriginPatches = new HashSet<GamePatch>();
                 foreach (var file in _archive)
                 {
                     if (mapsList.Contains(file.Filename))
@@ -454,9 +492,18 @@ namespace War3App.MapAdapter.WinForms
                             children.Add(subItem);
                         }
 
-                        var mapArchiveItem = ListViewItemExtensions.Create(new ItemTag(_archive, file, children.ToArray()));
+                        using (var mapInfoFileStream = mapArchive.OpenFile(MapInfo.FileName))
+                        {
+                            var mapArchiveOriginPatch = MapInfo.Parse(mapInfoFileStream).GetOriginGamePatch();
+                            var mapArchiveItem = ListViewItemExtensions.Create(new ItemTag(_archive, file, children.ToArray(), mapArchiveOriginPatch));
 
-                        _fileList.Items.Add(mapArchiveItem);
+                            _fileList.Items.Add(mapArchiveItem);
+                            if (mapArchiveOriginPatch.HasValue)
+                            {
+                                possibleOriginPatches.Add(mapArchiveOriginPatch.Value);
+                            }
+                        }
+
                         foreach (var child in children)
                         {
                             _fileList.Items.Add(child);
@@ -470,9 +517,38 @@ namespace War3App.MapAdapter.WinForms
                     }
                 }
 
-                _openCloseArchiveButton.Enabled = true;
-                _openCloseArchiveButton.Text = "Close archive";
-                _adaptAllButton.Enabled = _fileList.Items.Count > 0;
+                if (_originPatch is null && possibleOriginPatches.Count == 1)
+                {
+                    _originPatch = possibleOriginPatches.Single();
+                }
+
+                var targetPatches = new HashSet<object>(new object[] { GamePatch.v1_29_0, GamePatch.v1_31_0, LatestPatch, });
+                if (_originPatch is null)
+                {
+                    _originPatch = LatestPatch;
+                }
+                else if (_originPatch.Value <= GamePatch.v1_29_2)
+                {
+                    targetPatches.Remove(GamePatch.v1_29_0);
+                }
+                else if (_originPatch.Value <= GamePatch.v1_31_1)
+                {
+                    targetPatches.Remove(GamePatch.v1_31_0);
+                }
+                else
+                {
+                    targetPatches.Remove(LatestPatch);
+                }
+
+                // TODO: Add object data for latest patch to prevent adapter errors.
+                targetPatches.Remove(LatestPatch);
+
+                _targetPatchesComboBox.Items.AddRange(targetPatches.ToArray());
+                _targetPatchesComboBox.Enabled = true;
+                if (_targetPatchesComboBox.Items.Count == 1)
+                {
+                    _targetPatchesComboBox.SelectedIndex = 0;
+                }
             }
         }
 
@@ -488,6 +564,11 @@ namespace War3App.MapAdapter.WinForms
             _openCloseArchiveButton.Text = "Open archive";
             _adaptAllButton.Enabled = false;
             _saveAsButton.Enabled = false;
+
+            _targetPatchesComboBox.Enabled = false;
+            _targetPatchesComboBox.SelectedIndex = -1;
+            _targetPatchesComboBox.Items.Clear();
+            _originPatch = null;
 
             _fileList.Items.Clear();
         }
