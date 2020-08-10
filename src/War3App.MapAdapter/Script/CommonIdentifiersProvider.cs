@@ -26,8 +26,9 @@ namespace War3App.MapAdapter.Script
                 GamePatch.v1_30_0 => GetIdentifiersPatch1_30_0(),
                 GamePatch.v1_31_0 => GetIdentifiersPatch1_31_0(),
                 GamePatch.v1_32_0 => GetIdentifiersPatch1_32_0(),
-                GamePatch.v1_32_1 => GetIdentifiersPatch1_32_1(),
-                // 1.32.2
+                GamePatch.v1_32_2 => GetIdentifiersPatch1_32_2(),
+                GamePatch.v1_32_3 => GetIdentifiersPatch1_32_3(),
+                GamePatch.v1_32_6 => GetIdentifiersPatch1_32_6(),
 
                 _ => Array.Empty<string>(),
             };
@@ -1785,15 +1786,26 @@ namespace War3App.MapAdapter.Script
             yield return nameof(War3Api.Common.BlzSetUnitFacingEx);
         }
 
-        private static IEnumerable<string> GetIdentifiersPatch1_32_1()
-        {
-            yield break;
-        }
-
         private static IEnumerable<string> GetIdentifiersPatch1_32_2()
         {
-            // Could have been added in 1.32.1 as well.
             yield return nameof(War3Api.Common.SetThematicMusicVolume);
+        }
+
+        private static IEnumerable<string> GetIdentifiersPatch1_32_3()
+        {
+            yield return nameof(War3Api.Common.EVENT_PLAYER_UNIT_STACK_ITEM);
+            yield return nameof(War3Api.Common.EVENT_UNIT_STACK_ITEM);
+            yield return nameof(War3Api.Common.BlzGetAbsorbingItem);
+            yield return nameof(War3Api.Common.BlzGetManipulatedItemWasAbsorbed);
+            yield return nameof(War3Api.Common.BlzGetStackingItemSource);
+            yield return nameof(War3Api.Common.BlzGetStackingItemTarget);
+            yield return nameof(War3Api.Common.BlzGetStackingItemTargetPreviousCharges);
+        }
+
+        private static IEnumerable<string> GetIdentifiersPatch1_32_6()
+        {
+            yield return "BlzFrameGetChildrenCount";
+            yield return "BlzFrameGetChild";
         }
     }
 }
