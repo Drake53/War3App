@@ -226,9 +226,8 @@ namespace War3App.MapAdapter.WinForms
 
             _fileList.SelectedIndexChanged += (s, e) =>
             {
-                if (_fileList.SelectedItems.Count == 1)
+                if (_fileList.TryGetSelectedItemTag(out var tag))
                 {
-                    var tag = _fileList.SelectedItems[0].GetTag();
                     _adaptContextButton.Enabled = _targetPatch.HasValue && (tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified);
                     _removeContextButton.Enabled = tag.Status != MapFileStatus.Removed;
                 }
@@ -243,9 +242,8 @@ namespace War3App.MapAdapter.WinForms
 
             _fileList.ItemActivate += (s, e) =>
             {
-                if (_fileList.SelectedItems.Count == 1)
+                if (_fileList.TryGetSelectedItemTag(out var tag))
                 {
-                    var tag = _fileList.SelectedItems[0].GetTag();
                     if (tag.Status == MapFileStatus.Incompatible)
                     {
                         var scriptEditForm = new ScriptEditForm(tag.AdaptResult.RegexDiagnostics);
@@ -427,9 +425,8 @@ namespace War3App.MapAdapter.WinForms
 
         private static void UpdateDiagnosticsDisplay()
         {
-            if (_fileList.SelectedItems.Count == 1)
+            if (_fileList.TryGetSelectedItemTag(out var tag))
             {
-                var tag = _fileList.SelectedItems[0].GetTag();
                 if (tag.AdaptResult?.Diagnostics != null)
                 {
                     _diagnosticsDisplay.Lines = tag.AdaptResult.Diagnostics;
