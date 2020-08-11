@@ -51,14 +51,7 @@ namespace War3App.MapAdapter.WinForms
             {
                 if (_diagnosticsView.SelectedIndices.Count == 1)
                 {
-                    var matches = _regices[_diagnosticsView.SelectedIndices[0]].Matches(_script.Text);
-                    if (matches.Count > 0)
-                    {
-                        var nextMatch = matches.FirstOrDefault(match => match.Index > _script.SelectionStart + _script.SelectionLength) ?? matches.First();
-                        _script.Select(nextMatch.Index, nextMatch.Length);
-                        _script.ScrollToCaret();
-                        _script.Focus();
-                    }
+                    GoToNextRegexMatch(_regices[_diagnosticsView.SelectedIndices[0]]);
                 }
             };
 
@@ -95,13 +88,28 @@ namespace War3App.MapAdapter.WinForms
                 _window.Close();
             };
 
+            var searchBox = new TextBox
+            {
+                AcceptsReturn = false,
+                Width = 200,
+            };
+
+            var searchButton = new Button{ Text = "Find Next", };
+            searchButton.Click += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(searchBox.Text))
+                {
+                    GoToNextRegexMatch(new Regex(searchBox.Text));
+                }
+            };
+
             var buttonsFlowLayout = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.LeftToRight,
             };
 
-            buttonsFlowLayout.AddControls(okButton, cancelButton);
+            buttonsFlowLayout.AddControls(okButton, cancelButton, searchBox, searchButton);
             _window.AddControls(buttonsFlowLayout, _diagnosticsView, _script);
         }
 
@@ -114,6 +122,18 @@ namespace War3App.MapAdapter.WinForms
         public DialogResult Show()
         {
             return _window.ShowDialog();
+        }
+
+        private void GoToNextRegexMatch(Regex regex)
+        {
+            var matches = regex.Matches(_script.Text);
+            if (matches.Count > 0)
+            {
+                var nextMatch = matches.FirstOrDefault(match => match.Index > _script.SelectionStart + _script.SelectionLength) ?? matches.First();
+                _script.Select(nextMatch.Index, nextMatch.Length);
+                _script.ScrollToCaret();
+                _script.Focus();
+            }
         }
     }
 }
