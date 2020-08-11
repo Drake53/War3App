@@ -10,6 +10,10 @@ namespace War3App.MapAdapter.Modeling
 {
     public sealed class BinaryModelAdapter : IMapFileAdapter
     {
+        public string MapFileDescription => "Binary Model";
+
+        public bool IsTextFile => false;
+
         public bool CanAdaptFile(string s)
         {
             return string.Equals(s.GetFileExtension(), ".mdx", StringComparison.OrdinalIgnoreCase);

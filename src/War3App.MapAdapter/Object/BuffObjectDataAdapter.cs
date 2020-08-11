@@ -13,6 +13,10 @@ namespace War3App.MapAdapter.Object
 {
     public sealed class BuffObjectDataAdapter : IMapFileAdapter
     {
+        public string MapFileDescription => "Object Data (Buff)";
+
+        public bool IsTextFile => false;
+
         public bool CanAdaptFile(string s)
         {
             return string.Equals(s.GetFileExtension(), MapBuffObjectData.FileName.GetFileExtension(), StringComparison.OrdinalIgnoreCase);

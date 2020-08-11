@@ -10,6 +10,10 @@ namespace War3App.MapAdapter.PreviewIcons
 {
     public sealed class MapPreviewIconsAdapter : IMapFileAdapter
     {
+        public string MapFileDescription => "Map Preview Icons";
+
+        public bool IsTextFile => false;
+
         public bool CanAdaptFile(string s)
         {
             return string.Equals(s.GetFileExtension(), MapPreviewIcons.FileName.GetFileExtension(), StringComparison.OrdinalIgnoreCase);

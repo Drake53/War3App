@@ -10,6 +10,10 @@ namespace War3App.MapAdapter.Info
 {
     public sealed class MapInfoAdapter : IMapFileAdapter
     {
+        public string MapFileDescription => "Map Info";
+
+        public bool IsTextFile => false;
+
         public bool CanAdaptFile(string s)
         {
             return string.Equals(s.GetFileExtension(), MapInfo.FileName.GetFileExtension(), StringComparison.OrdinalIgnoreCase);

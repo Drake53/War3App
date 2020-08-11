@@ -10,6 +10,10 @@ namespace War3App.MapAdapter.Environment
 {
     public sealed class MapEnvironmentAdapter : IMapFileAdapter
     {
+        public string MapFileDescription => "Environment";
+
+        public bool IsTextFile => false;
+
         public bool CanAdaptFile(string s)
         {
             return string.Equals(s.GetFileExtension(), MapEnvironment.FileName.GetFileExtension(), StringComparison.OrdinalIgnoreCase);

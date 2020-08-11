@@ -13,6 +13,10 @@ namespace War3App.MapAdapter.Object
 {
     public sealed class AbilityObjectDataAdapter : IMapFileAdapter
     {
+        public string MapFileDescription => "Object Data (Ability)";
+
+        public bool IsTextFile => false;
+
         public bool CanAdaptFile(string s)
         {
             return string.Equals(s.GetFileExtension(), MapAbilityObjectData.FileName.GetFileExtension(), StringComparison.OrdinalIgnoreCase);

@@ -12,6 +12,10 @@ namespace War3App.MapAdapter.Script
 {
     public sealed class MapScriptRegexAdapter : IMapFileAdapter
     {
+        public string MapFileDescription => "Map Script";
+
+        public bool IsTextFile => true;
+
         public bool CanAdaptFile(string s)
         {
             var fileExtension = s.GetFileExtension();

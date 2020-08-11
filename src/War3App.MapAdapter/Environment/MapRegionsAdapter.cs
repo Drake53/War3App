@@ -10,6 +10,10 @@ namespace War3App.MapAdapter.Regions
 {
     public sealed class MapRegionsAdapter : IMapFileAdapter
     {
+        public string MapFileDescription => "Regions";
+
+        public bool IsTextFile => false;
+
         public bool CanAdaptFile(string s)
         {
             return string.Equals(s.GetFileExtension(), MapRegions.FileName.GetFileExtension(), StringComparison.OrdinalIgnoreCase);

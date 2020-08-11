@@ -13,6 +13,10 @@ namespace War3App.MapAdapter.Object
 {
     public sealed class DestructableObjectDataAdapter : IMapFileAdapter
     {
+        public string MapFileDescription => "Object Data (Destructable)";
+
+        public bool IsTextFile => false;
+
         public bool CanAdaptFile(string s)
         {
             return string.Equals(s.GetFileExtension(), MapDestructableObjectData.FileName.GetFileExtension(), StringComparison.OrdinalIgnoreCase);

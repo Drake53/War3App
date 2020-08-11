@@ -8,6 +8,10 @@ namespace War3App.MapAdapter.Widget
 {
     public sealed class MapDoodadsAdapter : IMapFileAdapter
     {
+        public string MapFileDescription => "Doodads";
+
+        public bool IsTextFile => false;
+
         public bool CanAdaptFile(string s)
         {
             return string.Equals(s, MapDoodads.FileName, StringComparison.OrdinalIgnoreCase);

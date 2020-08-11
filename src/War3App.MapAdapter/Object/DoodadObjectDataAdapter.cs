@@ -13,6 +13,10 @@ namespace War3App.MapAdapter.Object
 {
     public sealed class DoodadObjectDataAdapter : IMapFileAdapter
     {
+        public string MapFileDescription => "Object Data (Doodad)";
+
+        public bool IsTextFile => false;
+
         public bool CanAdaptFile(string s)
         {
             return string.Equals(s.GetFileExtension(), MapDoodadObjectData.FileName.GetFileExtension(), StringComparison.OrdinalIgnoreCase);

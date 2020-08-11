@@ -10,6 +10,10 @@ namespace War3App.MapAdapter.Info
 {
     public sealed class CampaignInfoAdapter : IMapFileAdapter
     {
+        public string MapFileDescription => "Campaign Info";
+
+        public bool IsTextFile => false;
+
         public bool CanAdaptFile(string s)
         {
             return string.Equals(s.GetFileExtension(), CampaignInfo.FileName.GetFileExtension(), StringComparison.OrdinalIgnoreCase);
