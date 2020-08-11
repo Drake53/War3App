@@ -599,9 +599,17 @@ namespace War3App.MapAdapter.WinForms
                     continue;
                 }
 
-                if (tag.Children != null)
+                if (tag.Status == MapFileStatus.Removed)
                 {
-                    if (tag.Children.Any(child => child.IsModified))
+                    removedFiles.Add(tag.GetHashedFileName());
+                }
+                else if (tag.Children != null)
+                {
+                    if (tag.Children.All(child => child.Status == MapFileStatus.Removed))
+                    {
+                        removedFiles.Add(tag.GetHashedFileName());
+                    }
+                    else if (tag.Children.Any(child => child.IsModified || child.Status == MapFileStatus.Removed))
                     {
                         // Assume at most one nested archive (for campaign archives), so no recursion.
                         using var subArchive = MpqArchive.Open(_archive.OpenFile(tag.FileName));
@@ -615,13 +623,13 @@ namespace War3App.MapAdapter.WinForms
                                 subArchive.AddFilename(child.FileName);
                             }
 
-                            if (child.TryGetModifiedMpqFile(out var subArchiveAdaptedFile))
-                            {
-                                subArchiveAdaptedFiles.Add(subArchiveAdaptedFile);
-                            }
-                            else if (child.Status == MapFileStatus.Removed)
+                            if (child.Status == MapFileStatus.Removed)
                             {
                                 subArchiveRemovedFiles.Add(child.GetHashedFileName());
+                            }
+                            else if (child.TryGetModifiedMpqFile(out var subArchiveAdaptedFile))
+                            {
+                                subArchiveAdaptedFiles.Add(subArchiveAdaptedFile);
                             }
                         }
 
@@ -639,18 +647,10 @@ namespace War3App.MapAdapter.WinForms
                         adaptedFile.TargetFlags = tag.MpqEntry.Flags;
                         adaptedFiles.Add(adaptedFile);
                     }
-                    else if (tag.Children.All(child => child.Status == MapFileStatus.Removed))
-                    {
-                        removedFiles.Add(tag.GetHashedFileName());
-                    }
                 }
                 else if (tag.TryGetModifiedMpqFile(out var adaptedFile))
                 {
                     adaptedFiles.Add(adaptedFile);
-                }
-                else if (tag.Status == MapFileStatus.Removed)
-                {
-                    removedFiles.Add(tag.GetHashedFileName());
                 }
             }
 

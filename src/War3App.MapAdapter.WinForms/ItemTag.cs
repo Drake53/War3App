@@ -76,7 +76,7 @@ namespace War3App.MapAdapter.WinForms
 
         public Stream CurrentStream => AdaptResult?.AdaptedFileStream ?? OriginalFileStream;
 
-        public bool IsModified => (Status == MapFileStatus.Modified || Status == MapFileStatus.Adapted) && AdaptResult?.AdaptedFileStream != null;
+        public bool IsModified => AdaptResult?.AdaptedFileStream != null;
 
         public void UpdateAdaptResult(AdaptResult adaptResult)
         {
