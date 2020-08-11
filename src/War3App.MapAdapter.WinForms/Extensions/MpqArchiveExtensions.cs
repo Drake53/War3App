@@ -11,11 +11,8 @@ namespace War3App.MapAdapter.WinForms.Extensions
     {
         public static void AddFileNames(this MpqArchive archive)
         {
-            if (archive.TryAddFilename(CampaignInfo.FileName))
+            if (archive.IsCampaignArchive(out var campaignInfo))
             {
-                using var campaignInfoStream = archive.OpenFile(CampaignInfo.FileName);
-                var campaignInfo = CampaignInfo.Parse(campaignInfoStream);
-
                 for (var i = 0; i < campaignInfo.MapCount; i++)
                 {
                     archive.AddFilename(campaignInfo.GetMap(i).MapFilePath);

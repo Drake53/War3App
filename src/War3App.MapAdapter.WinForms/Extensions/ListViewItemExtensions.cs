@@ -7,7 +7,8 @@ namespace War3App.MapAdapter.WinForms.Extensions
     {
         internal const int StatusColumnIndex = 0;
         internal const int FileNameColumnIndex = 1;
-        internal const int ArchiveNameColumnIndex = 2;
+        internal const int FileTypeColumnIndex = 2;
+        internal const int ArchiveNameColumnIndex = 3;
 
         public static ListViewItem Create(ItemTag tag)
         {
@@ -15,6 +16,7 @@ namespace War3App.MapAdapter.WinForms.Extensions
             {
                 string.Empty,
                 tag.FileName ?? "<unknown filename>",
+                tag.Adapter?.MapFileDescription ?? string.Empty,
                 tag.ArchiveName,
             });
 

@@ -31,6 +31,7 @@ namespace War3App.MapAdapter.WinForms
         private static GamePatch? _originPatch;
 
         private static ListView _fileList;
+        private static ToolStripButton _editContextButton;
         private static ToolStripButton _adaptContextButton;
         private static ToolStripButton _removeContextButton;
 
@@ -140,9 +141,10 @@ namespace War3App.MapAdapter.WinForms
             _fileList.View = View.Details;
             _fileList.Columns.AddRange(new[]
             {
-                new ColumnHeader { Text = "Status", Width = 100 },
-                new ColumnHeader { Text = "FileName", Width = 296 },
-                new ColumnHeader { Text = "Archive", Width = 100 },
+                new ColumnHeader { Text = "Status", Width = 102 },
+                new ColumnHeader { Text = "FileName", Width = 300 },
+                new ColumnHeader { Text = "FileType", Width = 130 },
+                new ColumnHeader { Text = "Archive", Width = 87 },
             });
 
             _fileList.FullRowSelect = true;
@@ -174,15 +176,24 @@ namespace War3App.MapAdapter.WinForms
             {
             };
 
+            _editContextButton = new ToolStripButton("Edit");
+            _editContextButton.Enabled = false;
+            _editContextButton.Click += OnClickEditSelected;
+
             _adaptContextButton = new ToolStripButton("Adapt");
             _adaptContextButton.Enabled = false;
             _adaptContextButton.Click += OnClickAdaptSelected;
-            fileListContextMenu.Items.Add(_adaptContextButton);
 
             _removeContextButton = new ToolStripButton("Remove");
             _removeContextButton.Enabled = false;
             _removeContextButton.Click += OnClickRemoveSelected;
-            fileListContextMenu.Items.Add(_removeContextButton);
+
+            fileListContextMenu.Items.AddRange(new[]
+            {
+                _adaptContextButton,
+                _editContextButton,
+                _removeContextButton,
+            });
 
             _fileList.ContextMenuStrip = fileListContextMenu;
 
@@ -228,11 +239,13 @@ namespace War3App.MapAdapter.WinForms
             {
                 if (_fileList.TryGetSelectedItemTag(out var tag))
                 {
+                    _editContextButton.Enabled = tag.Adapter?.IsTextFile ?? false;
                     _adaptContextButton.Enabled = _targetPatch.HasValue && (tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified);
                     _removeContextButton.Enabled = tag.Status != MapFileStatus.Removed;
                 }
                 else
                 {
+                    _editContextButton.Enabled = false;
                     _adaptContextButton.Enabled = false;
                     _removeContextButton.Enabled = false;
                 }
@@ -240,41 +253,7 @@ namespace War3App.MapAdapter.WinForms
                 UpdateDiagnosticsDisplay();
             };
 
-            _fileList.ItemActivate += (s, e) =>
-            {
-                if (_fileList.TryGetSelectedItemTag(out var tag))
-                {
-                    if (tag.Status == MapFileStatus.Incompatible)
-                    {
-                        var scriptEditForm = new ScriptEditForm(tag.AdaptResult.RegexDiagnostics);
-
-                        tag.CurrentStream.Position = 0;
-                        using (var reader = new StreamReader(tag.CurrentStream, leaveOpen: true))
-                        {
-                            scriptEditForm.Text = reader.ReadToEnd();
-                        }
-
-                        if (scriptEditForm.Show() == DialogResult.OK)
-                        {
-                            var memoryStream = new MemoryStream();
-                            using (var writer = new StreamWriter(memoryStream, leaveOpen: true))
-                            {
-                                writer.Write(scriptEditForm.Text);
-                            }
-
-                            memoryStream.Position = 0;
-                            tag.ListViewItem.Update(new AdaptResult
-                            {
-                                AdaptedFileStream = memoryStream,
-                                Status = MapFileStatus.Modified,
-                                Diagnostics = null,
-                            });
-
-                            _diagnosticsDisplay.Text = string.Empty;
-                        }
-                    }
-                }
-            };
+            _fileList.ItemActivate += OnClickEditSelected;
 
             _saveAsButton.Click += (s, e) =>
             {
@@ -342,6 +321,45 @@ namespace War3App.MapAdapter.WinForms
             else
             {
                 CloseArchive();
+            }
+        }
+
+        private static void OnClickEditSelected(object sender, EventArgs e)
+        {
+            if (!_editContextButton.Enabled)
+            {
+                // Check since this method can also be invoked by ItemActivate event.
+                return;
+            }
+
+            if (_fileList.TryGetSelectedItemTag(out var tag))
+            {
+                var scriptEditForm = new ScriptEditForm(tag.AdaptResult?.RegexDiagnostics ?? Array.Empty<RegexDiagnostic>());
+
+                tag.CurrentStream.Position = 0;
+                using (var reader = new StreamReader(tag.CurrentStream, leaveOpen: true))
+                {
+                    scriptEditForm.Text = reader.ReadToEnd();
+                }
+
+                if (scriptEditForm.Show() == DialogResult.OK)
+                {
+                    var memoryStream = new MemoryStream();
+                    using (var writer = new StreamWriter(memoryStream, leaveOpen: true))
+                    {
+                        writer.Write(scriptEditForm.Text);
+                    }
+
+                    memoryStream.Position = 0;
+                    tag.ListViewItem.Update(new AdaptResult
+                    {
+                        AdaptedFileStream = memoryStream,
+                        Status = MapFileStatus.Modified,
+                        Diagnostics = null,
+                    });
+
+                    _diagnosticsDisplay.Text = string.Empty;
+                }
             }
         }
 
