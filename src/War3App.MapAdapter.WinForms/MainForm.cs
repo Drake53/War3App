@@ -16,6 +16,8 @@ namespace War3App.MapAdapter.WinForms
 {
     internal static class MainForm
     {
+        private const string Title = "Map Adapter v0.5.0";
+
         private const GamePatch LatestPatch = GamePatch.v1_32_7;
 
         private static MpqArchive _archive;
@@ -43,7 +45,7 @@ namespace War3App.MapAdapter.WinForms
             var form = new Form();
             form.Width = 1280;
             form.Height = 720;
-            form.Text = "Map Adapter";
+            form.Text = Title;
             form.FormBorderStyle = FormBorderStyle.FixedSingle;
 
             _archiveInput = new TextBox
@@ -215,11 +217,6 @@ namespace War3App.MapAdapter.WinForms
                         var adaptResult = adapter.AdaptFile(tag.CurrentStream, _targetPatch.Value, tag.GetOriginPatch(_originPatch.Value));
                         tag.UpdateAdaptResult(adaptResult);
 
-                        if (adaptResult.Status == MapFileStatus.Adapted)
-                        {
-                            _saveAsButton.Enabled = true;
-                        }
-
                         if (tag.Parent != null)
                         {
                             parentsToUpdate.Add(tag.Parent);
@@ -382,11 +379,6 @@ namespace War3App.MapAdapter.WinForms
                         {
                             var adaptResult = adapter.AdaptFile(child.CurrentStream, _targetPatch.Value, child.GetOriginPatch(_originPatch.Value));
                             child.UpdateAdaptResult(adaptResult);
-
-                            if (adaptResult.Status == MapFileStatus.Adapted)
-                            {
-                                _saveAsButton.Enabled = true;
-                            }
                         }
                     }
 
@@ -399,11 +391,6 @@ namespace War3App.MapAdapter.WinForms
                     {
                         var adaptResult = adapter.AdaptFile(tag.CurrentStream, _targetPatch.Value, tag.GetOriginPatch(_originPatch.Value));
                         tag.UpdateAdaptResult(adaptResult);
-
-                        if (adaptResult.Status == MapFileStatus.Adapted)
-                        {
-                            _saveAsButton.Enabled = true;
-                        }
 
                         if (tag.Parent != null)
                         {
@@ -433,7 +420,6 @@ namespace War3App.MapAdapter.WinForms
             }
 
             _removeContextButton.Enabled = false;
-            _saveAsButton.Enabled = true;
         }
 
         private static void TrySetOpenArchiveButtonEnabled()
@@ -468,6 +454,7 @@ namespace War3App.MapAdapter.WinForms
                 _archiveInput.Enabled = false;
                 _archiveInputBrowseButton.Enabled = false;
                 _openCloseArchiveButton.Text = "Close archive";
+                _saveAsButton.Enabled = true;
 
                 _archive = MpqArchive.Open(fileInfo.FullName, true);
                 _archive.AddFileNames();
@@ -539,18 +526,18 @@ namespace War3App.MapAdapter.WinForms
                 {
                     _originPatch = LatestPatch;
                 }
-                else if (_originPatch.Value <= GamePatch.v1_29_2)
-                {
-                    targetPatches.Remove(GamePatch.v1_29_0);
-                }
-                else if (_originPatch.Value <= GamePatch.v1_31_1)
-                {
-                    targetPatches.Remove(GamePatch.v1_31_0);
-                }
-                else
-                {
-                    targetPatches.Remove(LatestPatch);
-                }
+                //else if (_originPatch.Value <= GamePatch.v1_29_2)
+                //{
+                //    targetPatches.Remove(GamePatch.v1_29_0);
+                //}
+                //else if (_originPatch.Value <= GamePatch.v1_31_1)
+                //{
+                //    targetPatches.Remove(GamePatch.v1_31_0);
+                //}
+                //else
+                //{
+                //    targetPatches.Remove(LatestPatch);
+                //}
 
                 // TODO: Add object data for latest patch to prevent adapter errors.
                 targetPatches.Remove(LatestPatch);
@@ -634,7 +621,7 @@ namespace War3App.MapAdapter.WinForms
                         }
 
                         var adaptedSubArchiveStream = new MemoryStream();
-                        if (_targetPatch.Value < GamePatch.v1_31_0)
+                        // if (_targetPatch.Value < GamePatch.v1_31_0)
                         {
                             MapInfo.Parse(subArchive.OpenFile(MapInfo.FileName)).WriteArchiveHeaderToStream(adaptedSubArchiveStream);
                         }
@@ -656,7 +643,7 @@ namespace War3App.MapAdapter.WinForms
 
             using (var fileStream = File.Create(fileName))
             {
-                if (_targetPatch.Value < GamePatch.v1_31_0)
+                // if (_targetPatch.Value < GamePatch.v1_31_0)
                 {
                     if (_archive.IsCampaignArchive(out var campaignInfo))
                     {
