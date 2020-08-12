@@ -29,10 +29,36 @@ namespace War3App.MapAdapter.Info
             try
             {
                 var campaignInfo = CampaignInfo.Parse(stream);
-                return new AdaptResult
+
+                var targetPatchEditorVersion = targetPatch.GetEditorVersion();
+                if (campaignInfo.EditorVersion == targetPatchEditorVersion)
                 {
-                    Status = MapFileStatus.Compatible,
-                };
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Compatible,
+                    };
+                }
+
+                try
+                {
+                    campaignInfo.EditorVersion = targetPatchEditorVersion;
+
+                    var newCampaignInfoFileStream = new MemoryStream();
+                    campaignInfo.SerializeTo(newCampaignInfoFileStream, true);
+
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Adapted,
+                        AdaptedFileStream = newCampaignInfoFileStream,
+                    };
+                }
+                catch
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.AdapterError,
+                    };
+                }
             }
             catch (NotSupportedException)
             {

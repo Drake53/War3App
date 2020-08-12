@@ -2,8 +2,11 @@
 using System.IO;
 using System.Text;
 
+using War3App.MapAdapter.Extensions;
+
 using War3Net.Build.Common;
 using War3Net.Build.Info;
+using War3Net.Build.Providers;
 using War3Net.Common.Extensions;
 
 namespace War3App.MapAdapter.Info
@@ -144,6 +147,9 @@ namespace War3App.MapAdapter.Info
                 {
                     mapInfo.DowngradeOnce();
                 }
+
+                mapInfo.EditorVersion = targetPatch.GetEditorVersion();
+                mapInfo.GameVersion = GamePatchVersionProvider.GetPatchVersion(targetPatch);
 
                 return true;
             }
