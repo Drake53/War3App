@@ -22,7 +22,7 @@ namespace War3App.MapAdapter.WinForms
             OriginalFileStream = archive.OpenFile(mpqEntry);
             if (FileName != null && PatchAgnosticFileProvider.IsFilePatchAgnostic(FileName))
             {
-                Status = MapFileStatus.Compatible;
+                Status = string.Equals(FileName, "(attributes)", StringComparison.OrdinalIgnoreCase) ? MapFileStatus.Removed : MapFileStatus.Compatible;
             }
             else
             {
