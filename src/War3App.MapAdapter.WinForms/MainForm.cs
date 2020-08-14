@@ -569,6 +569,11 @@ namespace War3App.MapAdapter.WinForms
             _targetPatchesComboBox.Items.Clear();
             _originPatch = null;
 
+            for (var i = 0; i < _fileList.Items.Count; i++)
+            {
+                _fileList.Items[i].GetTag().AdaptResult?.AdaptedFileStream?.Dispose();
+            }
+
             _fileList.Items.Clear();
         }
 
@@ -630,7 +635,7 @@ namespace War3App.MapAdapter.WinForms
                         MpqArchive.Create(adaptedSubArchiveStream, GetCreateArchiveMpqFiles(subArchiveOriginalFiles, subArchiveAdaptedFiles, subArchiveRemovedFiles).ToArray());
 
                         adaptedSubArchiveStream.Position = 0;
-                        var adaptedFile = MpqFile.New(adaptedSubArchiveStream, tag.FileName);
+                        var adaptedFile = MpqFile.New(adaptedSubArchiveStream, tag.FileName, true);
                         adaptedFile.TargetFlags = tag.MpqEntry.Flags;
                         adaptedFiles.Add(adaptedFile);
                     }

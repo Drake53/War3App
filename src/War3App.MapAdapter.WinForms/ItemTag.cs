@@ -98,7 +98,7 @@ namespace War3App.MapAdapter.WinForms
             if (IsModified)
             {
                 AdaptResult.AdaptedFileStream.Position = 0;
-                mpqFile = MpqFile.New(AdaptResult.AdaptedFileStream, FileName);
+                mpqFile = MpqFile.New(AdaptResult.AdaptedFileStream, FileName, true);
                 mpqFile.TargetFlags = MpqEntry.Flags;
 
                 return true;
