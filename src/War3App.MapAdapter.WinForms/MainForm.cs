@@ -214,6 +214,7 @@ namespace War3App.MapAdapter.WinForms
                     var adapter = tag.Adapter;
                     if (adapter != null && (tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified))
                     {
+                        tag.CurrentStream.Position = 0;
                         var adaptResult = adapter.AdaptFile(tag.CurrentStream, _targetPatch.Value, tag.GetOriginPatch(_originPatch.Value));
                         tag.UpdateAdaptResult(adaptResult);
 
@@ -377,6 +378,7 @@ namespace War3App.MapAdapter.WinForms
                         var adapter = child.Adapter;
                         if (adapter != null && (child.Status == MapFileStatus.Pending || child.Status == MapFileStatus.Modified))
                         {
+                            tag.CurrentStream.Position = 0;
                             var adaptResult = adapter.AdaptFile(child.CurrentStream, _targetPatch.Value, child.GetOriginPatch(_originPatch.Value));
                             child.UpdateAdaptResult(adaptResult);
                         }
@@ -389,6 +391,7 @@ namespace War3App.MapAdapter.WinForms
                     var adapter = tag.Adapter;
                     if (adapter != null)
                     {
+                        tag.CurrentStream.Position = 0;
                         var adaptResult = adapter.AdaptFile(tag.CurrentStream, _targetPatch.Value, tag.GetOriginPatch(_originPatch.Value));
                         tag.UpdateAdaptResult(adaptResult);
 
