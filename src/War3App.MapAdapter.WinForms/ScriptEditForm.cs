@@ -29,6 +29,7 @@ namespace War3App.MapAdapter.WinForms
                 ZoomFactor = 1f,
                 Font = new Font("Consolas", 12f, FontStyle.Regular),
                 DetectUrls = false,
+                WordWrap = false,
             };
 
             _diagnosticsView = new ListView
