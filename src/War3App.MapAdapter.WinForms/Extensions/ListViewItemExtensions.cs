@@ -57,7 +57,7 @@ namespace War3App.MapAdapter.WinForms.Extensions
         {
             return column switch
             {
-                StatusColumnIndex => item.GetTag().Status.CompareTo(other.GetTag().Status),
+                StatusColumnIndex => 0 - item.GetTag().Status.CompareTo(other.GetTag().Status),
 
                 _ => string.IsNullOrWhiteSpace(item.SubItems[column].Text) == string.IsNullOrWhiteSpace(other.SubItems[column].Text)
                     ? string.Compare(item.SubItems[column].Text, other.SubItems[column].Text, StringComparison.InvariantCulture)
