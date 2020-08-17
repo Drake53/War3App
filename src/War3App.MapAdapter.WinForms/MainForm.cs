@@ -16,7 +16,7 @@ namespace War3App.MapAdapter.WinForms
 {
     internal static class MainForm
     {
-        private const string Title = "Map Adapter v0.5.0";
+        private const string Title = "Map Adapter v0.6.0";
 
         private const GamePatch LatestPatch = GamePatch.v1_32_7;
 
@@ -33,6 +33,8 @@ namespace War3App.MapAdapter.WinForms
         private static GamePatch? _originPatch;
 
         private static ListView _fileList;
+        private static FileListSorter _fileListSorter;
+
         private static ToolStripButton _editContextButton;
         private static ToolStripButton _adaptContextButton;
         private static ToolStripButton _removeContextButton;
@@ -139,6 +141,8 @@ namespace War3App.MapAdapter.WinForms
                 Dock = DockStyle.Right,
                 Width = 640,
             };
+
+            _fileListSorter = new FileListSorter(_fileList);
 
             _fileList.View = View.Details;
             _fileList.Columns.AddRange(new[]
@@ -551,6 +555,9 @@ namespace War3App.MapAdapter.WinForms
                 {
                     _targetPatchesComboBox.SelectedIndex = 0;
                 }
+
+                _fileList.ListViewItemSorter = _fileListSorter;
+                _fileList.ColumnClick += _fileListSorter.Sort;
             }
         }
 
@@ -571,6 +578,10 @@ namespace War3App.MapAdapter.WinForms
             _targetPatchesComboBox.SelectedIndex = -1;
             _targetPatchesComboBox.Items.Clear();
             _originPatch = null;
+
+            _fileList.ColumnClick -= _fileListSorter.Sort;
+            _fileList.ListViewItemSorter = null;
+            _fileListSorter.Reset();
 
             for (var i = 0; i < _fileList.Items.Count; i++)
             {
@@ -638,7 +649,7 @@ namespace War3App.MapAdapter.WinForms
                         MpqArchive.Create(adaptedSubArchiveStream, GetCreateArchiveMpqFiles(subArchiveOriginalFiles, subArchiveAdaptedFiles, subArchiveRemovedFiles).ToArray());
 
                         adaptedSubArchiveStream.Position = 0;
-                        var adaptedFile = MpqFile.New(adaptedSubArchiveStream, tag.FileName, true);
+                        var adaptedFile = MpqFile.New(adaptedSubArchiveStream, tag.FileName, false);
                         adaptedFile.TargetFlags = tag.MpqEntry.Flags;
                         adaptedFiles.Add(adaptedFile);
                     }

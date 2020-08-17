@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace War3App.MapAdapter.WinForms.Extensions
@@ -50,6 +51,18 @@ namespace War3App.MapAdapter.WinForms.Extensions
 
             item.SubItems[StatusColumnIndex].Text = tag.Status.ToString();
             item.ImageIndex = (int)tag.Status;
+        }
+
+        public static int CompareTo(this ListViewItem item, ListViewItem other, int column)
+        {
+            return column switch
+            {
+                StatusColumnIndex => item.GetTag().Status.CompareTo(other.GetTag().Status),
+
+                _ => string.IsNullOrWhiteSpace(item.SubItems[column].Text) == string.IsNullOrWhiteSpace(other.SubItems[column].Text)
+                    ? string.Compare(item.SubItems[column].Text, other.SubItems[column].Text, StringComparison.InvariantCulture)
+                    : string.IsNullOrWhiteSpace(item.SubItems[column].Text) ? 1 : -1,
+            };
         }
     }
 }
