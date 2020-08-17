@@ -33,7 +33,6 @@ namespace War3App.MapAdapter.Environment
                 {
                     Status = MapFileStatus.Compatible,
                 };
-
             }
             catch (NotSupportedException)
             {

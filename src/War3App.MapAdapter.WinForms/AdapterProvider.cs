@@ -55,6 +55,8 @@ namespace War3App.MapAdapter.WinForms
 
             yield return new BinaryModelAdapter();
 
+            yield return new BlpImageAdapter();
+
             yield return new CampaignInfoAdapter();
         }
     }

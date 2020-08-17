@@ -33,7 +33,6 @@ namespace War3App.MapAdapter.PreviewIcons
                 {
                     Status = MapFileStatus.Compatible,
                 };
-
             }
             catch (NotSupportedException)
             {
