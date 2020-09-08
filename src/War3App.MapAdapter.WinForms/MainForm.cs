@@ -45,15 +45,17 @@ namespace War3App.MapAdapter.WinForms
         private static void Main(string[] args)
         {
             var form = new Form();
-            form.Width = 1280;
-            form.Height = 720;
+            form.Size = new Size(1280, 720);
+            form.MinimumSize = new Size(400, 300);
             form.Text = Title;
-            form.FormBorderStyle = FormBorderStyle.FixedSingle;
+
+            var splitContainer = new SplitContainer
+            {
+                Dock = DockStyle.Fill,
+            };
 
             _archiveInput = new TextBox
             {
-                Width = 350,
-                Height = 20,
                 PlaceholderText = "Input map or campaign...",
             };
 
@@ -65,16 +67,14 @@ namespace War3App.MapAdapter.WinForms
 
             _diagnosticsDisplay = new TextBox
             {
-                Height = 600,
                 Multiline = true,
                 ReadOnly = true,
-                Dock = DockStyle.Bottom,
+                Dock = DockStyle.Fill,
                 ScrollBars = ScrollBars.Vertical,
             };
 
             _adaptAllButton = new Button
             {
-                Location = new Point(505, 45),
                 Text = "Adapt all",
             };
 
@@ -83,7 +83,6 @@ namespace War3App.MapAdapter.WinForms
 
             _saveAsButton = new Button
             {
-                Location = new Point(505, 165),
                 Text = "Save As...",
             };
 
@@ -95,7 +94,6 @@ namespace War3App.MapAdapter.WinForms
                 Enabled = false,
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Width = 120,
-                Dock = DockStyle.Top,
             };
 
             _targetPatchesComboBox.SelectedIndexChanged += (s, e) =>
@@ -111,7 +109,6 @@ namespace War3App.MapAdapter.WinForms
 
             _archiveInputBrowseButton = new Button
             {
-                Location = new Point(420, 5),
                 Text = "Browse",
             };
 
@@ -138,8 +135,7 @@ namespace War3App.MapAdapter.WinForms
 
             _fileList = new ListView
             {
-                Dock = DockStyle.Right,
-                Width = 640,
+                Dock = DockStyle.Fill,
             };
 
             _fileListSorter = new FileListSorter(_fileList);
@@ -274,7 +270,7 @@ namespace War3App.MapAdapter.WinForms
 
             var flowLayout = new FlowLayoutPanel
             {
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
                 FlowDirection = FlowDirection.TopDown,
                 Width = 640,
             };
@@ -298,13 +294,27 @@ namespace War3App.MapAdapter.WinForms
             inputArchiveFlowLayout.AddControls(_archiveInput, _archiveInputBrowseButton, _openCloseArchiveButton);
             buttonsFlowLayout.AddControls(_adaptAllButton, _saveAsButton, targetPatchLabel, _targetPatchesComboBox);
             flowLayout.AddControls(inputArchiveFlowLayout, buttonsFlowLayout);
-            form.AddControls(_diagnosticsDisplay, _fileList, flowLayout);
+
+            splitContainer.Panel1.AddControls(_diagnosticsDisplay, flowLayout);
+            splitContainer.Panel2.AddControls(_fileList);
+            form.AddControls(splitContainer);
 
             targetPatchLabel.Size = targetPatchLabel.PreferredSize;
-            buttonsFlowLayout.Size = buttonsFlowLayout.PreferredSize;
 
-            inputArchiveFlowLayout.Size = inputArchiveFlowLayout.PreferredSize;
-            flowLayout.Size = flowLayout.PreferredSize;
+            splitContainer.Panel1.SizeChanged += (s, e) =>
+            {
+                var width = splitContainer.Panel1.Width;
+                _archiveInput.Width = (width > 360 ? 360 : width) - 10;
+
+                inputArchiveFlowLayout.Size = inputArchiveFlowLayout.GetPreferredSize(new Size(width, 0));
+                buttonsFlowLayout.Size = buttonsFlowLayout.GetPreferredSize(new Size(width, 0));
+                flowLayout.Height
+                    = inputArchiveFlowLayout.Margin.Top + inputArchiveFlowLayout.Height + inputArchiveFlowLayout.Margin.Bottom
+                    + buttonsFlowLayout.Margin.Top + buttonsFlowLayout.Height + buttonsFlowLayout.Margin.Bottom;
+            };
+
+            splitContainer.SplitterDistance = 640;
+            splitContainer.Panel1MinSize = 200;
 
             form.FormClosing += (s, e) =>
             {
