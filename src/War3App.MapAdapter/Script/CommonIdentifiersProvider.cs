@@ -36,10 +36,6 @@ namespace War3App.MapAdapter.Script
 
         private static IEnumerable<string> GetIdentifiersPatch1_29_0()
         {
-            /*
-                type mousebuttontype                extends handle
-            */
-
             yield return "BlzDeleteHeroAbility"; // THIS FUNCTION WAS REMOVED IN 1.30
 
             yield return nameof(War3Api.Common.ConvertMouseButtonType);
@@ -170,9 +166,6 @@ namespace War3App.MapAdapter.Script
         private static IEnumerable<string> GetIdentifiersPatch1_30_0()
         {
             /*
-                type animtype                       extends handle
-                type subanimtype                    extends handle
-
                 // THIS FUNCTION HAD PARAMETER 'string testName' BEFORE 1.30
                 native AutomationTestEnd            takes nothing returns nothing
 
@@ -269,45 +262,6 @@ namespace War3App.MapAdapter.Script
         private static IEnumerable<string> GetIdentifiersPatch1_31_0()
         {
             /*
-                type framehandle                    extends handle
-                type originframetype                extends handle
-                type framepointtype                 extends handle
-                type textaligntype                  extends handle
-                type frameeventtype                 extends handle
-                type oskeytype                      extends handle
-                type abilityintegerfield            extends handle
-                type abilityrealfield               extends handle
-                type abilitybooleanfield            extends handle
-                type abilitystringfield             extends handle
-                type abilityintegerlevelfield       extends handle
-                type abilityreallevelfield          extends handle
-                type abilitybooleanlevelfield       extends handle
-                type abilitystringlevelfield        extends handle
-                type abilityintegerlevelarrayfield  extends handle
-                type abilityreallevelarrayfield     extends handle
-                type abilitybooleanlevelarrayfield  extends handle
-                type abilitystringlevelarrayfield   extends handle
-                type unitintegerfield               extends handle
-                type unitrealfield                  extends handle
-                type unitbooleanfield               extends handle
-                type unitstringfield                extends handle
-                type unitweaponintegerfield         extends handle
-                type unitweaponrealfield            extends handle
-                type unitweaponbooleanfield         extends handle
-                type unitweaponstringfield          extends handle
-                type itemintegerfield               extends handle
-                type itemrealfield                  extends handle
-                type itembooleanfield               extends handle
-                type itemstringfield                extends handle
-                type movetype                       extends handle
-                type targetflag                     extends handle
-                type armortype                      extends handle
-                type heroattribute                  extends handle
-                type defensetype                    extends handle
-                type regentype                      extends handle
-                type unitcategory                   extends handle
-                type pathingflag                    extends handle
-
                 // THESE RETURNED 'NOTHING' BEFORE 1.31
                 native GroupAddUnit                 takes group whichGroup, unit whichUnit returns boolean
                 native GroupRemoveUnit              takes group whichGroup, unit whichUnit returns boolean
