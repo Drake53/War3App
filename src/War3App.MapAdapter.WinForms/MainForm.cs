@@ -16,15 +16,16 @@ namespace War3App.MapAdapter.WinForms
 {
     internal static class MainForm
     {
-        private const string Title = "Map Adapter v0.6.0";
+        private const string Title = "Map Adapter v0.6.2";
 
-        private const GamePatch LatestPatch = GamePatch.v1_32_7;
+        private const GamePatch LatestPatch = GamePatch.v1_32_8;
 
         private static MpqArchive _archive;
 
         private static TextBox _archiveInput;
         private static Button _archiveInputBrowseButton;
         private static Button _openCloseArchiveButton;
+        private static FileSystemWatcher _watcher;
 
         private static Button _adaptAllButton;
         private static Button _saveAsButton;
@@ -44,6 +45,11 @@ namespace War3App.MapAdapter.WinForms
         [STAThread]
         private static void Main(string[] args)
         {
+            _watcher = new FileSystemWatcher();
+            _watcher.Created += OnWatchedFileEvent;
+            _watcher.Renamed += OnWatchedFileEvent;
+            _watcher.Deleted += OnWatchedFileEvent;
+
             var form = new Form();
             form.Size = new Size(1280, 720);
             form.MinimumSize = new Size(400, 300);
@@ -104,7 +110,7 @@ namespace War3App.MapAdapter.WinForms
 
             _archiveInput.TextChanged += (s, e) =>
             {
-                TrySetOpenArchiveButtonEnabled();
+                OnArchiveInputTextChanged();
             };
 
             _archiveInputBrowseButton = new Button
@@ -313,7 +319,7 @@ namespace War3App.MapAdapter.WinForms
                     + buttonsFlowLayout.Margin.Top + buttonsFlowLayout.Height + buttonsFlowLayout.Margin.Bottom;
             };
 
-            splitContainer.SplitterDistance = 640;
+            splitContainer.SplitterDistance = 640 - splitContainer.SplitterWidth;
             splitContainer.Panel1MinSize = 200;
 
             form.FormClosing += (s, e) =>
@@ -439,9 +445,39 @@ namespace War3App.MapAdapter.WinForms
             _removeContextButton.Enabled = false;
         }
 
-        private static void TrySetOpenArchiveButtonEnabled()
+        private static void OnArchiveInputTextChanged()
         {
-            _openCloseArchiveButton.Enabled = string.IsNullOrWhiteSpace(_archiveInput.Text) ? false : File.Exists(_archiveInput.Text);
+            if (string.IsNullOrWhiteSpace(_archiveInput.Text))
+            {
+                _watcher.EnableRaisingEvents = false;
+                _openCloseArchiveButton.Enabled = false;
+            }
+            else
+            {
+                var fileInfo = new FileInfo(_archiveInput.Text);
+                _watcher.Path = fileInfo.DirectoryName;
+                _watcher.Filter = fileInfo.Name;
+                _watcher.EnableRaisingEvents = true;
+
+                SetOpenArchiveButtonEnabled(fileInfo.Exists);
+            }
+        }
+
+        private static void OnWatchedFileEvent(object sender, EventArgs e)
+        {
+            SetOpenArchiveButtonEnabled(new FileInfo(_archiveInput.Text).Exists);
+        }
+
+        private static void SetOpenArchiveButtonEnabled(bool enabled)
+        {
+            if (_openCloseArchiveButton.InvokeRequired)
+            {
+                _openCloseArchiveButton.Invoke(new Action(() => _openCloseArchiveButton.Enabled = enabled));
+            }
+            else
+            {
+                _openCloseArchiveButton.Enabled = enabled;
+            }
         }
 
         private static void UpdateDiagnosticsDisplay()
@@ -578,7 +614,6 @@ namespace War3App.MapAdapter.WinForms
 
             _archiveInput.Enabled = true;
             _archiveInputBrowseButton.Enabled = true;
-            TrySetOpenArchiveButtonEnabled();
 
             _openCloseArchiveButton.Text = "Open archive";
             _adaptAllButton.Enabled = false;
@@ -599,6 +634,8 @@ namespace War3App.MapAdapter.WinForms
             }
 
             _fileList.Items.Clear();
+
+            _diagnosticsDisplay.Text = string.Empty;
         }
 
         private static void SaveArchive(string fileName)
