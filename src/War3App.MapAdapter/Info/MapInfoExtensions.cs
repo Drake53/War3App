@@ -149,7 +149,7 @@ namespace War3App.MapAdapter.Info
                 }
 
                 mapInfo.EditorVersion = targetPatch.GetEditorVersion();
-                mapInfo.GameVersion = GamePatchVersionProvider.GetPatchVersion(targetPatch);
+                mapInfo.GameVersion = GamePatchVersionProvider.GetGameVersion(targetPatch);
 
                 return true;
             }
