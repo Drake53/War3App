@@ -17,6 +17,14 @@ namespace War3App.MapAdapter.Object
                 case GamePatch.v1_29_2:
                     return GetRawcodesPatch1_29_2();
 
+                case GamePatch.v1_30_0:
+                case GamePatch.v1_30_1:
+                case GamePatch.v1_30_2:
+                case GamePatch.v1_30_3:
+                case GamePatch.v1_30_4:
+                    // TODO
+                    return GetRawcodesPatch1_29_2();
+
                 case GamePatch.v1_31_0:
                 case GamePatch.v1_31_1:
                     return GetRawcodesPatch1_31_1_12173();
@@ -33,6 +41,14 @@ namespace War3App.MapAdapter.Object
                 case GamePatch.v1_29_0:
                 case GamePatch.v1_29_1:
                 case GamePatch.v1_29_2:
+                    return GetPropertyRawcodesPatch1_29_2();
+
+                case GamePatch.v1_30_0:
+                case GamePatch.v1_30_1:
+                case GamePatch.v1_30_2:
+                case GamePatch.v1_30_3:
+                case GamePatch.v1_30_4:
+                    // TODO
                     return GetPropertyRawcodesPatch1_29_2();
 
                 case GamePatch.v1_31_0:
