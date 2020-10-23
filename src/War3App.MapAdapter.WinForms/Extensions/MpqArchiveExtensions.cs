@@ -24,9 +24,12 @@ namespace War3App.MapAdapter.WinForms.Extensions
 
             archive.AddFilename(MapSounds.FileName);
             archive.AddFilename(MapInfo.FileName);
-            archive.AddFilename(MapEnvironment.FileName);
             archive.AddFilename(MapDoodads.FileName);
             archive.AddFilename(MapUnits.FileName);
+
+            archive.AddFilename(MapEnvironment.FileName);
+            archive.AddFilename(MapPreviewIcons.FileName);
+            archive.AddFilename(MapRegions.FileName);
 
             archive.AddFilename(MapUnitObjectData.FileName);
             archive.AddFilename(MapItemObjectData.FileName);
@@ -35,6 +38,16 @@ namespace War3App.MapAdapter.WinForms.Extensions
             archive.AddFilename(MapAbilityObjectData.FileName);
             archive.AddFilename(MapBuffObjectData.FileName);
             archive.AddFilename(MapUpgradeObjectData.FileName);
+
+            archive.AddFilename(CampaignInfo.FileName);
+
+            archive.AddFilename(CampaignUnitObjectData.FileName);
+            archive.AddFilename(CampaignItemObjectData.FileName);
+            archive.AddFilename(CampaignDestructableObjectData.FileName);
+            archive.AddFilename(CampaignDoodadObjectData.FileName);
+            archive.AddFilename(CampaignAbilityObjectData.FileName);
+            archive.AddFilename(CampaignBuffObjectData.FileName);
+            archive.AddFilename(CampaignUpgradeObjectData.FileName);
 
             archive.AddFilename(@"war3map.j");
             archive.AddFilename(@"scripts\war3map.j");

@@ -108,10 +108,7 @@ namespace War3App.MapAdapter.WinForms
                 _adaptAllButton.Enabled = _targetPatch.HasValue && _fileList.Items.Count > 0;
             };
 
-            _archiveInput.TextChanged += (s, e) =>
-            {
-                OnArchiveInputTextChanged();
-            };
+            _archiveInput.TextChanged += OnArchiveInputTextChanged;
 
             _archiveInputBrowseButton = new Button
             {
@@ -445,7 +442,7 @@ namespace War3App.MapAdapter.WinForms
             _removeContextButton.Enabled = false;
         }
 
-        private static void OnArchiveInputTextChanged()
+        private static void OnArchiveInputTextChanged(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(_archiveInput.Text))
             {
@@ -465,7 +462,7 @@ namespace War3App.MapAdapter.WinForms
 
         private static void OnWatchedFileEvent(object sender, EventArgs e)
         {
-            SetOpenArchiveButtonEnabled(new FileInfo(_archiveInput.Text).Exists);
+            SetOpenArchiveButtonEnabled(File.Exists(_archiveInput.Text));
         }
 
         private static void SetOpenArchiveButtonEnabled(bool enabled)

@@ -6,12 +6,10 @@ namespace War3App.MapAdapter.WinForms.Extensions
     {
         public static void SetSolidColor(this Bitmap bitmap, Color color)
         {
-            for (var y = 0; y < bitmap.Height; y++)
+            // https://stackoverflow.com/questions/1720160/how-do-i-fill-a-bitmap-with-a-solid-color
+            using (var graphics = Graphics.FromImage(bitmap))
             {
-                for (var x = 0; x < bitmap.Width; x++)
-                {
-                    bitmap.SetPixel(x, y, color);
-                }
+                graphics.Clear(color);
             }
         }
 
