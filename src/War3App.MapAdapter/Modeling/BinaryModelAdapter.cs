@@ -21,6 +21,8 @@ namespace War3App.MapAdapter.Modeling
 
         public bool CanAdaptFile(Stream stream)
         {
+            // TODO: War3Net.Modeling.BinaryModelParser.IsBinaryModel(stream)
+
             if (stream.Length < 4)
             {
                 return false;
@@ -46,6 +48,8 @@ namespace War3App.MapAdapter.Modeling
         {
             try
             {
+                // TODO: War3Net.Modeling.BinaryModelParser.Parse(stream)
+
                 using var reader = new BinaryReader(stream);
                 reader.ReadInt32();
 

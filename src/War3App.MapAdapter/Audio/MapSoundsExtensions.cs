@@ -39,6 +39,7 @@ namespace War3App.MapAdapter.Audio
                 case MapSoundsFormatVersion.Reforged:
                     foreach (var sound in mapSounds)
                     {
+                        // TODO: warn/error if it's a .flac file
                         sound.SoundName = null;
                     }
 
@@ -55,7 +56,7 @@ namespace War3App.MapAdapter.Audio
             {
                 MapSoundsFormatVersion.Normal => GamePatch.v1_00,
                 MapSoundsFormatVersion.Reforged => GamePatch.v1_32_0,
-                MapSoundsFormatVersion.ReforgedV3 => GamePatch.v1_32_5, // todo; verify correctness
+                MapSoundsFormatVersion.ReforgedV3 => GamePatch.v1_32_6, // todo; verify correctness
             };
         }
     }

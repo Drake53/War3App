@@ -110,17 +110,6 @@ namespace War3App.MapAdapter.Script
                                 Matches = usageCount,
                                 Regex = regex,
                             });
-                            //foreach (Match match in matches)
-                            //{
-                            //    if (incompatibleAudioFileUsage.TryGetValue(match.Value, out var value))
-                            //    {
-                            //        incompatibleAudioFileUsage[match.Value] = value + 1;
-                            //    }
-                            //    else
-                            //    {
-                            //        incompatibleAudioFileUsage.Add(match.Value, 1);
-                            //    }
-                            //}
                         }
                     }
 
