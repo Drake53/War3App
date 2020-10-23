@@ -108,6 +108,15 @@ namespace War3App.MapAdapter.WinForms
                 _adaptAllButton.Enabled = _targetPatch.HasValue && _fileList.Items.Count > 0;
             };
 
+            _targetPatchesComboBox.FormattingEnabled = true;
+            _targetPatchesComboBox.Format += (s, e) =>
+            {
+                if (e.ListItem is GamePatch gamePatch)
+                {
+                    e.Value = gamePatch.ToString().Replace('_', '.');
+                }
+            };
+
             _archiveInput.TextChanged += OnArchiveInputTextChanged;
 
             _archiveInputBrowseButton = new Button
@@ -571,26 +580,19 @@ namespace War3App.MapAdapter.WinForms
                     _originPatch = possibleOriginPatches.Single();
                 }
 
-                var targetPatches = new HashSet<object>(new object[] { GamePatch.v1_29_0, GamePatch.v1_31_0, LatestPatch, });
+                // TODO: Add object data for latest patch (and 1.30) to prevent adapter errors.
+                var targetPatches = new HashSet<object>(new object[]
+                {
+                    GamePatch.v1_29_0,
+                    GamePatch.v1_30_0,
+                    GamePatch.v1_31_0,
+                    // LatestPatch,
+                });
+
                 if (_originPatch is null)
                 {
                     _originPatch = LatestPatch;
                 }
-                //else if (_originPatch.Value <= GamePatch.v1_29_2)
-                //{
-                //    targetPatches.Remove(GamePatch.v1_29_0);
-                //}
-                //else if (_originPatch.Value <= GamePatch.v1_31_1)
-                //{
-                //    targetPatches.Remove(GamePatch.v1_31_0);
-                //}
-                //else
-                //{
-                //    targetPatches.Remove(LatestPatch);
-                //}
-
-                // TODO: Add object data for latest patch to prevent adapter errors.
-                targetPatches.Remove(LatestPatch);
 
                 _targetPatchesComboBox.Items.AddRange(targetPatches.ToArray());
                 _targetPatchesComboBox.Enabled = true;
