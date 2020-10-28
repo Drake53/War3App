@@ -2,6 +2,7 @@
 using War3Net.Build.Environment;
 using War3Net.Build.Info;
 using War3Net.Build.Object;
+using War3Net.Build.Script;
 using War3Net.Build.Widget;
 using War3Net.IO.Mpq;
 
@@ -26,6 +27,7 @@ namespace War3App.MapAdapter.WinForms.Extensions
             archive.AddFilename(MapInfo.FileName);
             archive.AddFilename(MapDoodads.FileName);
             archive.AddFilename(MapUnits.FileName);
+            archive.AddFilename(MapTriggers.FileName);
 
             archive.AddFilename(MapEnvironment.FileName);
             archive.AddFilename(MapPreviewIcons.FileName);

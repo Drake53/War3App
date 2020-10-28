@@ -52,6 +52,7 @@ namespace War3App.MapAdapter.WinForms
             yield return new UpgradeObjectDataAdapter();
 
             yield return new MapScriptRegexAdapter();
+            yield return new MapTriggersAdapter();
 
             yield return new BinaryModelAdapter();
 
