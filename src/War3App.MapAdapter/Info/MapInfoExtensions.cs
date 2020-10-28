@@ -212,6 +212,15 @@ namespace War3App.MapAdapter.Info
                 MapInfoFormatVersion.Tft => GamePatch.v1_07,
                 MapInfoFormatVersion.Lua => GamePatch.v1_31_0,
                 MapInfoFormatVersion.Reforged => GamePatch.v1_32_0,
+
+                MapInfoFormatVersion.v8 => GamePatch.v1_00,
+                MapInfoFormatVersion.v10 => GamePatch.v1_00,
+                MapInfoFormatVersion.v11 => GamePatch.v1_00,
+                MapInfoFormatVersion.v15 => GamePatch.v1_00,
+                MapInfoFormatVersion.v23 => GamePatch.v1_07,
+                MapInfoFormatVersion.v24 => GamePatch.v1_07,
+                MapInfoFormatVersion.v26 => GamePatch.v1_31_0,
+                MapInfoFormatVersion.v27 => GamePatch.v1_31_0,
             };
         }
     }

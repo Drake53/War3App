@@ -5,6 +5,7 @@ using System.Text;
 using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Common;
+using War3Net.Common.Extensions;
 
 namespace War3App.MapAdapter.Modeling
 {
@@ -29,10 +30,10 @@ namespace War3App.MapAdapter.Modeling
             }
 
             using var reader = new BinaryReader(stream, Encoding.UTF8, true);
-            char[] chars;
+            int header;
             try
             {
-                chars = reader.ReadChars(4);
+                header = reader.ReadInt32();
                 stream.Position = 0;
             }
             catch (ArgumentException)
@@ -41,7 +42,7 @@ namespace War3App.MapAdapter.Modeling
                 return false;
             }
 
-            return new string(chars) == "MDLX";
+            return header == "MDLX".FromRawcode();
         }
 
         public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
