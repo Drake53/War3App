@@ -73,11 +73,12 @@ namespace War3App.MapAdapter.Audio
                     Status = MapFileStatus.Unadaptable,
                 };
             }
-            catch
+            catch (Exception e)
             {
                 return new AdaptResult
                 {
                     Status = MapFileStatus.ParseError,
+                    Diagnostics = new[] { e.Message },
                 };
             }
         }

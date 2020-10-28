@@ -41,11 +41,12 @@ namespace War3App.MapAdapter.Environment
                     Status = MapFileStatus.Unadaptable,
                 };
             }
-            catch
+            catch (Exception e)
             {
                 return new AdaptResult
                 {
                     Status = MapFileStatus.ParseError,
+                    Diagnostics = new[] { e.Message },
                 };
             }
         }

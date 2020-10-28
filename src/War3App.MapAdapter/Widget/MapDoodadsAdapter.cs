@@ -71,11 +71,12 @@ namespace War3App.MapAdapter.Widget
                     Status = MapFileStatus.Unadaptable,
                 };
             }
-            catch
+            catch (Exception e)
             {
                 return new AdaptResult
                 {
                     Status = MapFileStatus.ParseError,
+                    Diagnostics = new[] { e.Message },
                 };
             }
         }

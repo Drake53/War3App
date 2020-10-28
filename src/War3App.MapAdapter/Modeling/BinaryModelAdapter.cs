@@ -90,11 +90,12 @@ namespace War3App.MapAdapter.Modeling
                     Status = MapFileStatus.Unknown,
                 };
             }
-            catch
+            catch (Exception e)
             {
                 return new AdaptResult
                 {
                     Status = MapFileStatus.ParseError,
+                    Diagnostics = new[] { e.Message },
                 };
             }
         }
