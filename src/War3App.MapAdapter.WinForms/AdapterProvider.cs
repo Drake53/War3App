@@ -53,6 +53,7 @@ namespace War3App.MapAdapter.WinForms
 
             yield return new MapScriptRegexAdapter();
             yield return new MapTriggersAdapter();
+            yield return new MapCustomTextTriggersAdapter();
 
             yield return new BinaryModelAdapter();
 

@@ -28,6 +28,7 @@ namespace War3App.MapAdapter.WinForms.Extensions
             archive.AddFilename(MapDoodads.FileName);
             archive.AddFilename(MapUnits.FileName);
             archive.AddFilename(MapTriggers.FileName);
+            archive.AddFilename(MapCustomTextTriggers.FileName);
 
             archive.AddFilename(MapEnvironment.FileName);
             archive.AddFilename(MapPreviewIcons.FileName);
