@@ -134,6 +134,11 @@ namespace War3App.MapAdapter.Info
                     mapInfo.GameVersion = GamePatchVersionProvider.GetGameVersion(targetPatch);
                 }
 
+                if (targetPatch < GamePatch.v1_29_0 && (mapInfo.PlayerDataCount > 12 || mapInfo.ForceDataCount > 12))
+                {
+                    return false;
+                }
+
                 return true;
             }
             catch (NotSupportedException)

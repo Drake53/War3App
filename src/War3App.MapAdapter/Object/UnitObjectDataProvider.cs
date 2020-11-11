@@ -17,6 +17,14 @@ namespace War3App.MapAdapter.Object
         {
             switch (patch)
             {
+                case GamePatch.v1_28:
+                case GamePatch.v1_28_1:
+                case GamePatch.v1_28_2:
+                case GamePatch.v1_28_3:
+                case GamePatch.v1_28_4:
+                case GamePatch.v1_28_5:
+                // TODO
+
                 case GamePatch.v1_29_0:
                 case GamePatch.v1_29_1:
                 case GamePatch.v1_29_2:
@@ -43,6 +51,14 @@ namespace War3App.MapAdapter.Object
         {
             switch (patch)
             {
+                case GamePatch.v1_28:
+                case GamePatch.v1_28_1:
+                case GamePatch.v1_28_2:
+                case GamePatch.v1_28_3:
+                case GamePatch.v1_28_4:
+                case GamePatch.v1_28_5:
+                // TODO
+
                 case GamePatch.v1_29_0:
                 case GamePatch.v1_29_1:
                 case GamePatch.v1_29_2:

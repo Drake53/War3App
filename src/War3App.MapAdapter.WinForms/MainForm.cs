@@ -584,6 +584,7 @@ namespace War3App.MapAdapter.WinForms
                 // TODO: Add object data for latest patch (and 1.30) to prevent adapter errors.
                 var targetPatches = new HashSet<object>(new object[]
                 {
+                    GamePatch.v1_28,
                     GamePatch.v1_29_0,
                     GamePatch.v1_30_0,
                     GamePatch.v1_31_0,
@@ -595,7 +596,7 @@ namespace War3App.MapAdapter.WinForms
                     _originPatch = LatestPatch;
                 }
 
-                _targetPatchesComboBox.Items.AddRange(targetPatches.ToArray());
+                _targetPatchesComboBox.Items.AddRange(targetPatches.OrderByDescending(patch => (int)patch).ToArray());
                 _targetPatchesComboBox.Enabled = true;
                 if (_targetPatchesComboBox.Items.Count == 1)
                 {
