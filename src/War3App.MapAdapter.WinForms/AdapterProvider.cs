@@ -9,6 +9,7 @@ using War3App.MapAdapter.Audio;
 using War3App.MapAdapter.Environment;
 using War3App.MapAdapter.Info;
 using War3App.MapAdapter.Modeling;
+using War3App.MapAdapter.Mpq;
 using War3App.MapAdapter.Object;
 using War3App.MapAdapter.PreviewIcons;
 using War3App.MapAdapter.Regions;
@@ -37,17 +38,30 @@ namespace War3App.MapAdapter.WinForms
 
         private static IEnumerable<IMapFileAdapter> InitAdapters()
         {
+            yield return new FlacAdapter();
             yield return new MapSoundsAdapter();
+            yield return new Mp3Adapter();
+            yield return new OggAdapter();
+            yield return new WavAdapter();
+
+            yield return new BlpImageAdapter();
+            yield return new TgaImageAdapter();
 
             yield return new MapCamerasAdapter();
             yield return new MapEnvironmentAdapter();
             yield return new MapPreviewIconsAdapter();
             yield return new MapRegionsAdapter();
-            // yield return new PathingMapAdapter();
-            // yield return new ShadowMapAdapter();
+            yield return new PathingMapAdapter();
+            yield return new ShadowMapAdapter();
 
             yield return new CampaignInfoAdapter();
             yield return new MapInfoAdapter();
+
+            yield return new BinaryModelAdapter();
+            yield return new TextModelAdapter();
+
+            yield return new AttributesAdapter();
+            yield return new ListFileAdapter();
 
             yield return new AbilityObjectDataAdapter();
             yield return new BuffObjectDataAdapter();
@@ -65,9 +79,6 @@ namespace War3App.MapAdapter.WinForms
 
             yield return new MapDoodadsAdapter();
             yield return new MapUnitsAdapter();
-
-            yield return new BinaryModelAdapter();
-            yield return new BlpImageAdapter();
         }
     }
 }
