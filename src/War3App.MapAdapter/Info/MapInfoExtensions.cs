@@ -134,11 +134,6 @@ namespace War3App.MapAdapter.Info
                     mapInfo.GameVersion = GamePatchVersionProvider.GetGameVersion(targetPatch);
                 }
 
-                if (targetPatch < GamePatch.v1_29_0 && (mapInfo.PlayerDataCount > 12 || mapInfo.ForceDataCount > 12))
-                {
-                    return false;
-                }
-
                 return true;
             }
             catch (NotSupportedException)
@@ -182,7 +177,7 @@ namespace War3App.MapAdapter.Info
                     break;
 
                 case MapInfoFormatVersion.Tft:
-                    throw new NotImplementedException();
+                    throw new NotSupportedException();
 
                 default:
                     break;
@@ -191,7 +186,8 @@ namespace War3App.MapAdapter.Info
 
         public static GamePatch GetMinimumPatch(this MapInfo mapInfo)
         {
-            return mapInfo.FormatVersion switch
+            var minimumBySlotCounts = mapInfo.PlayerDataCount > 12 || mapInfo.ForceDataCount > 12 ? GamePatch.v1_29_0 : GamePatch.v1_00;
+            var minimumByFormatVersion = mapInfo.FormatVersion switch
             {
                 MapInfoFormatVersion.RoC => GamePatch.v1_00,
                 MapInfoFormatVersion.Tft => GamePatch.v1_07,
@@ -207,6 +203,8 @@ namespace War3App.MapAdapter.Info
                 MapInfoFormatVersion.v26 => GamePatch.v1_31_0,
                 MapInfoFormatVersion.v27 => GamePatch.v1_31_0,
             };
+
+            return minimumBySlotCounts > minimumByFormatVersion ? minimumBySlotCounts : minimumByFormatVersion;
         }
     }
 }
