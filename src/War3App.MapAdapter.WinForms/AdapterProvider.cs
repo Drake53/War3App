@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿#nullable enable
+
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 
@@ -23,7 +26,7 @@ namespace War3App.MapAdapter.WinForms
             return TryGetAdapter(tag.FileName, tag.OriginalFileStream, out var adapter) ? adapter : null;
         }
 
-        internal static bool TryGetAdapter(string fileName, Stream stream, out IMapFileAdapter? adapter)
+        internal static bool TryGetAdapter(string? fileName, Stream stream, [NotNullWhen(true)] out IMapFileAdapter? adapter)
         {
             adapter = fileName is null
                 ? _adapters.SingleOrDefault(adapter => adapter.CanAdaptFile(stream))
@@ -35,31 +38,36 @@ namespace War3App.MapAdapter.WinForms
         private static IEnumerable<IMapFileAdapter> InitAdapters()
         {
             yield return new MapSoundsAdapter();
-            yield return new MapInfoAdapter();
-            yield return new MapDoodadsAdapter();
-            yield return new MapUnitsAdapter();
 
+            yield return new MapCamerasAdapter();
             yield return new MapEnvironmentAdapter();
             yield return new MapPreviewIconsAdapter();
             yield return new MapRegionsAdapter();
-
-            yield return new UnitObjectDataAdapter();
-            yield return new ItemObjectDataAdapter();
-            yield return new DestructableObjectDataAdapter();
-            yield return new DoodadObjectDataAdapter();
-            yield return new AbilityObjectDataAdapter();
-            yield return new BuffObjectDataAdapter();
-            yield return new UpgradeObjectDataAdapter();
-
-            yield return new MapScriptRegexAdapter();
-            yield return new MapTriggersAdapter();
-            yield return new MapCustomTextTriggersAdapter();
-
-            yield return new BinaryModelAdapter();
-
-            yield return new BlpImageAdapter();
+            // yield return new PathingMapAdapter();
+            // yield return new ShadowMapAdapter();
 
             yield return new CampaignInfoAdapter();
+            yield return new MapInfoAdapter();
+
+            yield return new AbilityObjectDataAdapter();
+            yield return new BuffObjectDataAdapter();
+            yield return new DestructableObjectDataAdapter();
+            yield return new DoodadObjectDataAdapter();
+            yield return new ItemObjectDataAdapter();
+            // yield return new ObjectDataAdapter();
+            yield return new UnitObjectDataAdapter();
+            yield return new UpgradeObjectDataAdapter();
+
+            yield return new MapCustomTextTriggersAdapter();
+            yield return new MapTriggersAdapter();
+            yield return new MapTriggerStringsAdapter();
+            yield return new MapScriptRegexAdapter();
+
+            yield return new MapDoodadsAdapter();
+            yield return new MapUnitsAdapter();
+
+            yield return new BinaryModelAdapter();
+            yield return new BlpImageAdapter();
         }
     }
 }
