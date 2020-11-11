@@ -1,13 +1,11 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 
 using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Common;
 using War3Net.Build.Info;
 using War3Net.Build.Providers;
-using War3Net.Common.Extensions;
 
 namespace War3App.MapAdapter.Info
 {
@@ -117,24 +115,6 @@ namespace War3App.MapAdapter.Info
                 else
                 {
                     throw new InvalidDataException();
-                }
-            }
-        }
-
-        public static void WriteArchiveHeaderToStream(this MapInfo mapInfo, Stream stream, byte[] signData = null)
-        {
-            using (var writer = new BinaryWriter(stream, new UTF8Encoding(false, true), true))
-            {
-                writer.Write("HM3W".FromRawcode());
-                writer.Write(0);
-                writer.WriteString(mapInfo.MapName);
-                writer.Write((int)mapInfo.MapFlags);
-                writer.Write(mapInfo.PlayerDataCount);
-
-                if (signData != null && signData.Length == 256)
-                {
-                    writer.Write("NGIS".FromRawcode());
-                    writer.Write(signData);
                 }
             }
         }

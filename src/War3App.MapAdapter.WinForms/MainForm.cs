@@ -9,6 +9,7 @@ using War3App.MapAdapter.Info;
 using War3App.MapAdapter.WinForms.Extensions;
 
 using War3Net.Build.Common;
+using War3Net.Build.Extensions;
 using War3Net.Build.Info;
 using War3Net.IO.Mpq;
 
@@ -16,7 +17,7 @@ namespace War3App.MapAdapter.WinForms
 {
     internal static class MainForm
     {
-        private const string Title = "Map Adapter v0.8.1";
+        private const string Title = "Map Adapter v0.9.0";
 
         private const GamePatch LatestPatch = GamePatch.v1_32_9;
 
@@ -516,7 +517,7 @@ namespace War3App.MapAdapter.WinForms
                 _saveAsButton.Enabled = true;
 
                 _archive = MpqArchive.Open(fileInfo.FullName, true);
-                _archive.AddFileNames();
+                _archive.DiscoverFileNames();
 
                 var mapsList = new HashSet<string>();
                 if (_archive.IsCampaignArchive(out var campaignInfo))
@@ -540,7 +541,7 @@ namespace War3App.MapAdapter.WinForms
 
                         using var mapArchiveStream = _archive.OpenFile(map);
                         using var mapArchive = MpqArchive.Open(mapArchiveStream, true);
-                        mapArchive.AddFileNames();
+                        mapArchive.DiscoverFileNames();
 
                         var children = new List<ListViewItem>();
                         foreach (var mapFile in mapArchive)
