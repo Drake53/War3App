@@ -26,9 +26,22 @@ namespace War3App.MapAdapter.Info
 
         public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
         {
+            MapInfo mapInfo;
             try
             {
-                var mapInfo = MapInfo.Parse(stream);
+                mapInfo = MapInfo.Parse(stream);
+            }
+            catch (Exception e)
+            {
+                return new AdaptResult
+                {
+                    Status = MapFileStatus.ParseError,
+                    Diagnostics = new[] { e.Message },
+                };
+            }
+
+            try
+            {
                 if (mapInfo.GetMinimumPatch() <= targetPatch)
                 {
                     return new AdaptResult
@@ -37,47 +50,38 @@ namespace War3App.MapAdapter.Info
                     };
                 }
 
-                try
+                if (mapInfo.TryDowngrade(targetPatch))
                 {
-                    if (mapInfo.TryDowngrade(targetPatch))
-                    {
-                        var newMapInfoFileStream = new MemoryStream();
-                        mapInfo.SerializeTo(newMapInfoFileStream, true);
+                    var newMapInfoFileStream = new MemoryStream();
+                    mapInfo.SerializeTo(newMapInfoFileStream, true);
 
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Adapted,
-                            AdaptedFileStream = newMapInfoFileStream,
-                        };
-                    }
-                    else
+                    return new AdaptResult
                     {
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Unadaptable,
-                        };
-                    }
+                        Status = MapFileStatus.Adapted,
+                        AdaptedFileStream = newMapInfoFileStream,
+                    };
                 }
-                catch
+                else
                 {
                     return new AdaptResult
                     {
-                        Status = MapFileStatus.AdapterError,
+                        Status = MapFileStatus.Unadaptable,
                     };
                 }
             }
-            catch (NotSupportedException)
+            catch (NotSupportedException e)
             {
                 return new AdaptResult
                 {
                     Status = MapFileStatus.Unadaptable,
+                    Diagnostics = new[] { e.Message },
                 };
             }
             catch (Exception e)
             {
                 return new AdaptResult
                 {
-                    Status = MapFileStatus.ParseError,
+                    Status = MapFileStatus.AdapterError,
                     Diagnostics = new[] { e.Message },
                 };
             }

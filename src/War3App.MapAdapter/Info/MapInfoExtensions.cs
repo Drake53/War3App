@@ -136,10 +136,6 @@ namespace War3App.MapAdapter.Info
 
                 return true;
             }
-            catch (NotSupportedException)
-            {
-                return false;
-            }
             catch
             {
                 throw;
@@ -168,7 +164,7 @@ namespace War3App.MapAdapter.Info
                 case MapInfoFormatVersion.Lua:
                     if (mapInfo.ScriptLanguage == ScriptLanguage.Lua)
                     {
-                        throw new NotSupportedException();
+                        throw new NotSupportedException("Cannot downgrade, because map is set to use Lua as script language.");
                     }
 
                     mapInfo.GameVersion = null;
@@ -177,7 +173,14 @@ namespace War3App.MapAdapter.Info
                     break;
 
                 case MapInfoFormatVersion.Tft:
-                    throw new NotSupportedException();
+                    if (mapInfo.PlayerDataCount > 12 || mapInfo.ForceDataCount > 12)
+                    {
+                        throw new NotSupportedException("Cannot downgrade, because the map uses more than 12 players and/or teams.");
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
 
                 default:
                     break;

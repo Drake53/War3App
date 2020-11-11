@@ -10,6 +10,7 @@ namespace War3App.MapAdapter.Extensions
         {
             return gamePatch switch
             {
+                GamePatch.v1_28 => 6060,
                 GamePatch.v1_29_0 => 6060,
                 GamePatch.v1_30_0 => 6061,
                 GamePatch.v1_31_0 => 6072,
