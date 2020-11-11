@@ -20,15 +20,8 @@ namespace War3App.MapAdapter.WinForms
             FileName = mpqEntry.Filename;
             ArchiveName = archiveName ?? string.Empty;
             OriginalFileStream = archive.OpenFile(mpqEntry);
-            if (FileName != null && PatchAgnosticFileProvider.IsFilePatchAgnostic(FileName))
-            {
-                Status = string.Equals(FileName, "(attributes)", StringComparison.OrdinalIgnoreCase) ? MapFileStatus.Removed : MapFileStatus.Compatible;
-            }
-            else
-            {
-                Adapter = AdapterProvider.GetAdapter(this);
-                Status = Adapter is null ? MapFileStatus.Unknown : MapFileStatus.Pending;
-            }
+            Adapter = AdapterProvider.GetAdapter(this);
+            Status = Adapter is null ? MapFileStatus.Unknown : MapFileStatus.Pending;
         }
 
         public ItemTag(MpqArchive archive, MpqEntry mpqEntry, ListViewItem[] children, GamePatch? originPatch)
