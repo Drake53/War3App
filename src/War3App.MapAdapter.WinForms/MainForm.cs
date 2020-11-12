@@ -17,7 +17,7 @@ namespace War3App.MapAdapter.WinForms
 {
     internal static class MainForm
     {
-        private const string Title = "Map Adapter v0.9.0";
+        private const string Title = "Map Adapter v0.9.2";
 
         private const GamePatch LatestPatch = GamePatch.v1_32_9;
 
@@ -581,7 +581,7 @@ namespace War3App.MapAdapter.WinForms
                     _originPatch = possibleOriginPatches.Single();
                 }
 
-                // TODO: Add object data for latest patch (and 1.30) to prevent adapter errors.
+                // TODO: Add object data for latest patch (and 1.28, 1.30) to prevent adapter errors.
                 var targetPatches = new HashSet<object>(new object[]
                 {
                     GamePatch.v1_28,
@@ -641,9 +641,7 @@ namespace War3App.MapAdapter.WinForms
 
         private static void SaveArchive(string fileName)
         {
-            var originalFiles = _archive.GetMpqFiles();
-            var adaptedFiles = new List<MpqFile>();
-            var removedFiles = new HashSet<ulong>();
+            var archiveBuilder = new MpqArchiveBuilder(_archive);
 
             for (var i = 0; i < _fileList.Items.Count; i++)
             {
@@ -655,82 +653,58 @@ namespace War3App.MapAdapter.WinForms
 
                 if (tag.Status == MapFileStatus.Removed)
                 {
-                    removedFiles.Add(tag.GetHashedFileName());
+                    archiveBuilder.RemoveFile(tag.GetHashedFileName());
                 }
                 else if (tag.Children != null)
                 {
                     if (tag.Children.All(child => child.Status == MapFileStatus.Removed))
                     {
-                        removedFiles.Add(tag.GetHashedFileName());
+                        archiveBuilder.RemoveFile(tag.GetHashedFileName());
                     }
                     else if (tag.Children.Any(child => child.IsModified || child.Status == MapFileStatus.Removed))
                     {
                         // Assume at most one nested archive (for campaign archives), so no recursion.
                         using var subArchive = MpqArchive.Open(_archive.OpenFile(tag.FileName));
-                        var subArchiveAdaptedFiles = new List<MpqFile>();
-                        var subArchiveRemovedFiles = new HashSet<ulong>();
-
                         foreach (var child in tag.Children)
                         {
                             if (child.FileName != null)
                             {
                                 subArchive.AddFilename(child.FileName);
                             }
+                        }
 
+                        var subArchiveBuilder = new MpqArchiveBuilder(subArchive);
+                        foreach (var child in tag.Children)
+                        {
                             if (child.Status == MapFileStatus.Removed)
                             {
-                                subArchiveRemovedFiles.Add(child.GetHashedFileName());
+                                subArchiveBuilder.RemoveFile(child.GetHashedFileName());
                             }
                             else if (child.TryGetModifiedMpqFile(out var subArchiveAdaptedFile))
                             {
-                                subArchiveAdaptedFiles.Add(subArchiveAdaptedFile);
+                                subArchiveBuilder.AddFile(subArchiveAdaptedFile);
                             }
                         }
 
                         var adaptedSubArchiveStream = new MemoryStream();
-                        // if (_targetPatch.Value < GamePatch.v1_31_0)
-                        {
-                            MapInfo.Parse(subArchive.OpenFile(MapInfo.FileName)).WriteArchiveHeaderToStream(adaptedSubArchiveStream);
-                        }
-
-                        var subArchiveOriginalFiles = subArchive.GetMpqFiles();
-                        MpqArchive.Create(adaptedSubArchiveStream, GetCreateArchiveMpqFiles(subArchiveOriginalFiles, subArchiveAdaptedFiles, subArchiveRemovedFiles).ToArray());
+                        subArchiveBuilder.SaveWithPreArchiveData(adaptedSubArchiveStream, true);
 
                         adaptedSubArchiveStream.Position = 0;
                         var adaptedFile = MpqFile.New(adaptedSubArchiveStream, tag.FileName, false);
                         adaptedFile.TargetFlags = tag.MpqEntry.Flags;
-                        adaptedFiles.Add(adaptedFile);
+                        archiveBuilder.AddFile(adaptedFile);
                     }
                 }
                 else if (tag.TryGetModifiedMpqFile(out var adaptedFile))
                 {
-                    adaptedFiles.Add(adaptedFile);
+                    archiveBuilder.AddFile(adaptedFile);
                 }
             }
 
             using (var fileStream = File.Create(fileName))
             {
-                // if (_targetPatch.Value < GamePatch.v1_31_0)
-                {
-                    if (_archive.IsCampaignArchive(out var campaignInfo))
-                    {
-                        campaignInfo.WriteArchiveHeaderToStream(fileStream);
-                    }
-                    else
-                    {
-                        MapInfo.Parse(_archive.OpenFile(MapInfo.FileName)).WriteArchiveHeaderToStream(fileStream);
-                    }
-                }
-
-                MpqArchive.Create(fileStream, GetCreateArchiveMpqFiles(originalFiles, adaptedFiles, removedFiles).ToArray()).Dispose();
+                archiveBuilder.SaveWithPreArchiveData(fileStream);
             }
-        }
-
-        private static IEnumerable<MpqFile> GetCreateArchiveMpqFiles(IEnumerable<MpqFile> originalFiles, IEnumerable<MpqFile> modifiedFiles, IEnumerable<ulong> removedFiles)
-        {
-            return modifiedFiles.Concat(originalFiles.Where(originalFile =>
-                !removedFiles.Contains(originalFile.Name) &&
-                !modifiedFiles.Where(modifiedFile => modifiedFile.IsSameAs(originalFile)).Any()));
         }
     }
 }
