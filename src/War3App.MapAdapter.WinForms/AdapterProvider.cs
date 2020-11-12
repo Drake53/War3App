@@ -29,9 +29,11 @@ namespace War3App.MapAdapter.WinForms
 
         internal static bool TryGetAdapter(string? fileName, Stream stream, [NotNullWhen(true)] out IMapFileAdapter? adapter)
         {
-            adapter = fileName is null
-                ? _adapters.SingleOrDefault(adapter => adapter.CanAdaptFile(stream))
-                : _adapters.SingleOrDefault(adapter => adapter.CanAdaptFile(fileName) || adapter.CanAdaptFile(stream));
+            adapter = _adapters.SingleOrDefault(adapter => adapter.CanAdaptFile(stream));
+            if (adapter is null && fileName != null)
+            {
+                adapter = _adapters.SingleOrDefault(adapter => adapter.CanAdaptFile(fileName));
+            }
 
             return adapter != null;
         }
