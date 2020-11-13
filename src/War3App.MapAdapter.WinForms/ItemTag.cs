@@ -20,7 +20,7 @@ namespace War3App.MapAdapter.WinForms
             FileName = mpqEntry.Filename;
             ArchiveName = archiveName ?? string.Empty;
             OriginalFileStream = archive.OpenFile(mpqEntry);
-            Adapter = AdapterProvider.GetAdapter(this);
+            Adapter = AdapterFactory.GetAdapter(OriginalFileStream, FileName);
             Status = Adapter is null ? MapFileStatus.Unknown : MapFileStatus.Pending;
         }
 
