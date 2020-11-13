@@ -1,10 +1,7 @@
 ﻿using System;
 using System.IO;
 
-using War3App.MapAdapter.Extensions;
-
 using War3Net.Build.Common;
-using War3Net.Build.Script;
 
 namespace War3App.MapAdapter.Script
 {
@@ -13,16 +10,6 @@ namespace War3App.MapAdapter.Script
         public string MapFileDescription => "Trigger Strings";
 
         public bool IsTextFile => true;
-
-        public bool CanAdaptFile(string s)
-        {
-            return string.Equals(s.GetFileExtension(), MapTriggerStrings.FileName.GetFileExtension(), StringComparison.OrdinalIgnoreCase);
-        }
-
-        public bool CanAdaptFile(Stream stream)
-        {
-            return false;
-        }
 
         public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
         {

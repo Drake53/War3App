@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-using War3App.MapAdapter.Extensions;
-
 using War3Net.Build.Common;
 using War3Net.Build.Object;
 using War3Net.Common.Extensions;
@@ -16,16 +14,6 @@ namespace War3App.MapAdapter.Object
         public string MapFileDescription => "Object Data (Buff)";
 
         public bool IsTextFile => false;
-
-        public bool CanAdaptFile(string s)
-        {
-            return string.Equals(s.GetFileExtension(), MapBuffObjectData.FileName.GetFileExtension(), StringComparison.OrdinalIgnoreCase);
-        }
-
-        public bool CanAdaptFile(Stream stream)
-        {
-            return false;
-        }
 
         public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
         {

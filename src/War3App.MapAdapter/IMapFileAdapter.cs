@@ -10,10 +10,6 @@ namespace War3App.MapAdapter
 
         public bool IsTextFile { get; }
 
-        bool CanAdaptFile(string fileName);
-
-        bool CanAdaptFile(Stream stream);
-
         AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch);
     }
 }

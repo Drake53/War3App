@@ -14,16 +14,6 @@ namespace War3App.MapAdapter.Info
 
         public bool IsTextFile => false;
 
-        public bool CanAdaptFile(string s)
-        {
-            return string.Equals(s.GetFileExtension(), CampaignInfo.FileName.GetFileExtension(), StringComparison.OrdinalIgnoreCase);
-        }
-
-        public bool CanAdaptFile(Stream stream)
-        {
-            return false;
-        }
-
         public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
         {
             try
