@@ -6,7 +6,7 @@ using War3App.MapAdapter.Extensions;
 using War3Net.Build.Common;
 using War3Net.Build.Environment;
 
-namespace War3App.MapAdapter.Regions
+namespace War3App.MapAdapter.Environment
 {
     public sealed class MapRegionsAdapter : IMapFileAdapter
     {

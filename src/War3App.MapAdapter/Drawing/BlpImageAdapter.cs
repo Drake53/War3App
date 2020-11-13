@@ -6,7 +6,7 @@ using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Common;
 
-namespace War3App.MapAdapter.Modeling
+namespace War3App.MapAdapter.Drawing
 {
     public sealed class BlpImageAdapter : IMapFileAdapter
     {

@@ -6,13 +6,12 @@ using System.IO;
 using System.Linq;
 
 using War3App.MapAdapter.Audio;
+using War3App.MapAdapter.Drawing;
 using War3App.MapAdapter.Environment;
 using War3App.MapAdapter.Info;
 using War3App.MapAdapter.Modeling;
 using War3App.MapAdapter.Mpq;
 using War3App.MapAdapter.Object;
-using War3App.MapAdapter.PreviewIcons;
-using War3App.MapAdapter.Regions;
 using War3App.MapAdapter.Script;
 using War3App.MapAdapter.Widget;
 
