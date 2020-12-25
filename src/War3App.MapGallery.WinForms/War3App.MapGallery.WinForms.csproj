@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <OutputType>WinExe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\War3App.Common.WinForms\War3App.Common.WinForms.csproj" />
+    <ProjectReference Include="..\War3App.MapGallery\War3App.MapGallery.csproj" />
+  </ItemGroup>
+
+</Project>
