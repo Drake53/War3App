@@ -100,7 +100,7 @@ namespace War3App.MapTranspiler
                 }
 
                 var transpiler = new JassToLuaTranspiler();
-                transpiler.RegisterJassFile(JassParser.ParseFile(commonJPath));
+                transpiler.RegisterJassFile(JassSyntaxFactory.ParseCompilationUnit(File.ReadAllText(commonJPath)));
 
                 worker?.ReportProgress(estimatedWorkToRegisterCommonAndBlizzard);
 
@@ -110,12 +110,12 @@ namespace War3App.MapTranspiler
                 }
                 else
                 {
-                    transpiler.RegisterJassFile(JassParser.ParseFile(blizzardJPath));
+                    transpiler.RegisterJassFile(JassSyntaxFactory.ParseCompilationUnit(File.ReadAllText(blizzardJPath)));
 
                     worker?.ReportProgress(estimatedWorkToRegisterCommonAndBlizzard * 2);
                 }
 
-                var luaCompilationUnit = transpiler.Transpile(JassParser.ParseString(map.Script));
+                var luaCompilationUnit = transpiler.Transpile(JassSyntaxFactory.ParseCompilationUnit(map.Script));
 
                 using var stream = new MemoryStream();
                 using (var writer = new StreamWriter(stream, leaveOpen: true))

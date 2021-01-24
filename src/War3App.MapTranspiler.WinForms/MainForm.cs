@@ -12,6 +12,7 @@ using War3App.Common.WinForms.Extensions;
 using War3Net.Build;
 using War3Net.Build.Extensions;
 using War3Net.Build.Info;
+using War3Net.CodeAnalysis.Jass;
 using War3Net.IO.Mpq;
 
 namespace War3App.MapTranspiler.WinForms
@@ -166,6 +167,9 @@ namespace War3App.MapTranspiler.WinForms
             _worker.DoWork += TranspileMapBackgroundWork;
             _worker.ProgressChanged += TranspileMapProgressChanged;
             _worker.RunWorkerCompleted += TranspileMapCompleted;
+
+            // Initialize parser
+            JassSyntaxFactory.ParseCompilationUnit(string.Empty);
 
             var flowLayout = new FlowLayoutPanel
             {
