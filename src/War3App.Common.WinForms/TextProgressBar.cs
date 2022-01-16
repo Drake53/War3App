@@ -6,6 +6,7 @@ using System.Windows.Forms;
 // https://github.com/ukushu/TextProgressBar/blob/master/TextProgressBar.cs
 namespace War3App.Common.WinForms
 {
+    [DesignerCategory("")]
     public class TextProgressBar : ProgressBar
     {
         public enum ProgressBarDisplayMode

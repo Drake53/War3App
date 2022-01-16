@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace War3App.MapAdapter.WinForms.Extensions
+namespace War3App.Common.WinForms.Extensions
 {
     public static class BitmapExtensions
     {
