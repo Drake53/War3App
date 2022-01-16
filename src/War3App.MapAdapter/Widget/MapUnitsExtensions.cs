@@ -30,28 +30,28 @@ namespace War3App.MapAdapter.Widget
 
         public static void DowngradeOnce(this MapUnits mapUnits)
         {
-            switch (mapUnits.FormatVersion)
+            if (mapUnits.UseNewFormat)
             {
-                case MapWidgetsFormatVersion.Reforged:
-                    mapUnits.FormatVersion = MapWidgetsFormatVersion.Tft;
-                    break;
-
-                case MapWidgetsFormatVersion.Tft:
-                    mapUnits.FormatVersion = MapWidgetsFormatVersion.Roc;
-                    break;
-
-                default:
-                    break;
+                mapUnits.UseNewFormat = false;
+            }
+            else
+            {
+                mapUnits.FormatVersion = MapWidgetsFormatVersion.RoC;
+                mapUnits.SubVersion = MapWidgetsSubVersion.V9;
             }
         }
 
         public static GamePatch GetMinimumPatch(this MapUnits mapUnits)
         {
+            if (mapUnits.UseNewFormat)
+            {
+                return GamePatch.v1_32_0;
+            }
+
             return mapUnits.FormatVersion switch
             {
-                MapWidgetsFormatVersion.Roc => GamePatch.v1_00,
-                MapWidgetsFormatVersion.Tft => GamePatch.v1_07,
-                MapWidgetsFormatVersion.Reforged => GamePatch.v1_32_0,
+                MapWidgetsFormatVersion.RoC => GamePatch.v1_00,
+                MapWidgetsFormatVersion.TFT => GamePatch.v1_07,
             };
         }
     }

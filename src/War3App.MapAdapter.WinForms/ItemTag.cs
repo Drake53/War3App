@@ -17,7 +17,7 @@ namespace War3App.MapAdapter.WinForms
         public ItemTag(MpqArchive archive, MpqEntry mpqEntry, string archiveName = null)
         {
             MpqEntry = mpqEntry;
-            FileName = mpqEntry.Filename;
+            FileName = mpqEntry.FileName;
             ArchiveName = archiveName ?? string.Empty;
             OriginalFileStream = archive.OpenFile(mpqEntry);
             Adapter = AdapterFactory.GetAdapter(OriginalFileStream, FileName);
@@ -27,7 +27,7 @@ namespace War3App.MapAdapter.WinForms
         public ItemTag(MpqArchive archive, MpqEntry mpqEntry, ListViewItem[] children, GamePatch? originPatch)
         {
             MpqEntry = mpqEntry;
-            FileName = mpqEntry.Filename;
+            FileName = mpqEntry.FileName;
             ArchiveName = string.Empty;
             Adapter = null;
             OriginalFileStream = archive.OpenFile(mpqEntry);
@@ -100,7 +100,7 @@ namespace War3App.MapAdapter.WinForms
             mpqFile = null;
             return false;
         }
-
+        
         public ulong GetHashedFileName()
         {
             if (FileName is null)

@@ -90,8 +90,8 @@ namespace War3App.MapAdapter
         private static IEnumerable<KeyValuePair<string, IMapFileAdapter>> GetAdaptersByFileName()
         {
             // No file extension.
-            yield return new(Attributes.Key, new AttributesAdapter());
-            yield return new(ListFile.Key, new ListFileAdapter());
+            yield return new(Attributes.FileName, new AttributesAdapter());
+            yield return new(ListFile.FileName, new ListFileAdapter());
 
             // Different file types with same file extension.
             yield return new(MapDoodads.FileName, new MapDoodadsAdapter());
@@ -111,10 +111,10 @@ namespace War3App.MapAdapter
 
             yield return new(MapCameras.FileName.GetFileExtension(), new MapCamerasAdapter());
             yield return new(MapEnvironment.FileName.GetFileExtension(), new MapEnvironmentAdapter());
+            yield return new(MapPathingMap.FileName.GetFileExtension(), new MapPathingMapAdapter());
             yield return new(MapPreviewIcons.FileName.GetFileExtension(), new MapPreviewIconsAdapter());
             yield return new(MapRegions.FileName.GetFileExtension(), new MapRegionsAdapter());
-            yield return new(PathingMap.FileName.GetFileExtension(), new PathingMapAdapter());
-            yield return new(ShadowMap.FileName.GetFileExtension(), new ShadowMapAdapter());
+            yield return new(MapShadowMap.FileName.GetFileExtension(), new MapShadowMapAdapter());
 
             yield return new(CampaignInfo.FileName.GetFileExtension(), new CampaignInfoAdapter());
             yield return new(MapInfo.FileName.GetFileExtension(), new MapInfoAdapter());
@@ -134,8 +134,8 @@ namespace War3App.MapAdapter
             yield return new(MapCustomTextTriggers.FileName.GetFileExtension(), new MapCustomTextTriggersAdapter());
             yield return new(MapTriggers.FileName.GetFileExtension(), new MapTriggersAdapter());
             yield return new(MapTriggerStrings.FileName.GetFileExtension(), new MapTriggerStringsAdapter());
-            yield return new(".j", new MapScriptRegexAdapter());
-            yield return new(".lua", new MapScriptRegexAdapter());
+            yield return new(JassMapScript.FileName.GetFileExtension(), new MapScriptRegexAdapter());
+            yield return new(LuaMapScript.FileName.GetFileExtension(), new MapScriptRegexAdapter());
         }
     }
 }

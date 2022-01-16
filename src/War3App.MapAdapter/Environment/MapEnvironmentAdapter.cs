@@ -2,7 +2,7 @@
 using System.IO;
 
 using War3Net.Build.Common;
-using War3Net.Build.Environment;
+using War3Net.Build.Extensions;
 
 namespace War3App.MapAdapter.Environment
 {
@@ -16,7 +16,8 @@ namespace War3App.MapAdapter.Environment
         {
             try
             {
-                var mapEnvironment = MapEnvironment.Parse(stream);
+                using var reader = new BinaryReader(stream);
+                var mapEnvironment = reader.ReadMapEnvironment();
                 return new AdaptResult
                 {
                     Status = MapFileStatus.Compatible,

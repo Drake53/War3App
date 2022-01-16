@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 using War3Net.Build.Common;
-using War3Net.Build.Environment;
+using War3Net.Build.Extensions;
 
 namespace War3App.MapAdapter.Environment
 {
@@ -16,7 +17,8 @@ namespace War3App.MapAdapter.Environment
         {
             try
             {
-                var mapCameras = MapCameras.Parse(stream);
+                using var reader = new BinaryReader(stream);
+                var mapCameras = reader.ReadMapCameras();
                 if (mapCameras.GetMinimumPatch() <= targetPatch)
                 {
                     return new AdaptResult
@@ -30,7 +32,8 @@ namespace War3App.MapAdapter.Environment
                     if (mapCameras.TryDowngrade(targetPatch))
                     {
                         var newMapCamerasFileStream = new MemoryStream();
-                        mapCameras.SerializeTo(newMapCamerasFileStream, true);
+                        using var writer = new BinaryWriter(newMapCamerasFileStream, new UTF8Encoding(false, true), true);
+                        writer.Write(mapCameras);
 
                         return new AdaptResult
                         {

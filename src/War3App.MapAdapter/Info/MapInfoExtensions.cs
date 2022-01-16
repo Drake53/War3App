@@ -150,13 +150,6 @@ namespace War3App.MapAdapter.Info
                     mapInfo.MapFlags &= ~(MapFlags.AccurateProbabilityForCalculations | MapFlags.CustomAbilitySkin);
                     mapInfo.EditorVersion = 6072;
                     mapInfo.GameVersion = new Version(1, 31, 1, 12173);
-                    var playerData = new PlayerData[mapInfo.PlayerDataCount];
-                    for (var i = 0; i < mapInfo.PlayerDataCount; i++)
-                    {
-                        playerData[i] = PlayerData.Create(mapInfo.GetPlayerData(i), false);
-                    }
-
-                    mapInfo.SetPlayerData(playerData);
 
                     mapInfo.FormatVersion = MapInfoFormatVersion.Lua;
                     break;
@@ -173,7 +166,7 @@ namespace War3App.MapAdapter.Info
                     break;
 
                 case MapInfoFormatVersion.Tft:
-                    if (mapInfo.PlayerDataCount > 12 || mapInfo.ForceDataCount > 12)
+                    if (mapInfo.Players.Count > 12 || mapInfo.Forces.Count > 12)
                     {
                         throw new NotSupportedException("Cannot downgrade, because the map uses more than 12 players and/or teams.");
                     }
@@ -189,7 +182,7 @@ namespace War3App.MapAdapter.Info
 
         public static GamePatch GetMinimumPatch(this MapInfo mapInfo)
         {
-            var minimumBySlotCounts = mapInfo.PlayerDataCount > 12 || mapInfo.ForceDataCount > 12 ? GamePatch.v1_29_0 : GamePatch.v1_00;
+            var minimumBySlotCounts = mapInfo.Players.Count > 12 || mapInfo.Forces.Count > 12 ? GamePatch.v1_29_0 : GamePatch.v1_00;
             var minimumByFormatVersion = mapInfo.FormatVersion switch
             {
                 MapInfoFormatVersion.RoC => GamePatch.v1_00,

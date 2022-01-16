@@ -1,10 +1,11 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Common;
-using War3Net.Build.Info;
+using War3Net.Build.Extensions;
 
 namespace War3App.MapAdapter.Info
 {
@@ -18,7 +19,8 @@ namespace War3App.MapAdapter.Info
         {
             try
             {
-                var campaignInfo = CampaignInfo.Parse(stream);
+                using var reader = new BinaryReader(stream);
+                var campaignInfo = reader.ReadCampaignInfo();
 
                 var targetPatchEditorVersion = targetPatch.GetEditorVersion();
                 if (campaignInfo.EditorVersion == targetPatchEditorVersion)
@@ -34,7 +36,8 @@ namespace War3App.MapAdapter.Info
                     campaignInfo.EditorVersion = targetPatchEditorVersion;
 
                     var newCampaignInfoFileStream = new MemoryStream();
-                    campaignInfo.SerializeTo(newCampaignInfoFileStream, true);
+                    using var writer = new BinaryWriter(newCampaignInfoFileStream, new UTF8Encoding(false, true), true);
+                    writer.Write(campaignInfo);
 
                     return new AdaptResult
                     {

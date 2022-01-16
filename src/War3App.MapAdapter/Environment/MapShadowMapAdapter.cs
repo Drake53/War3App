@@ -2,13 +2,13 @@
 using System.IO;
 
 using War3Net.Build.Common;
-using War3Net.Build.Environment;
+using War3Net.Build.Extensions;
 
 namespace War3App.MapAdapter.Environment
 {
-    public sealed class PathingMapAdapter : IMapFileAdapter
+    public sealed class MapShadowMapAdapter : IMapFileAdapter
     {
-        public string MapFileDescription => "Pathing Map";
+        public string MapFileDescription => "Shadow Map";
 
         public bool IsTextFile => false;
 
@@ -16,7 +16,8 @@ namespace War3App.MapAdapter.Environment
         {
             try
             {
-                var pathingMap = PathingMap.Parse(stream);
+                using var reader = new BinaryReader(stream);
+                var shadowMap = reader.ReadMapShadowMap();
                 return new AdaptResult
                 {
                     Status = MapFileStatus.Compatible,

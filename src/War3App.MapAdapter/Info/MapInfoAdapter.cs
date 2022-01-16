@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Common;
+using War3Net.Build.Extensions;
 using War3Net.Build.Info;
 
 namespace War3App.MapAdapter.Info
@@ -29,7 +31,8 @@ namespace War3App.MapAdapter.Info
             MapInfo mapInfo;
             try
             {
-                mapInfo = MapInfo.Parse(stream);
+                using var reader = new BinaryReader(stream);
+                mapInfo = reader.ReadMapInfo();
             }
             catch (Exception e)
             {
@@ -53,7 +56,8 @@ namespace War3App.MapAdapter.Info
                 if (mapInfo.TryDowngrade(targetPatch))
                 {
                     var newMapInfoFileStream = new MemoryStream();
-                    mapInfo.SerializeTo(newMapInfoFileStream, true);
+                    using var writer = new BinaryWriter(newMapInfoFileStream, new UTF8Encoding(false, true), true);
+                    writer.Write(mapInfo);
 
                     return new AdaptResult
                     {

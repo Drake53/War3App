@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 using War3Net.Build.Common;
-using War3Net.Build.Script;
+using War3Net.Build.Extensions;
 
 namespace War3App.MapAdapter.Script
 {
@@ -16,7 +17,8 @@ namespace War3App.MapAdapter.Script
         {
             try
             {
-                var mapTriggers = MapTriggers.Parse(stream);
+                using var reader = new BinaryReader(stream);
+                var mapTriggers = reader.ReadMapTriggers();
                 if (mapTriggers.GetMinimumPatch() <= targetPatch)
                 {
                     return new AdaptResult
@@ -30,7 +32,8 @@ namespace War3App.MapAdapter.Script
                     if (mapTriggers.TryDowngrade(targetPatch))
                     {
                         var newMapTriggersFileStream = new MemoryStream();
-                        mapTriggers.SerializeTo(newMapTriggersFileStream, true);
+                        using var writer = new BinaryWriter(newMapTriggersFileStream, new UTF8Encoding(false, true), true);
+                        writer.Write(mapTriggers);
 
                         return new AdaptResult
                         {

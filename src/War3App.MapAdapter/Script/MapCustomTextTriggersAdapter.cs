@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 using War3Net.Build.Common;
-using War3Net.Build.Script;
+using War3Net.Build.Extensions;
 
 namespace War3App.MapAdapter.Script
 {
@@ -14,9 +15,12 @@ namespace War3App.MapAdapter.Script
 
         public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
         {
+            var encoding = new UTF8Encoding(false, true);
+
             try
             {
-                var mapCustomTextTriggers = MapCustomTextTriggers.Parse(stream);
+                using var reader = new BinaryReader(stream);
+                var mapCustomTextTriggers = reader.ReadMapCustomTextTriggers(encoding);
                 if (mapCustomTextTriggers.GetMinimumPatch() <= targetPatch)
                 {
                     return new AdaptResult
@@ -30,7 +34,8 @@ namespace War3App.MapAdapter.Script
                     if (mapCustomTextTriggers.TryDowngrade(targetPatch))
                     {
                         var newMapCustomTextTriggersFileStream = new MemoryStream();
-                        mapCustomTextTriggers.SerializeTo(newMapCustomTextTriggersFileStream, true);
+                        using var writer = new BinaryWriter(newMapCustomTextTriggersFileStream, encoding, true);
+                        writer.Write(mapCustomTextTriggers, encoding);
 
                         return new AdaptResult
                         {

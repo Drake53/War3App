@@ -30,9 +30,9 @@ namespace War3App.MapAdapter.Script
 
         public static void DowngradeOnce(this MapTriggers mapTriggers)
         {
-            if (mapTriggers.UseNewFormat)
+            if (mapTriggers.SubVersion.HasValue)
             {
-                mapTriggers.UseNewFormat = false;
+                mapTriggers.SubVersion = null;
             }
             else
             {
@@ -42,7 +42,7 @@ namespace War3App.MapAdapter.Script
 
         public static GamePatch GetMinimumPatch(this MapTriggers mapTriggers)
         {
-            return mapTriggers.UseNewFormat
+            return mapTriggers.SubVersion.HasValue
                 ? GamePatch.v1_31_0
                 : mapTriggers.FormatVersion == MapTriggersFormatVersion.Tft
                     ? GamePatch.v1_07

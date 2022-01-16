@@ -37,7 +37,7 @@ namespace War3App.MapAdapter.Audio
                     break;
 
                 case MapSoundsFormatVersion.Reforged:
-                    foreach (var sound in mapSounds)
+                    foreach (var sound in mapSounds.Sounds)
                     {
                         // TODO: warn/error if it's a .flac file
                         sound.SoundName = null;

@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="War3Api.Blizzard" Version="1.32.3.1" />
-    <PackageReference Include="War3Net.Build.Core" Version="1.7.2" />
+    <PackageReference Include="War3Net.Build.Core" Version="5.3.0" />
   </ItemGroup>
 
 </Project>

@@ -30,9 +30,9 @@ namespace War3App.MapAdapter.Script
 
         public static void DowngradeOnce(this MapCustomTextTriggers mapCustomTextTriggers)
         {
-            if (mapCustomTextTriggers.UseNewFormat)
+            if (mapCustomTextTriggers.SubVersion.HasValue)
             {
-                mapCustomTextTriggers.UseNewFormat = false;
+                mapCustomTextTriggers.SubVersion = null;
             }
             else
             {
@@ -42,7 +42,7 @@ namespace War3App.MapAdapter.Script
 
         public static GamePatch GetMinimumPatch(this MapCustomTextTriggers mapCustomTextTriggers)
         {
-            return mapCustomTextTriggers.UseNewFormat
+            return mapCustomTextTriggers.SubVersion.HasValue
                 ? GamePatch.v1_31_0
                 : mapCustomTextTriggers.FormatVersion == MapCustomTextTriggersFormatVersion.Tft
                     ? GamePatch.v1_07

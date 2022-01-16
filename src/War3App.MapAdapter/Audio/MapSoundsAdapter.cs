@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
-using War3Net.Build.Audio;
 using War3Net.Build.Common;
+using War3Net.Build.Extensions;
 
 namespace War3App.MapAdapter.Audio
 {
@@ -16,7 +17,8 @@ namespace War3App.MapAdapter.Audio
         {
             try
             {
-                var mapSounds = MapSounds.Parse(stream);
+                using var reader = new BinaryReader(stream);
+                var mapSounds = reader.ReadMapSounds();
                 if (mapSounds.GetMinimumPatch() <= targetPatch)
                 {
                     return new AdaptResult
@@ -30,7 +32,8 @@ namespace War3App.MapAdapter.Audio
                     if (mapSounds.TryDowngrade(targetPatch))
                     {
                         var newMapSoundsFileStream = new MemoryStream();
-                        mapSounds.SerializeTo(newMapSoundsFileStream, true);
+                        using var writer = new BinaryWriter(newMapSoundsFileStream, new UTF8Encoding(false, true), true);
+                        writer.Write(mapSounds);
 
                         return new AdaptResult
                         {

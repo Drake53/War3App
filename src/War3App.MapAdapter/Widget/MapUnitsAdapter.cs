@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 using War3Net.Build.Common;
-using War3Net.Build.Widget;
+using War3Net.Build.Extensions;
 
 namespace War3App.MapAdapter.Widget
 {
@@ -16,7 +17,8 @@ namespace War3App.MapAdapter.Widget
         {
             try
             {
-                var mapUnits = MapUnits.Parse(stream);
+                using var reader = new BinaryReader(stream);
+                var mapUnits = reader.ReadMapUnits();
                 if (mapUnits.GetMinimumPatch() <= targetPatch)
                 {
                     return new AdaptResult
@@ -30,7 +32,8 @@ namespace War3App.MapAdapter.Widget
                     if (mapUnits.TryDowngrade(targetPatch))
                     {
                         var newMapUnitsFileStream = new MemoryStream();
-                        mapUnits.SerializeTo(newMapUnitsFileStream, true);
+                        using var writer = new BinaryWriter(newMapUnitsFileStream, new UTF8Encoding(false, true), true);
+                        writer.Write(mapUnits);
 
                         return new AdaptResult
                         {
