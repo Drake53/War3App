@@ -16,18 +16,6 @@ namespace War3App.MapAdapter.Script
 
         public bool IsTextFile => true;
 
-        public bool CanAdaptFile(string s)
-        {
-            var fileExtension = s.GetFileExtension();
-            return string.Equals(fileExtension, ".j", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(fileExtension, ".lua", StringComparison.OrdinalIgnoreCase);
-        }
-
-        public bool CanAdaptFile(Stream stream)
-        {
-            return false;
-        }
-
         public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
         {
             try
