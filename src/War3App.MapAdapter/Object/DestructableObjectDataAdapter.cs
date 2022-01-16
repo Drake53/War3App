@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 using War3Net.Build.Common;
+using War3Net.Build.Extensions;
 using War3Net.Build.Object;
 using War3Net.Common.Extensions;
 
@@ -19,7 +21,8 @@ namespace War3App.MapAdapter.Object
         {
             try
             {
-                var mapDestructableObjectData = MapDestructableObjectData.Parse(stream);
+                using var reader = new BinaryReader(stream);
+                var mapDestructableObjectData = reader.ReadMapDestructableObjectData();
 
                 try
                 {
@@ -27,8 +30,27 @@ namespace War3App.MapAdapter.Object
                     var knownProperties = DestructableObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet();
 
                     var diagnostics = new List<string>();
-                    var destructables = new List<ObjectModification>();
-                    foreach (var destructable in mapDestructableObjectData.GetData())
+
+                    var baseDestructables = new List<SimpleObjectModification>();
+                    foreach (var destructable in mapDestructableObjectData.BaseDestructables)
+                    {
+                        if (!knownIds.Contains(destructable.OldId))
+                        {
+                            diagnostics.Add($"Unknown base destructable: '{destructable.OldId.ToRawcode()}'");
+                            continue;
+                        }
+
+                        if (destructable.Modifications.Any(property => !knownProperties.Contains(property.Id)))
+                        {
+                            diagnostics.AddRange(destructable.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                            destructable.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
+                        }
+
+                        baseDestructables.Add(destructable);
+                    }
+
+                    var newDestructables = new List<SimpleObjectModification>();
+                    foreach (var destructable in mapDestructableObjectData.NewDestructables)
                     {
                         if (!knownIds.Contains(destructable.OldId))
                         {
@@ -42,21 +64,24 @@ namespace War3App.MapAdapter.Object
                             continue;
                         }
 
-                        if (destructable.Any(property => !knownProperties.Contains(property.Id)))
+                        if (destructable.Modifications.Any(property => !knownProperties.Contains(property.Id)))
                         {
-                            diagnostics.AddRange(destructable.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
-                            destructables.Add(new ObjectModification(destructable.OldId, destructable.NewId, destructable.Where(property => knownProperties.Contains(property.Id)).ToArray()));
+                            diagnostics.AddRange(destructable.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                            destructable.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
                         }
-                        else
-                        {
-                            destructables.Add(destructable);
-                        }
+
+                        newDestructables.Add(destructable);
                     }
 
                     if (diagnostics.Count > 0)
                     {
                         var memoryStream = new MemoryStream();
-                        MapDestructableObjectData.Serialize(new MapDestructableObjectData(destructables.ToArray()), memoryStream, true);
+                        using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
+                        writer.Write(new MapDestructableObjectData(mapDestructableObjectData.FormatVersion)
+                        {
+                            BaseDestructables = baseDestructables,
+                            NewDestructables = newDestructables,
+                        });
 
                         return new AdaptResult
                         {

@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-
-using War3App.MapAdapter.Extensions;
+using System.Text;
 
 using War3Net.Build.Common;
+using War3Net.Build.Extensions;
 using War3Net.Build.Object;
 using War3Net.Common.Extensions;
 
@@ -17,21 +17,12 @@ namespace War3App.MapAdapter.Object
 
         public bool IsTextFile => false;
 
-        public bool CanAdaptFile(string s)
-        {
-            return string.Equals(s.GetFileExtension(), MapAbilityObjectData.FileName.GetFileExtension(), StringComparison.OrdinalIgnoreCase);
-        }
-
-        public bool CanAdaptFile(Stream stream)
-        {
-            return false;
-        }
-
         public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
         {
             try
             {
-                var mapAbilityObjectData = MapAbilityObjectData.Parse(stream);
+                using var reader = new BinaryReader(stream);
+                var mapAbilityObjectData = reader.ReadMapAbilityObjectData();
 
                 try
                 {
@@ -39,8 +30,27 @@ namespace War3App.MapAdapter.Object
                     var knownProperties = AbilityObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet();
 
                     var diagnostics = new List<string>();
-                    var abilities = new List<ObjectModification>();
-                    foreach (var ability in mapAbilityObjectData.GetData())
+
+                    var baseAbilities = new List<LevelObjectModification>();
+                    foreach (var ability in mapAbilityObjectData.BaseAbilities)
+                    {
+                        if (!knownIds.Contains(ability.OldId))
+                        {
+                            diagnostics.Add($"Unknown base ability: '{ability.OldId.ToRawcode()}'");
+                            continue;
+                        }
+
+                        if (ability.Modifications.Any(property => !knownProperties.Contains(property.Id)))
+                        {
+                            diagnostics.AddRange(ability.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                            ability.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
+                        }
+
+                        baseAbilities.Add(ability);
+                    }
+
+                    var newAbilities = new List<LevelObjectModification>();
+                    foreach (var ability in mapAbilityObjectData.NewAbilities)
                     {
                         if (!knownIds.Contains(ability.OldId))
                         {
@@ -54,21 +64,24 @@ namespace War3App.MapAdapter.Object
                             continue;
                         }
 
-                        if (ability.Any(property => !knownProperties.Contains(property.Id)))
+                        if (ability.Modifications.Any(property => !knownProperties.Contains(property.Id)))
                         {
-                            diagnostics.AddRange(ability.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
-                            abilities.Add(new ObjectModification(ability.OldId, ability.NewId, ability.Where(property => knownProperties.Contains(property.Id)).ToArray()));
+                            diagnostics.AddRange(ability.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                            ability.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
                         }
-                        else
-                        {
-                            abilities.Add(ability);
-                        }
+
+                        newAbilities.Add(ability);
                     }
 
                     if (diagnostics.Count > 0)
                     {
                         var memoryStream = new MemoryStream();
-                        MapAbilityObjectData.Serialize(new MapAbilityObjectData(abilities.ToArray()), memoryStream, true);
+                        using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
+                        writer.Write(new MapAbilityObjectData(mapAbilityObjectData.FormatVersion)
+                        {
+                            BaseAbilities = baseAbilities,
+                            NewAbilities = newAbilities,
+                        });
 
                         return new AdaptResult
                         {

@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 using War3Net.Build.Common;
+using War3Net.Build.Extensions;
 using War3Net.Build.Object;
 using War3Net.Common.Extensions;
 
@@ -19,7 +21,8 @@ namespace War3App.MapAdapter.Object
         {
             try
             {
-                var mapUnitObjectData = MapUnitObjectData.Parse(stream);
+                using var reader = new BinaryReader(stream);
+                var mapUnitObjectData = reader.ReadMapUnitObjectData();
 
                 try
                 {
@@ -27,8 +30,27 @@ namespace War3App.MapAdapter.Object
                     var knownProperties = UnitObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet();
 
                     var diagnostics = new List<string>();
-                    var units = new List<ObjectModification>();
-                    foreach (var unit in mapUnitObjectData.GetData())
+
+                    var baseUnits = new List<SimpleObjectModification>();
+                    foreach (var unit in mapUnitObjectData.BaseUnits)
+                    {
+                        if (!knownIds.Contains(unit.OldId))
+                        {
+                            diagnostics.Add($"Unknown base unit: '{unit.OldId.ToRawcode()}'");
+                            continue;
+                        }
+
+                        if (unit.Modifications.Any(property => !knownProperties.Contains(property.Id)))
+                        {
+                            diagnostics.AddRange(unit.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                            unit.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
+                        }
+
+                        baseUnits.Add(unit);
+                    }
+
+                    var newUnits = new List<SimpleObjectModification>();
+                    foreach (var unit in mapUnitObjectData.NewUnits)
                     {
                         if (!knownIds.Contains(unit.OldId))
                         {
@@ -42,21 +64,24 @@ namespace War3App.MapAdapter.Object
                             continue;
                         }
 
-                        if (unit.Any(property => !knownProperties.Contains(property.Id)))
+                        if (unit.Modifications.Any(property => !knownProperties.Contains(property.Id)))
                         {
-                            diagnostics.AddRange(unit.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
-                            units.Add(new ObjectModification(unit.OldId, unit.NewId, unit.Where(property => knownProperties.Contains(property.Id)).ToArray()));
+                            diagnostics.AddRange(unit.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                            unit.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
                         }
-                        else
-                        {
-                            units.Add(unit);
-                        }
+
+                        newUnits.Add(unit);
                     }
 
                     if (diagnostics.Count > 0)
                     {
                         var memoryStream = new MemoryStream();
-                        MapUnitObjectData.Serialize(new MapUnitObjectData(units.ToArray()), memoryStream, true);
+                        using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
+                        writer.Write(new MapUnitObjectData(mapUnitObjectData.FormatVersion)
+                        {
+                            BaseUnits = baseUnits,
+                            NewUnits = newUnits,
+                        });
 
                         return new AdaptResult
                         {

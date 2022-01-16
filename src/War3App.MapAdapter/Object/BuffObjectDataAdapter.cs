@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 using War3Net.Build.Common;
+using War3Net.Build.Extensions;
 using War3Net.Build.Object;
 using War3Net.Common.Extensions;
 
@@ -19,7 +21,8 @@ namespace War3App.MapAdapter.Object
         {
             try
             {
-                var mapBuffObjectData = MapBuffObjectData.Parse(stream);
+                using var reader = new BinaryReader(stream);
+                var mapBuffObjectData = reader.ReadMapBuffObjectData();
 
                 try
                 {
@@ -27,8 +30,27 @@ namespace War3App.MapAdapter.Object
                     var knownProperties = BuffObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet();
 
                     var diagnostics = new List<string>();
-                    var buffs = new List<ObjectModification>();
-                    foreach (var buff in mapBuffObjectData.GetData())
+
+                    var baseBuffs = new List<SimpleObjectModification>();
+                    foreach (var buff in mapBuffObjectData.BaseBuffs)
+                    {
+                        if (!knownIds.Contains(buff.OldId))
+                        {
+                            diagnostics.Add($"Unknown base buff: '{buff.OldId.ToRawcode()}'");
+                            continue;
+                        }
+
+                        if (buff.Modifications.Any(property => !knownProperties.Contains(property.Id)))
+                        {
+                            diagnostics.AddRange(buff.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                            buff.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
+                        }
+
+                        baseBuffs.Add(buff);
+                    }
+
+                    var newBuffs = new List<SimpleObjectModification>();
+                    foreach (var buff in mapBuffObjectData.NewBuffs)
                     {
                         if (!knownIds.Contains(buff.OldId))
                         {
@@ -42,21 +64,24 @@ namespace War3App.MapAdapter.Object
                             continue;
                         }
 
-                        if (buff.Any(property => !knownProperties.Contains(property.Id)))
+                        if (buff.Modifications.Any(property => !knownProperties.Contains(property.Id)))
                         {
-                            diagnostics.AddRange(buff.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
-                            buffs.Add(new ObjectModification(buff.OldId, buff.NewId, buff.Where(property => knownProperties.Contains(property.Id)).ToArray()));
+                            diagnostics.AddRange(buff.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                            buff.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
                         }
-                        else
-                        {
-                            buffs.Add(buff);
-                        }
+
+                        newBuffs.Add(buff);
                     }
 
                     if (diagnostics.Count > 0)
                     {
                         var memoryStream = new MemoryStream();
-                        MapBuffObjectData.Serialize(new MapBuffObjectData(buffs.ToArray()), memoryStream, true);
+                        using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
+                        writer.Write(new MapBuffObjectData(mapBuffObjectData.FormatVersion)
+                        {
+                            BaseBuffs = baseBuffs,
+                            NewBuffs = newBuffs,
+                        });
 
                         return new AdaptResult
                         {

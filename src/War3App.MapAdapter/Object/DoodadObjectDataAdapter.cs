@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 using War3Net.Build.Common;
+using War3Net.Build.Extensions;
 using War3Net.Build.Object;
 using War3Net.Common.Extensions;
 
@@ -19,7 +21,8 @@ namespace War3App.MapAdapter.Object
         {
             try
             {
-                var mapDoodadObjectData = MapDoodadObjectData.Parse(stream);
+                using var reader = new BinaryReader(stream);
+                var mapDoodadObjectData = reader.ReadMapDoodadObjectData();
 
                 try
                 {
@@ -27,8 +30,27 @@ namespace War3App.MapAdapter.Object
                     var knownProperties = DoodadObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet();
 
                     var diagnostics = new List<string>();
-                    var doodads = new List<ObjectModification>();
-                    foreach (var doodad in mapDoodadObjectData.GetData())
+
+                    var baseDoodads = new List<VariationObjectModification>();
+                    foreach (var doodad in mapDoodadObjectData.BaseDoodads)
+                    {
+                        if (!knownIds.Contains(doodad.OldId))
+                        {
+                            diagnostics.Add($"Unknown base doodad: '{doodad.OldId.ToRawcode()}'");
+                            continue;
+                        }
+
+                        if (doodad.Modifications.Any(property => !knownProperties.Contains(property.Id)))
+                        {
+                            diagnostics.AddRange(doodad.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                            doodad.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
+                        }
+
+                        baseDoodads.Add(doodad);
+                    }
+
+                    var newDoodads = new List<VariationObjectModification>();
+                    foreach (var doodad in mapDoodadObjectData.NewDoodads)
                     {
                         if (!knownIds.Contains(doodad.OldId))
                         {
@@ -42,21 +64,24 @@ namespace War3App.MapAdapter.Object
                             continue;
                         }
 
-                        if (doodad.Any(property => !knownProperties.Contains(property.Id)))
+                        if (doodad.Modifications.Any(property => !knownProperties.Contains(property.Id)))
                         {
-                            diagnostics.AddRange(doodad.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
-                            doodads.Add(new ObjectModification(doodad.OldId, doodad.NewId, doodad.Where(property => knownProperties.Contains(property.Id)).ToArray()));
+                            diagnostics.AddRange(doodad.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                            doodad.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
                         }
-                        else
-                        {
-                            doodads.Add(doodad);
-                        }
+
+                        newDoodads.Add(doodad);
                     }
 
                     if (diagnostics.Count > 0)
                     {
                         var memoryStream = new MemoryStream();
-                        MapDoodadObjectData.Serialize(new MapDoodadObjectData(doodads.ToArray()), memoryStream, true);
+                        using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
+                        writer.Write(new MapDoodadObjectData(mapDoodadObjectData.FormatVersion)
+                        {
+                            BaseDoodads = baseDoodads,
+                            NewDoodads = newDoodads,
+                        });
 
                         return new AdaptResult
                         {

@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 using War3Net.Build.Common;
+using War3Net.Build.Extensions;
 using War3Net.Build.Object;
 using War3Net.Common.Extensions;
 
@@ -19,7 +21,8 @@ namespace War3App.MapAdapter.Object
         {
             try
             {
-                var mapUpgradeObjectData = MapUpgradeObjectData.Parse(stream);
+                using var reader = new BinaryReader(stream);
+                var mapUpgradeObjectData = reader.ReadMapUpgradeObjectData();
 
                 try
                 {
@@ -27,8 +30,27 @@ namespace War3App.MapAdapter.Object
                     var knownProperties = UpgradeObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet();
 
                     var diagnostics = new List<string>();
-                    var upgrades = new List<ObjectModification>();
-                    foreach (var upgrade in mapUpgradeObjectData.GetData())
+
+                    var baseUpgrades = new List<LevelObjectModification>();
+                    foreach (var upgrade in mapUpgradeObjectData.BaseUpgrades)
+                    {
+                        if (!knownIds.Contains(upgrade.OldId))
+                        {
+                            diagnostics.Add($"Unknown base upgrade: '{upgrade.OldId.ToRawcode()}'");
+                            continue;
+                        }
+
+                        if (upgrade.Modifications.Any(property => !knownProperties.Contains(property.Id)))
+                        {
+                            diagnostics.AddRange(upgrade.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                            upgrade.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
+                        }
+
+                        baseUpgrades.Add(upgrade);
+                    }
+
+                    var newUpgrades = new List<LevelObjectModification>();
+                    foreach (var upgrade in mapUpgradeObjectData.NewUpgrades)
                     {
                         if (!knownIds.Contains(upgrade.OldId))
                         {
@@ -42,21 +64,24 @@ namespace War3App.MapAdapter.Object
                             continue;
                         }
 
-                        if (upgrade.Any(property => !knownProperties.Contains(property.Id)))
+                        if (upgrade.Modifications.Any(property => !knownProperties.Contains(property.Id)))
                         {
-                            diagnostics.AddRange(upgrade.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
-                            upgrades.Add(new ObjectModification(upgrade.OldId, upgrade.NewId, upgrade.Where(property => knownProperties.Contains(property.Id)).ToArray()));
+                            diagnostics.AddRange(upgrade.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                            upgrade.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
                         }
-                        else
-                        {
-                            upgrades.Add(upgrade);
-                        }
+
+                        newUpgrades.Add(upgrade);
                     }
 
                     if (diagnostics.Count > 0)
                     {
                         var memoryStream = new MemoryStream();
-                        MapUpgradeObjectData.Serialize(new MapUpgradeObjectData(upgrades.ToArray()), memoryStream, true);
+                        using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
+                        writer.Write(new MapUpgradeObjectData(mapUpgradeObjectData.FormatVersion)
+                        {
+                            BaseUpgrades = baseUpgrades,
+                            NewUpgrades = newUpgrades,
+                        });
 
                         return new AdaptResult
                         {
