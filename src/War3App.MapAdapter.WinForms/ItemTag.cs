@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -100,15 +99,17 @@ namespace War3App.MapAdapter.WinForms
             mpqFile = null;
             return false;
         }
-        
-        public ulong GetHashedFileName()
+
+        public bool TryGetHashedFileName(out ulong hashedFileName)
         {
             if (FileName is null)
             {
-                throw new NotImplementedException();
+                hashedFileName = default;
+                return false;
             }
 
-            return MpqHash.GetHashedFileName(FileName);
+            hashedFileName = MpqHash.GetHashedFileName(FileName);
+            return true;
         }
 
         public GamePatch GetOriginPatch(GamePatch defaultPatch)

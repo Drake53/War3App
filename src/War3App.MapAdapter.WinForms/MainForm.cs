@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
+using War3App.Common.WinForms.Extensions;
 using War3App.MapAdapter.Info;
 using War3App.MapAdapter.WinForms.Extensions;
 
@@ -163,7 +164,7 @@ namespace War3App.MapAdapter.WinForms
             });
 
             _fileList.FullRowSelect = true;
-            _fileList.MultiSelect = false;
+            _fileList.MultiSelect = true;
 
             _fileList.HeaderStyle = ColumnHeaderStyle.Clickable;
 
@@ -244,6 +245,14 @@ namespace War3App.MapAdapter.WinForms
                 }
 
                 UpdateDiagnosticsDisplay();
+            };
+
+            _fileList.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Delete)
+                {
+                    OnClickRemoveSelected(s, e);
+                }
             };
 
             _fileList.SelectedIndexChanged += (s, e) =>
@@ -502,7 +511,7 @@ namespace War3App.MapAdapter.WinForms
             }
             else
             {
-                _diagnosticsDisplay.Text = string.Empty;
+                _diagnosticsDisplay.Text = $"{_fileList.SelectedItems.Count} files selected.";
             }
         }
 
@@ -522,22 +531,24 @@ namespace War3App.MapAdapter.WinForms
                 var mapsList = new HashSet<string>();
                 if (_archive.IsCampaignArchive(out var campaignInfo))
                 {
-                    for (var i = 0; i < campaignInfo.MapCount; i++)
+                    for (var i = 0; i < campaignInfo.Maps.Count; i++)
                     {
-                        mapsList.Add(campaignInfo.GetMap(i).MapFilePath);
+                        mapsList.Add(campaignInfo.Maps[i].MapFilePath);
                     }
                 }
                 else
                 {
-                    _originPatch = MapInfo.Parse(_archive.OpenFile(MapInfo.FileName)).GetOriginGamePatch();
+                    using var mpqStream = _archive.OpenFile(MapInfo.FileName);
+                    using var reader = new BinaryReader(mpqStream);
+                    _originPatch = reader.ReadMapInfo().GetOriginGamePatch();
                 }
 
                 var possibleOriginPatches = new HashSet<GamePatch>();
                 foreach (var file in _archive)
                 {
-                    if (mapsList.Contains(file.Filename))
+                    if (mapsList.Contains(file.FileName))
                     {
-                        var map = file.Filename;
+                        var map = file.FileName;
 
                         using var mapArchiveStream = _archive.OpenFile(map);
                         using var mapArchive = MpqArchive.Open(mapArchiveStream, true);
@@ -553,7 +564,9 @@ namespace War3App.MapAdapter.WinForms
 
                         using (var mapInfoFileStream = mapArchive.OpenFile(MapInfo.FileName))
                         {
-                            var mapArchiveOriginPatch = MapInfo.Parse(mapInfoFileStream).GetOriginGamePatch();
+                            using var reader = new BinaryReader(mapInfoFileStream);
+                            var mapArchiveOriginPatch = reader.ReadMapInfo().GetOriginGamePatch();
+
                             var mapArchiveItem = ListViewItemExtensions.Create(new ItemTag(_archive, file, children.ToArray(), mapArchiveOriginPatch));
 
                             _fileList.Items.Add(mapArchiveItem);
@@ -653,13 +666,27 @@ namespace War3App.MapAdapter.WinForms
 
                 if (tag.Status == MapFileStatus.Removed)
                 {
-                    archiveBuilder.RemoveFile(tag.GetHashedFileName());
+                    if (tag.TryGetHashedFileName(out var hashedFileName))
+                    {
+                        archiveBuilder.RemoveFile(hashedFileName);
+                    }
+                    else
+                    {
+                        archiveBuilder.RemoveFile(_archive, tag.MpqEntry);
+                    }
                 }
                 else if (tag.Children != null)
                 {
                     if (tag.Children.All(child => child.Status == MapFileStatus.Removed))
                     {
-                        archiveBuilder.RemoveFile(tag.GetHashedFileName());
+                        if (tag.TryGetHashedFileName(out var hashedFileName))
+                        {
+                            archiveBuilder.RemoveFile(hashedFileName);
+                        }
+                        else
+                        {
+                            archiveBuilder.RemoveFile(_archive, tag.MpqEntry);
+                        }
                     }
                     else if (tag.Children.Any(child => child.IsModified || child.Status == MapFileStatus.Removed))
                     {
@@ -669,7 +696,7 @@ namespace War3App.MapAdapter.WinForms
                         {
                             if (child.FileName != null)
                             {
-                                subArchive.AddFilename(child.FileName);
+                                subArchive.AddFileName(child.FileName);
                             }
                         }
 
@@ -678,7 +705,14 @@ namespace War3App.MapAdapter.WinForms
                         {
                             if (child.Status == MapFileStatus.Removed)
                             {
-                                subArchiveBuilder.RemoveFile(child.GetHashedFileName());
+                                if (child.TryGetHashedFileName(out var hashedFileName))
+                                {
+                                    subArchiveBuilder.RemoveFile(hashedFileName);
+                                }
+                                else
+                                {
+                                    subArchiveBuilder.RemoveFile(subArchive, child.MpqEntry);
+                                }
                             }
                             else if (child.TryGetModifiedMpqFile(out var subArchiveAdaptedFile))
                             {
