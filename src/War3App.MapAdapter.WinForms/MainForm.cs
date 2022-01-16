@@ -18,8 +18,8 @@ namespace War3App.MapAdapter.WinForms
 {
     internal static class MainForm
     {
-        private const string Title = "Map Adapter v0.9.2";
-
+        private const string Title = "Map Adapter v0.9.3";
+        
         private const GamePatch LatestPatch = GamePatch.v1_32_9;
 
         private static MpqArchive _archive;
