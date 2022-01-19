@@ -11,7 +11,7 @@ namespace War3App.MapAdapter.Modeling
 
         public bool IsTextFile => false;
 
-        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
         {
             try
             {
@@ -28,7 +28,7 @@ namespace War3App.MapAdapter.Modeling
                     if (chunkTag == "VERS")
                     {
                         var version = reader.ReadUInt32();
-                        if (version > 800 && targetPatch < GamePatch.v1_32_0)
+                        if (version > 800 && targetPatch.Patch < GamePatch.v1_32_0)
                         {
                             return new AdaptResult
                             {

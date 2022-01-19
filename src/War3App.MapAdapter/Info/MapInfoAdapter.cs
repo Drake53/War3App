@@ -16,7 +16,7 @@ namespace War3App.MapAdapter.Info
 
         public bool IsTextFile => false;
 
-        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
         {
             MapInfo mapInfo;
             try
@@ -35,7 +35,7 @@ namespace War3App.MapAdapter.Info
 
             try
             {
-                if (mapInfo.GetMinimumPatch() <= targetPatch)
+                if (mapInfo.GetMinimumPatch() <= targetPatch.Patch)
                 {
                     return new AdaptResult
                     {
@@ -43,7 +43,7 @@ namespace War3App.MapAdapter.Info
                     };
                 }
 
-                if (mapInfo.TryDowngrade(targetPatch))
+                if (mapInfo.TryDowngrade(targetPatch.Patch))
                 {
                     var newMapInfoFileStream = new MemoryStream();
                     using var writer = new BinaryWriter(newMapInfoFileStream, new UTF8Encoding(false, true), true);

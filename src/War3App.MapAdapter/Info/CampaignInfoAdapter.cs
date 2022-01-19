@@ -15,14 +15,14 @@ namespace War3App.MapAdapter.Info
 
         public bool IsTextFile => false;
 
-        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
         {
             try
             {
                 using var reader = new BinaryReader(stream);
                 var campaignInfo = reader.ReadCampaignInfo();
 
-                var targetPatchEditorVersion = targetPatch.GetEditorVersion();
+                var targetPatchEditorVersion = targetPatch.Patch.GetEditorVersion();
                 if (campaignInfo.EditorVersion == targetPatchEditorVersion)
                 {
                     return new AdaptResult

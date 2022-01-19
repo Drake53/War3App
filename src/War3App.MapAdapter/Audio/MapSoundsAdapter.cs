@@ -13,13 +13,13 @@ namespace War3App.MapAdapter.Audio
 
         public bool IsTextFile => false;
 
-        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
         {
             try
             {
                 using var reader = new BinaryReader(stream);
                 var mapSounds = reader.ReadMapSounds();
-                if (mapSounds.GetMinimumPatch() <= targetPatch)
+                if (mapSounds.GetMinimumPatch() <= targetPatch.Patch)
                 {
                     return new AdaptResult
                     {
@@ -29,7 +29,7 @@ namespace War3App.MapAdapter.Audio
 
                 try
                 {
-                    if (mapSounds.TryDowngrade(targetPatch))
+                    if (mapSounds.TryDowngrade(targetPatch.Patch))
                     {
                         var newMapSoundsFileStream = new MemoryStream();
                         using var writer = new BinaryWriter(newMapSoundsFileStream, new UTF8Encoding(false, true), true);

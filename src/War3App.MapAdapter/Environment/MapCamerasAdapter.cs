@@ -13,13 +13,13 @@ namespace War3App.MapAdapter.Environment
 
         public bool IsTextFile => false;
 
-        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
         {
             try
             {
                 using var reader = new BinaryReader(stream);
                 var mapCameras = reader.ReadMapCameras();
-                if (mapCameras.GetMinimumPatch() <= targetPatch)
+                if (mapCameras.GetMinimumPatch() <= targetPatch.Patch)
                 {
                     return new AdaptResult
                     {
@@ -29,7 +29,7 @@ namespace War3App.MapAdapter.Environment
 
                 try
                 {
-                    if (mapCameras.TryDowngrade(targetPatch))
+                    if (mapCameras.TryDowngrade(targetPatch.Patch))
                     {
                         var newMapCamerasFileStream = new MemoryStream();
                         using var writer = new BinaryWriter(newMapCamerasFileStream, new UTF8Encoding(false, true), true);

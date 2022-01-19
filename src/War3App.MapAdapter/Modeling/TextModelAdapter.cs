@@ -10,7 +10,7 @@ namespace War3App.MapAdapter.Modeling
 
         public bool IsTextFile => true;
 
-        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
         {
             // TODO
             return new AdaptResult
