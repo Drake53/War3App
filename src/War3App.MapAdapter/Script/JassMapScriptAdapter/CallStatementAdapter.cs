@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
+using War3Net.CodeAnalysis.Jass;
 using War3Net.CodeAnalysis.Jass.Syntax;
 
 namespace War3App.MapAdapter.Script
@@ -8,22 +9,28 @@ namespace War3App.MapAdapter.Script
     {
         private bool TryAdaptCallStatement(JassMapScriptAdapterContext context, JassCallStatementSyntax callStatement, [NotNullWhen(true)] out IStatementSyntax? adaptedCallStatement)
         {
-            if (context.KnownFunctions.TryGetValue(callStatement.IdentifierName.Name, out var knownFunctionParameters))
+            if (TryAdaptInvocation(context, callStatement, out var adaptedInvocationName, out var adaptedInvocationArguments))
             {
-                if (knownFunctionParameters.Length != callStatement.Arguments.Arguments.Length)
+                if (string.IsNullOrEmpty(adaptedInvocationName))
                 {
-                    context.Diagnostics.Add($"Invalid function invocation: '{callStatement.IdentifierName}' expected {knownFunctionParameters.Length} parameters but got {callStatement.Arguments.Arguments.Length}.");
+                    adaptedCallStatement = new JassCommentStatementSyntax(callStatement.ToString());
                 }
-            }
-            else
-            {
-                context.Diagnostics.Add($"Unknown function '{callStatement.IdentifierName}'.");
+                else if (TryAdaptArgumentList(context, adaptedInvocationArguments, out var adaptedArguments))
+                {
+                    adaptedCallStatement = JassSyntaxFactory.CallStatement(
+                        adaptedInvocationName,
+                        adaptedArguments);
+                }
+                else
+                {
+                    adaptedCallStatement = JassSyntaxFactory.CallStatement(
+                        adaptedInvocationName,
+                        adaptedInvocationArguments);
+                }
 
-                adaptedCallStatement = new JassCommentStatementSyntax(callStatement.ToString());
                 return true;
             }
-
-            if (TryAdaptArgumentList(context, callStatement.Arguments, out var adaptedArguments))
+            else if (TryAdaptArgumentList(context, callStatement.Arguments, out var adaptedArguments))
             {
                 adaptedCallStatement = new JassCallStatementSyntax(
                     callStatement.IdentifierName,

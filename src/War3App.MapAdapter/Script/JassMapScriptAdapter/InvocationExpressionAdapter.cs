@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
+using War3Net.CodeAnalysis.Jass;
 using War3Net.CodeAnalysis.Jass.Syntax;
 
 namespace War3App.MapAdapter.Script
@@ -8,19 +9,29 @@ namespace War3App.MapAdapter.Script
     {
         private bool TryAdaptInvocationExpression(JassMapScriptAdapterContext context, JassInvocationExpressionSyntax invocationExpression, [NotNullWhen(true)] out IExpressionSyntax? adaptedInvocationExpression)
         {
-            if (context.KnownFunctions.TryGetValue(invocationExpression.IdentifierName.Name, out var knownFunctionParameters))
+            if (TryAdaptInvocation(context, invocationExpression, out var adaptedInvocationName, out var adaptedInvocationArguments))
             {
-                if (knownFunctionParameters.Length != invocationExpression.Arguments.Arguments.Length)
+                if (string.IsNullOrEmpty(adaptedInvocationName))
                 {
-                    context.Diagnostics.Add($"Invalid function invocation: '{invocationExpression.IdentifierName}' expected {knownFunctionParameters.Length} parameters but got {invocationExpression.Arguments.Arguments.Length}.");
+                    context.Diagnostics.Add($"Invocation expression of function '{invocationExpression.IdentifierName}' should be removed.");
+                    adaptedInvocationExpression = invocationExpression;
                 }
-            }
-            else
-            {
-                context.Diagnostics.Add($"Unknown function '{invocationExpression.IdentifierName}'.");
-            }
+                else if (TryAdaptArgumentList(context, adaptedInvocationArguments, out var adaptedArguments))
+                {
+                    adaptedInvocationExpression = JassSyntaxFactory.InvocationExpression(
+                        adaptedInvocationName,
+                        adaptedArguments);
+                }
+                else
+                {
+                    adaptedInvocationExpression = JassSyntaxFactory.InvocationExpression(
+                        adaptedInvocationName,
+                        adaptedInvocationArguments);
+                }
 
-            if (TryAdaptArgumentList(context, invocationExpression.Arguments, out var adaptedArguments))
+                return true;
+            }
+            else if (TryAdaptArgumentList(context, invocationExpression.Arguments, out var adaptedArguments))
             {
                 adaptedInvocationExpression = new JassInvocationExpressionSyntax(
                     invocationExpression.IdentifierName,
