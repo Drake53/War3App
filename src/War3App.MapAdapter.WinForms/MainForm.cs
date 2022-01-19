@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
+using Microsoft.Extensions.Configuration;
+
 using War3App.Common.WinForms.Extensions;
 using War3App.MapAdapter.Info;
 using War3App.MapAdapter.WinForms.Extensions;
@@ -18,9 +20,9 @@ namespace War3App.MapAdapter.WinForms
 {
     internal static class MainForm
     {
-        private const string Title = "Map Adapter v0.9.3";
-        
-        private const GamePatch LatestPatch = GamePatch.v1_32_9;
+        private const string Title = "Map Adapter v1.0.0";
+
+        private const GamePatch LatestPatch = GamePatch.v1_32_10;
 
         private static MpqArchive _archive;
 
@@ -44,9 +46,24 @@ namespace War3App.MapAdapter.WinForms
 
         private static TextBox _diagnosticsDisplay;
 
+        private static AppSettings _appSettings;
+
         [STAThread]
         private static void Main(string[] args)
         {
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
+                .Build();
+
+            _appSettings = new AppSettings
+            {
+                TargetPatches = configuration.GetSection(nameof(AppSettings.TargetPatches)).GetChildren().Select(targetPatch => new TargetPatch
+                {
+                    Patch = Enum.Parse<GamePatch>(targetPatch.GetSection(nameof(TargetPatch.Patch)).Value),
+                    GameDataPath = targetPatch.GetSection(nameof(TargetPatch.GameDataPath)).Value,
+                }).ToList(),
+            };
+
             _watcher = new FileSystemWatcher();
             _watcher.Created += OnWatchedFileEvent;
             _watcher.Renamed += OnWatchedFileEvent;
@@ -229,7 +246,7 @@ namespace War3App.MapAdapter.WinForms
                     if (adapter != null && (tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified))
                     {
                         tag.CurrentStream.Position = 0;
-                        var adaptResult = adapter.AdaptFile(tag.CurrentStream, _targetPatch.Value, tag.GetOriginPatch(_originPatch.Value));
+                        var adaptResult = adapter.AdaptFile(tag.CurrentStream, GetTargetPatch(_targetPatch.Value), tag.GetOriginPatch(_originPatch.Value));
                         tag.UpdateAdaptResult(adaptResult);
 
                         if (tag.Parent != null)
@@ -415,7 +432,7 @@ namespace War3App.MapAdapter.WinForms
                         if (adapter != null && (child.Status == MapFileStatus.Pending || child.Status == MapFileStatus.Modified))
                         {
                             tag.CurrentStream.Position = 0;
-                            var adaptResult = adapter.AdaptFile(child.CurrentStream, _targetPatch.Value, child.GetOriginPatch(_originPatch.Value));
+                            var adaptResult = adapter.AdaptFile(child.CurrentStream, GetTargetPatch(_targetPatch.Value), child.GetOriginPatch(_originPatch.Value));
                             child.UpdateAdaptResult(adaptResult);
                         }
                     }
@@ -428,7 +445,7 @@ namespace War3App.MapAdapter.WinForms
                     if (adapter != null)
                     {
                         tag.CurrentStream.Position = 0;
-                        var adaptResult = adapter.AdaptFile(tag.CurrentStream, _targetPatch.Value, tag.GetOriginPatch(_originPatch.Value));
+                        var adaptResult = adapter.AdaptFile(tag.CurrentStream, GetTargetPatch(_targetPatch.Value), tag.GetOriginPatch(_originPatch.Value));
                         tag.UpdateAdaptResult(adaptResult);
 
                         if (tag.Parent != null)
@@ -594,15 +611,7 @@ namespace War3App.MapAdapter.WinForms
                     _originPatch = possibleOriginPatches.Single();
                 }
 
-                // TODO: Add object data for latest patch (and 1.28, 1.30) to prevent adapter errors.
-                var targetPatches = new HashSet<object>(new object[]
-                {
-                    GamePatch.v1_28,
-                    GamePatch.v1_29_0,
-                    GamePatch.v1_30_0,
-                    GamePatch.v1_31_0,
-                    // LatestPatch,
-                });
+                var targetPatches = new HashSet<object>(_appSettings.TargetPatches.Select(targetPatch => (object)targetPatch.Patch));
 
                 if (_originPatch is null)
                 {
@@ -739,6 +748,11 @@ namespace War3App.MapAdapter.WinForms
             {
                 archiveBuilder.SaveWithPreArchiveData(fileStream);
             }
+        }
+
+        private static TargetPatch GetTargetPatch(GamePatch patch)
+        {
+            return _appSettings.TargetPatches.First(targetPatch => targetPatch.Patch == patch);
         }
     }
 }
