@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -19,6 +20,33 @@ namespace War3App.MapAdapter.Script
             {
                 using var reader = new BinaryReader(stream);
                 var mapTriggers = reader.ReadMapTriggers();
+
+                try
+                {
+                    var triggerDataText = File.ReadAllText(Path.Combine(targetPatch.GameDataPath, PathConstants.TriggerDataPath));
+                    var triggerDataReader = new StringReader(triggerDataText);
+                    var triggerData = triggerDataReader.ReadTriggerData();
+
+                    stream.Position = 0;
+                    reader.ReadMapTriggers(triggerData);
+                }
+                catch (KeyNotFoundException e)
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Incompatible,
+                        Diagnostics = new[] { e.Message },
+                    };
+                }
+                catch (Exception e)
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.ParseError,
+                        Diagnostics = new[] { e.Message },
+                    };
+                }
+
                 if (mapTriggers.GetMinimumPatch() <= targetPatch.Patch)
                 {
                     return new AdaptResult
