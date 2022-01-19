@@ -29,26 +29,6 @@ namespace War3App.MapAdapter.Script
                     var diagnostics = new List<string>();
                     var regexDiagnostics = new List<RegexDiagnostic>();
 
-                    // Find incompatible types
-                    var incompatibleTypes = new HashSet<string>(CommonTypesProvider.GetTypes(targetPatch.Patch, originPatch));
-
-                    foreach (var incompatibleType in incompatibleTypes)
-                    {
-                        var regex = new Regex($"\\b{incompatibleType}\\b");
-                        var matches = regex.Matches(scriptText);
-                        var usageCount = matches.Count;
-                        if (usageCount > 0)
-                        {
-                            diagnostics.Add($"Found incompatible type: '{incompatibleType}' ({usageCount}x)");
-                            regexDiagnostics.Add(new RegexDiagnostic
-                            {
-                                DisplayText = $"Type: '{incompatibleType}'",
-                                Matches = usageCount,
-                                Regex = regex,
-                            });
-                        }
-                    }
-
                     // Find incompatible identifiers
                     var incompatibleIdentifiers = new HashSet<string>();
                     incompatibleIdentifiers.UnionWith(CommonIdentifiersProvider.GetIdentifiers(targetPatch.Patch, originPatch));
