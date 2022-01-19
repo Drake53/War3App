@@ -66,6 +66,18 @@ namespace War3App.MapAdapter.Info
                         {
                             return GamePatch.v1_32_7;
                         }
+                        else if (mapInfo.GameVersion.Build == 8)
+                        {
+                            return GamePatch.v1_32_8;
+                        }
+                        else if (mapInfo.GameVersion.Build == 9)
+                        {
+                            return GamePatch.v1_32_9;
+                        }
+                        else if (mapInfo.GameVersion.Build == 10)
+                        {
+                            return GamePatch.v1_32_10;
+                        }
                         else
                         {
                             return null;
