@@ -100,7 +100,17 @@ namespace War3App.MapAdapter.WinForms
             {
                 if (!string.IsNullOrEmpty(searchBox.Text))
                 {
-                    GoToNextRegexMatch(new Regex(searchBox.Text));
+                    Regex searchRegex;
+                    try
+                    {
+                        searchRegex = new Regex(searchBox.Text);
+                    }
+                    catch (RegexParseException)
+                    {
+                        return;
+                    }
+
+                    GoToNextRegexMatch(searchRegex);
                 }
             };
 
