@@ -4,8 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-using War3App.MapAdapter.Extensions;
-
 using War3Net.Build.Common;
 
 namespace War3App.MapAdapter.Script
@@ -16,7 +14,7 @@ namespace War3App.MapAdapter.Script
 
         public bool IsTextFile => true;
 
-        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
         {
             try
             {
@@ -32,7 +30,7 @@ namespace War3App.MapAdapter.Script
                     var regexDiagnostics = new List<RegexDiagnostic>();
 
                     // Find incompatible types
-                    var incompatibleTypes = new HashSet<string>(CommonTypesProvider.GetTypes(targetPatch, originPatch));
+                    var incompatibleTypes = new HashSet<string>(CommonTypesProvider.GetTypes(targetPatch.Patch, originPatch));
 
                     foreach (var incompatibleType in incompatibleTypes)
                     {
@@ -53,8 +51,8 @@ namespace War3App.MapAdapter.Script
 
                     // Find incompatible identifiers
                     var incompatibleIdentifiers = new HashSet<string>();
-                    incompatibleIdentifiers.UnionWith(CommonIdentifiersProvider.GetIdentifiers(targetPatch, originPatch));
-                    incompatibleIdentifiers.UnionWith(BlizzardIdentifiersProvider.GetIdentifiers(targetPatch, originPatch));
+                    incompatibleIdentifiers.UnionWith(CommonIdentifiersProvider.GetIdentifiers(targetPatch.Patch, originPatch));
+                    incompatibleIdentifiers.UnionWith(BlizzardIdentifiersProvider.GetIdentifiers(targetPatch.Patch, originPatch));
 
                     foreach (var incompatibleIdentifier in incompatibleIdentifiers)
                     {
@@ -75,18 +73,18 @@ namespace War3App.MapAdapter.Script
 
                     // Find incompatible audio formats
                     var incompatibleAudioFormats = new HashSet<string>();
-                    if (targetPatch < GamePatch.v1_32_0)
+                    if (targetPatch.Patch < GamePatch.v1_32_0)
                     {
                         incompatibleAudioFormats.Add("flac");
                     }
-                    if (targetPatch < GamePatch.v1_30_0 || targetPatch > GamePatch.v1_30_4)
+                    if (targetPatch.Patch < GamePatch.v1_30_0 || targetPatch.Patch > GamePatch.v1_30_4)
                     {
                         incompatibleAudioFormats.Add("ogg");
                     }
 
                     foreach (var incompatibleAudioFormat in incompatibleAudioFormats)
                     {
-                        var regex = new Regex($"\"(\\w|/)+.{incompatibleAudioFormat}\"");
+                        var regex = new Regex($"\"(\\w|/|\\\\)+.{incompatibleAudioFormat}\"");
                         var matches = regex.Matches(scriptText);
                         var usageCount = matches.Count;
                         if (usageCount > 0)
@@ -103,9 +101,9 @@ namespace War3App.MapAdapter.Script
 
                     // Find incompatible frame names
                     var incompatibleFrameNames = new HashSet<string>();
-                    if (targetPatch >= GamePatch.v1_31_0)
+                    if (targetPatch.Patch >= GamePatch.v1_31_0)
                     {
-                        incompatibleFrameNames.UnionWith(FrameNamesProvider.GetFrameNames(targetPatch, originPatch).Select(frame => frame.name));
+                        incompatibleFrameNames.UnionWith(FrameNamesProvider.GetFrameNames(targetPatch.Patch, originPatch).Select(frame => frame.name));
                     }
 
                     foreach (var incompatibleFrameName in incompatibleFrameNames)
