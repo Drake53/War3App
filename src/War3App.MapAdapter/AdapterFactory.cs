@@ -134,7 +134,7 @@ namespace War3App.MapAdapter
             yield return new(MapCustomTextTriggers.FileName.GetFileExtension(), new MapCustomTextTriggersAdapter());
             yield return new(MapTriggers.FileName.GetFileExtension(), new MapTriggersAdapter());
             yield return new(MapTriggerStrings.FileName.GetFileExtension(), new MapTriggerStringsAdapter());
-            yield return new(JassMapScript.FileName.GetFileExtension(), new MapScriptRegexAdapter());
+            yield return new(JassMapScript.FileName.GetFileExtension(), new JassMapScriptAdapter());
             yield return new(LuaMapScript.FileName.GetFileExtension(), new MapScriptRegexAdapter());
         }
     }
