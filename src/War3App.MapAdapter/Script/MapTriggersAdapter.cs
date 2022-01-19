@@ -13,13 +13,13 @@ namespace War3App.MapAdapter.Script
 
         public bool IsTextFile => false;
 
-        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
         {
             try
             {
                 using var reader = new BinaryReader(stream);
                 var mapTriggers = reader.ReadMapTriggers();
-                if (mapTriggers.GetMinimumPatch() <= targetPatch)
+                if (mapTriggers.GetMinimumPatch() <= targetPatch.Patch)
                 {
                     return new AdaptResult
                     {
@@ -29,7 +29,7 @@ namespace War3App.MapAdapter.Script
 
                 try
                 {
-                    if (mapTriggers.TryDowngrade(targetPatch))
+                    if (mapTriggers.TryDowngrade(targetPatch.Patch))
                     {
                         var newMapTriggersFileStream = new MemoryStream();
                         using var writer = new BinaryWriter(newMapTriggersFileStream, new UTF8Encoding(false, true), true);
