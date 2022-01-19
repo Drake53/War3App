@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
+using War3App.MapAdapter.Extensions;
+
 using War3Net.Build.Common;
 using War3Net.Build.Extensions;
 using War3Net.Build.Object;
@@ -17,7 +19,7 @@ namespace War3App.MapAdapter.Object
 
         public bool IsTextFile => false;
 
-        public AdaptResult AdaptFile(Stream stream, GamePatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
         {
             try
             {
@@ -26,8 +28,11 @@ namespace War3App.MapAdapter.Object
 
                 try
                 {
-                    var knownIds = DoodadObjectDataProvider.GetRawcodes(targetPatch).ToHashSet();
-                    var knownProperties = DoodadObjectDataProvider.GetPropertyRawcodes(targetPatch).ToHashSet();
+                    var knownIds = new HashSet<int>();
+                    knownIds.AddItemsFromSylkTable(Path.Combine(targetPatch.GameDataPath, PathConstants.DoodadDataPath), DataConstants.DoodadDataKeyColumn);
+
+                    var knownProperties = new HashSet<int>();
+                    knownProperties.AddItemsFromSylkTable(Path.Combine(targetPatch.GameDataPath, PathConstants.DoodadMetaDataPath), DataConstants.MetaDataIdColumn);
 
                     var diagnostics = new List<string>();
 
