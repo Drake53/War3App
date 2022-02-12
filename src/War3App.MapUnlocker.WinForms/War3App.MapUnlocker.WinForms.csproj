@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="War3Net.Build" Version="5.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\War3App.Common.WinForms\War3App.Common.WinForms.csproj" />
+    <ProjectReference Include="..\War3App.MapUnlocker\War3App.MapUnlocker.csproj" />
+  </ItemGroup>
+
+</Project>
