@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -8,13 +7,12 @@ using System.Windows.Forms;
 
 using War3App.Common.WinForms;
 using War3App.Common.WinForms.Extensions;
+using War3App.MapUnlocker.WinForms.Controls;
 
 using War3Net.Build;
 using War3Net.Build.Audio;
 using War3Net.Build.Environment;
 using War3Net.Build.Extensions;
-using War3Net.Build.Import;
-using War3Net.Build.Script;
 using War3Net.Build.Widget;
 using War3Net.CodeAnalysis.Jass;
 using War3Net.IO.Mpq;
@@ -23,7 +21,7 @@ namespace War3App.MapUnlocker.WinForms
 {
     internal static class MainForm
     {
-        private const string Title = "Map Decompiler v0.1.0";
+        private const string Title = "Map Unlocker v0.2.0";
 
         private static MpqArchive _archive;
         private static Map _map;
@@ -35,7 +33,7 @@ namespace War3App.MapUnlocker.WinForms
 
         private static Button _saveAsButton;
         private static Button _autoDetectFilesToDecompileButton;
-        private static CheckBox[] _filesToDecompileCheckBoxes;
+        private static MapFileCheckBox[] _filesToDecompileCheckBoxes;
 
         private static TextProgressBar _progressBar;
         private static BackgroundWorker _worker;
@@ -80,29 +78,11 @@ namespace War3App.MapUnlocker.WinForms
 
             _filesToDecompileCheckBoxes = new[]
             {
-                new CheckBox
-                {
-                    Text = $"{nameof(MapFiles.Sounds)} ({MapSounds.FileName})",
-                    Tag = MapFiles.Sounds,
-                },
-
-                new CheckBox
-                {
-                    Text = $"{nameof(MapFiles.Cameras)} ({MapCameras.FileName})",
-                    Tag = MapFiles.Cameras,
-                },
-
-                new CheckBox
-                {
-                    Text = $"{nameof(MapFiles.Regions)} ({MapRegions.FileName})",
-                    Tag = MapFiles.Regions,
-                },
-
-                new CheckBox
-                {
-                    Text = $"{nameof(MapFiles.Triggers)} ({MapTriggers.FileName})",
-                    Tag = MapFiles.Triggers,
-                },
+                new MapFileCheckBox(MapFiles.Sounds, MapSounds.FileName),
+                new MapFileCheckBox(MapFiles.Cameras, MapCameras.FileName),
+                new MapFileCheckBox(MapFiles.Regions, MapRegions.FileName),
+                new MapFileCheckBox(MapFiles.Triggers, MapSounds.FileName),
+                new MapFileCheckBox(MapFiles.Units, MapUnits.FileName),
             };
 
             foreach (var checkBox in _filesToDecompileCheckBoxes)
@@ -179,7 +159,7 @@ namespace War3App.MapUnlocker.WinForms
 
                 foreach (var checkBox in _filesToDecompileCheckBoxes)
                 {
-                    checkBox.Checked = filesToDecompile.HasFlag((MapFiles)checkBox.Tag);
+                    checkBox.Checked = filesToDecompile.HasFlag(checkBox.MapFile);
                 }
             };
 
@@ -194,7 +174,7 @@ namespace War3App.MapUnlocker.WinForms
             _worker = new BackgroundWorker
             {
                 WorkerReportsProgress = true,
-                WorkerSupportsCancellation = false,
+                WorkerSupportsCancellation = true,
             };
 
             _worker.DoWork += DecompileMapBackgroundWork;
@@ -208,6 +188,7 @@ namespace War3App.MapUnlocker.WinForms
             {
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
             };
 
             var inputArchiveFlowLayout = new FlowLayoutPanel
@@ -247,8 +228,8 @@ namespace War3App.MapUnlocker.WinForms
                     + buttonsFlowLayout.Margin.Top + buttonsFlowLayout.Height + buttonsFlowLayout.Margin.Bottom;
             };
 
-            form.Size = new Size(400, 300);
-            form.MinimumSize = new Size(400, 200);
+            form.Size = new Size(400, 400);
+            form.MinimumSize = new Size(400, 300);
 
             form.FormClosing += (s, e) =>
             {
@@ -358,11 +339,15 @@ namespace War3App.MapUnlocker.WinForms
             {
                 if (checkBox.Checked)
                 {
-                    filesToDecompile |= (MapFiles)checkBox.Tag;
+                    filesToDecompile |= checkBox.MapFile;
                 }
             }
 
             var decompiledMap = MapDecompiler.DecompileMap(_map, filesToDecompile, _worker);
+            if (decompiledMap is null)
+            {
+                return;
+            }
 
             var mapBuilder = new MapBuilder(decompiledMap);
             mapBuilder.AddFiles(_archive);
@@ -371,8 +356,28 @@ namespace War3App.MapUnlocker.WinForms
 
         private static void DecompileMapProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            _progressBar.CustomText = (string)e.UserState;
             _progressBar.Value = e.ProgressPercentage;
+
+            if (e.UserState is ProgressState progressState)
+            {
+                if (progressState.Error)
+                {
+                    if (MessageBox.Show($"Failed to decompile '{progressState.MapFile.Value}'. Press OK to ignore.", "Decompilation failed", MessageBoxButtons.OKCancel, MessageBoxIcon.Error) != DialogResult.OK)
+                    {
+                        _worker.CancelAsync();
+                    }
+
+                    progressState.Error = false;
+                }
+                else if (progressState.MapFile.HasValue)
+                {
+                    _progressBar.CustomText = $"Decompiling {progressState.MapFile.Value}...";
+                }
+                else
+                {
+                    _progressBar.CustomText = "Done";
+                }
+            }
         }
 
         private static void DecompileMapCompleted(object sender, RunWorkerCompletedEventArgs e)

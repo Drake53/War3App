@@ -1,11 +1,13 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 
 using War3Net.Build;
 using War3Net.Build.Audio;
 using War3Net.Build.Common;
 using War3Net.Build.Environment;
+using War3Net.Build.Extensions;
 using War3Net.Build.Providers;
 using War3Net.Build.Script;
 using War3Net.Build.Widget;
@@ -40,7 +42,7 @@ namespace War3App.MapUnlocker
                 filesToDecompile |= MapFiles.Triggers;
             }
 
-            if (map.Units is null)
+            if (map.Units is null || !map.Units.Units.Any(unit => !unit.IsPlayerStartLocation()))
             {
                 filesToDecompile |= MapFiles.Units;
             }
@@ -48,8 +50,8 @@ namespace War3App.MapUnlocker
             return filesToDecompile;
         }
 
-        /// <returns>A <b>new</b> <see cref="Map"/> object containing <b>only</b> the decompiled map files.</returns>
-        public static Map DecompileMap(Map map, MapFiles filesToDecompile, BackgroundWorker? worker)
+        /// <returns>A <b>new</b> <see cref="Map"/> object containing <b>only</b> the decompiled map files, or <see langword="null"/> if cancelled.</returns>
+        public static Map? DecompileMap(Map map, MapFiles filesToDecompile, BackgroundWorker? worker)
         {
             if (!filesToDecompile.IsDefined(allowNoFlags: false))
             {
@@ -107,10 +109,44 @@ namespace War3App.MapUnlocker
             var gameVersion = map.Info?.GameVersion;
             var gamePatch = gameVersion is null ? GamePatch.v1_26a : GamePatchVersionProvider.GetGamePatch(gameVersion);
 
-            if (filesToDecompile.HasFlag(MapFiles.Sounds))
-            {
-                worker?.ReportProgress(progress, "Decompiling sounds...");
+            var progressState = new ProgressState();
 
+            bool StartDecompilingFile(MapFiles mapFile)
+            {
+                if (filesToDecompile.HasFlag(mapFile))
+                {
+                    progressState.MapFile = mapFile;
+                    worker?.ReportProgress(progress, progressState);
+
+                    decompiledCount++;
+                    progress = (100 * decompiledCount) / toDecompileCount;
+
+                    return true;
+                }
+
+                return false;
+            }
+
+            bool WaitForCancel()
+            {
+                if (worker is not null)
+                {
+                    progressState.Error = true;
+                    worker.ReportProgress(progress, progressState);
+
+                    while (progressState.Error)
+                    {
+                        Thread.Sleep(500);
+                    }
+
+                    return worker.CancellationPending;
+                }
+
+                return false;
+            }
+
+            if (StartDecompilingFile(MapFiles.Sounds))
+            {
                 var formatVersion = gamePatch >= GamePatch.v1_32_6
                     ? MapSoundsFormatVersion.ReforgedV3
                     : gamePatch >= GamePatch.v1_32_0
@@ -121,15 +157,14 @@ namespace War3App.MapUnlocker
                 {
                     decompiledMap.Sounds = decompiledMapSounds;
                 }
-
-                decompiledCount++;
-                progress = (100 * decompiledCount) / toDecompileCount;
+                else if (WaitForCancel())
+                {
+                    return null;
+                }
             }
 
-            if (filesToDecompile.HasFlag(MapFiles.Cameras))
+            if (StartDecompilingFile(MapFiles.Cameras))
             {
-                worker?.ReportProgress(progress, "Decompiling cameras...");
-
                 var formatVersion = MapCamerasFormatVersion.Normal;
                 var useNewFormat = gamePatch >= GamePatch.v1_31_0;
 
@@ -137,30 +172,28 @@ namespace War3App.MapUnlocker
                 {
                     decompiledMap.Cameras = decompiledMapCameras;
                 }
-
-                decompiledCount++;
-                progress = (100 * decompiledCount) / toDecompileCount;
+                else if (WaitForCancel())
+                {
+                    return null;
+                }
             }
 
-            if (filesToDecompile.HasFlag(MapFiles.Regions))
+            if (StartDecompilingFile(MapFiles.Regions))
             {
-                worker?.ReportProgress(progress, "Decompiling regions...");
-
                 var formatVersion = MapRegionsFormatVersion.Normal;
 
                 if (decompiler.TryDecompileMapRegions(formatVersion, out var decompiledMapRegions))
                 {
                     decompiledMap.Regions = decompiledMapRegions;
                 }
-
-                decompiledCount++;
-                progress = (100 * decompiledCount) / toDecompileCount;
+                else if (WaitForCancel())
+                {
+                    return null;
+                }
             }
 
-            if (filesToDecompile.HasFlag(MapFiles.Triggers))
+            if (StartDecompilingFile(MapFiles.Triggers))
             {
-                worker?.ReportProgress(progress, "Decompiling triggers...");
-
                 var formatVersion = gamePatch >= GamePatch.v1_07 ? MapTriggersFormatVersion.Tft : MapTriggersFormatVersion.RoC;
                 var subVersion = gamePatch >= GamePatch.v1_31_0 ? (MapTriggersSubVersion?)MapTriggersSubVersion.New : null;
 
@@ -168,15 +201,14 @@ namespace War3App.MapUnlocker
                 {
                     decompiledMap.Triggers = decompiledMapTriggers;
                 }
-
-                decompiledCount++;
-                progress = (100 * decompiledCount) / toDecompileCount;
+                else if (WaitForCancel())
+                {
+                    return null;
+                }
             }
 
-            if (map.Units is null)
+            if (StartDecompilingFile(MapFiles.Units))
             {
-                worker?.ReportProgress(progress, "Decompiling units...");
-
                 var formatVersion = gamePatch >= GamePatch.v1_07 ? MapWidgetsFormatVersion.TFT : MapWidgetsFormatVersion.RoC;
                 var subVersion = gamePatch >= GamePatch.v1_07 ? MapWidgetsSubVersion.V11 : MapWidgetsSubVersion.V9;
                 var useNewFormat = gamePatch >= GamePatch.v1_32_0;
@@ -185,12 +217,14 @@ namespace War3App.MapUnlocker
                 {
                     decompiledMap.Units = decompiledMapUnits;
                 }
-
-                decompiledCount++;
-                progress = (100 * decompiledCount) / toDecompileCount;
+                else if (WaitForCancel())
+                {
+                    return null;
+                }
             }
 
-            worker?.ReportProgress(progress, "Done");
+            progressState.MapFile = null;
+            worker?.ReportProgress(progress, progressState);
 
             return decompiledMap;
         }
