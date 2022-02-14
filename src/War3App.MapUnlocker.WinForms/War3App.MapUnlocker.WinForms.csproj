@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="War3Net.Build" Version="5.4.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\War3App.Common.WinForms\War3App.Common.WinForms.csproj" />
     <ProjectReference Include="..\War3App.MapUnlocker\War3App.MapUnlocker.csproj" />
   </ItemGroup>

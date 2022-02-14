@@ -8,6 +8,7 @@ using War3Net.Build.Common;
 using War3Net.Build.Environment;
 using War3Net.Build.Providers;
 using War3Net.Build.Script;
+using War3Net.Build.Widget;
 using War3Net.CodeAnalysis.Decompilers;
 using War3Net.Common.Extensions;
 
@@ -39,6 +40,11 @@ namespace War3App.MapUnlocker
                 filesToDecompile |= MapFiles.Triggers;
             }
 
+            if (map.Units is null)
+            {
+                filesToDecompile |= MapFiles.Units;
+            }
+
             return filesToDecompile;
         }
 
@@ -67,7 +73,6 @@ namespace War3App.MapUnlocker
             if (filesToDecompile.HasFlag(MapFiles.Script)) throw new NotImplementedException();
             if (filesToDecompile.HasFlag(MapFiles.TriggerStrings)) throw new NotImplementedException();
             if (filesToDecompile.HasFlag(MapFiles.Doodads)) throw new NotImplementedException();
-            if (filesToDecompile.HasFlag(MapFiles.Units)) throw new NotImplementedException();
 
             var decompiler = new JassScriptDecompiler(map);
             var decompiledMap = new Map();
@@ -162,6 +167,23 @@ namespace War3App.MapUnlocker
                 if (decompiler.TryDecompileMapTriggers(formatVersion, subVersion, out var decompiledMapTriggers))
                 {
                     decompiledMap.Triggers = decompiledMapTriggers;
+                }
+
+                decompiledCount++;
+                progress = (100 * decompiledCount) / toDecompileCount;
+            }
+
+            if (map.Units is null)
+            {
+                worker?.ReportProgress(progress, "Decompiling units...");
+
+                var formatVersion = gamePatch >= GamePatch.v1_07 ? MapWidgetsFormatVersion.TFT : MapWidgetsFormatVersion.RoC;
+                var subVersion = gamePatch >= GamePatch.v1_07 ? MapWidgetsSubVersion.V11 : MapWidgetsSubVersion.V9;
+                var useNewFormat = gamePatch >= GamePatch.v1_32_0;
+
+                if (decompiler.TryDecompileMapUnits(formatVersion, subVersion, useNewFormat, out var decompiledMapUnits))
+                {
+                    decompiledMap.Units = decompiledMapUnits;
                 }
 
                 decompiledCount++;
