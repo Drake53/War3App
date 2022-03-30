@@ -40,6 +40,8 @@ namespace War3App.MapAdapter.WinForms
         private static ListView _fileList;
         private static FileListSorter _fileListSorter;
 
+        private static Timer? _fileSelectionChangedEventTimer;
+
         private static ToolStripButton _editContextButton;
         private static ToolStripButton _adaptContextButton;
         private static ToolStripButton _removeContextButton;
@@ -272,23 +274,7 @@ namespace War3App.MapAdapter.WinForms
                 }
             };
 
-            _fileList.SelectedIndexChanged += (s, e) =>
-            {
-                if (_fileList.TryGetSelectedItemTag(out var tag))
-                {
-                    _editContextButton.Enabled = tag.Adapter?.IsTextFile ?? false;
-                    _adaptContextButton.Enabled = _targetPatch.HasValue && (tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified);
-                    _removeContextButton.Enabled = tag.Status != MapFileStatus.Removed;
-                }
-                else
-                {
-                    _editContextButton.Enabled = false;
-                    _adaptContextButton.Enabled = false;
-                    _removeContextButton.Enabled = false;
-                }
-
-                UpdateDiagnosticsDisplay();
-            };
+            _fileList.SelectedIndexChanged += OnFileSelectionChanged;
 
             _fileList.ItemActivate += OnClickEditSelected;
 
@@ -375,6 +361,44 @@ namespace War3App.MapAdapter.WinForms
             }
         }
 
+        private static void OnFileSelectionChanged(object sender, EventArgs e)
+        {
+            if (_fileSelectionChangedEventTimer is null)
+            {
+                _fileSelectionChangedEventTimer = new Timer();
+                _fileSelectionChangedEventTimer.Tick += OnFileSelectionEventTimerTick;
+                _fileSelectionChangedEventTimer.Interval = 50;
+
+                _editContextButton.Enabled = false;
+                _adaptContextButton.Enabled = false;
+                _removeContextButton.Enabled = false;
+            }
+
+            // Start/reset the timer
+            _fileSelectionChangedEventTimer.Enabled = false;
+            _fileSelectionChangedEventTimer.Enabled = true;
+        }
+
+        private static void OnFileSelectionEventTimerTick(object sender, EventArgs e)
+        {
+            if (_fileList.TryGetSelectedItemTag(out var tag))
+            {
+                _editContextButton.Enabled = tag.Adapter?.IsTextFile ?? false;
+                _adaptContextButton.Enabled = _targetPatch.HasValue && (tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified);
+                _removeContextButton.Enabled = tag.Status != MapFileStatus.Removed;
+            }
+            else
+            {
+                var tags = _fileList.GetSelectedItemTags();
+
+                _editContextButton.Enabled = false;
+                _adaptContextButton.Enabled = _targetPatch.HasValue && tags.Any(tag => tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified);
+                _removeContextButton.Enabled = tags.Any(tag => tag.Status != MapFileStatus.Removed);
+            }
+
+            UpdateDiagnosticsDisplay();
+        }
+
         private static void OnClickEditSelected(object sender, EventArgs e)
         {
             if (!_editContextButton.Enabled)
@@ -442,7 +466,7 @@ namespace War3App.MapAdapter.WinForms
                 else
                 {
                     var adapter = tag.Adapter;
-                    if (adapter != null)
+                    if (adapter != null && (tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified))
                     {
                         tag.CurrentStream.Position = 0;
                         var adaptResult = adapter.AdaptFile(tag.CurrentStream, GetTargetPatch(_targetPatch.Value), tag.GetOriginPatch(_originPatch.Value));
@@ -465,6 +489,11 @@ namespace War3App.MapAdapter.WinForms
             {
                 var item = _fileList.SelectedItems[i];
                 var tag = item.GetTag();
+
+                if (tag.Status == MapFileStatus.Removed)
+                {
+                    continue;
+                }
 
                 tag.AdaptResult?.AdaptedFileStream?.Dispose();
                 tag.AdaptResult = new AdaptResult

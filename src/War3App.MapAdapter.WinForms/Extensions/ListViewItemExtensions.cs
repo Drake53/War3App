@@ -36,9 +36,10 @@ namespace War3App.MapAdapter.WinForms.Extensions
         public static void Update(this ListViewItem item)
         {
             var tag = item.GetTag();
-            tag.Status = tag.Children != null
-                ? tag.Children.Max(child => child.Status)
-                : tag.Status;
+            if (tag.Children is not null)
+            {
+                tag.Status = tag.Children.Max(child => child.Status);
+            }
 
             item.SubItems[StatusColumnIndex].Text = tag.Status.ToString();
             item.ImageIndex = (int)tag.Status;
