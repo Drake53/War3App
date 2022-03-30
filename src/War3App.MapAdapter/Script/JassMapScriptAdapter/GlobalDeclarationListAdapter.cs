@@ -11,10 +11,10 @@ namespace War3App.MapAdapter.Script
         {
             var isAdapted = false;
 
-            var declarationsBuilder = ImmutableArray.CreateBuilder<IDeclarationSyntax>();
+            var declarationsBuilder = ImmutableArray.CreateBuilder<IGlobalDeclarationSyntax>();
             foreach (var declaration in globalDeclarationList.Globals)
             {
-                if (TryAdaptDeclaration(context, declaration, out var adaptedDeclaration))
+                if (TryAdaptIGlobalDeclaration(context, declaration, out var adaptedDeclaration))
                 {
                     declarationsBuilder.Add(adaptedDeclaration);
                     isAdapted = true;

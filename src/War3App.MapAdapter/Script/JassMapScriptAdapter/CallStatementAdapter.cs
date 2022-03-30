@@ -13,7 +13,7 @@ namespace War3App.MapAdapter.Script
             {
                 if (string.IsNullOrEmpty(adaptedInvocationName))
                 {
-                    adaptedCallStatement = new JassCommentStatementSyntax(callStatement.ToString());
+                    adaptedCallStatement = new JassCommentSyntax(callStatement.ToString());
                 }
                 else if (TryAdaptArgumentList(context, adaptedInvocationArguments, out var adaptedArguments))
                 {

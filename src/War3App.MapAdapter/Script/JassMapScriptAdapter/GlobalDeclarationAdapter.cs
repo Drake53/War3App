@@ -6,7 +6,17 @@ namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptGlobalDeclaration(JassMapScriptAdapterContext context, JassGlobalDeclarationSyntax globalDeclaration, [NotNullWhen(true)] out IDeclarationSyntax? adaptedGlobalDeclaration)
+        private bool TryAdaptIGlobalDeclaration(JassMapScriptAdapterContext context, IGlobalDeclarationSyntax declaration, [NotNullWhen(true)] out IGlobalDeclarationSyntax? adaptedGlobalDeclaration)
+        {
+            return declaration switch
+            {
+                JassGlobalDeclarationSyntax globalDeclaration => TryAdaptGlobalDeclaration(context, globalDeclaration, out adaptedGlobalDeclaration),
+
+                _ => TryAdaptDummy(context, declaration, out adaptedGlobalDeclaration),
+            };
+        }
+
+        private bool TryAdaptGlobalDeclaration(JassMapScriptAdapterContext context, JassGlobalDeclarationSyntax globalDeclaration, [NotNullWhen(true)] out IGlobalDeclarationSyntax? adaptedGlobalDeclaration)
         {
             if (TryAdaptVariableDeclarator(context, true, globalDeclaration.Declarator, out var adaptedDeclarator))
             {

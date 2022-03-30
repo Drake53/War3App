@@ -11,7 +11,6 @@ namespace War3App.MapAdapter.Script
             return declaration switch
             {
                 JassGlobalDeclarationListSyntax globalDeclarationList => TryAdaptGlobalDeclarationList(context, globalDeclarationList, out adaptedDeclaration),
-                JassGlobalDeclarationSyntax globalDeclaration => TryAdaptGlobalDeclaration(context, globalDeclaration, out adaptedDeclaration),
                 JassNativeFunctionDeclarationSyntax nativeFunctionDeclaration => TryAdaptNativeFunctionDeclaration(context, nativeFunctionDeclaration, out adaptedDeclaration),
                 JassFunctionDeclarationSyntax functionDeclaration => TryAdaptFunctionDeclaration(context, functionDeclaration, out adaptedDeclaration),
                 JassTypeDeclarationSyntax typeDeclaration => TryAdaptTypeDeclaration(context, typeDeclaration, out adaptedDeclaration),
