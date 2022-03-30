@@ -123,6 +123,12 @@ namespace War3App.MapAdapter.WinForms
                 Width = 120,
             };
 
+            _targetPatchesComboBox.Items.AddRange(_appSettings.TargetPatches.OrderByDescending(targetPatch => targetPatch.Patch).Select(targetPatch => (object)targetPatch.Patch).ToArray());
+            if (_targetPatchesComboBox.Items.Count == 1)
+            {
+                _targetPatchesComboBox.SelectedIndex = 0;
+            }
+
             _targetPatchesComboBox.SelectedIndexChanged += (s, e) =>
             {
                 _targetPatch = (GamePatch?)_targetPatchesComboBox.SelectedItem;
@@ -172,6 +178,9 @@ namespace War3App.MapAdapter.WinForms
             };
 
             _fileListSorter = new FileListSorter(_fileList);
+
+            _fileList.ListViewItemSorter = _fileListSorter;
+            _fileList.ColumnClick += _fileListSorter.Sort;
 
             _fileList.View = View.Details;
             _fileList.Columns.AddRange(new[]
@@ -568,6 +577,7 @@ namespace War3App.MapAdapter.WinForms
             {
                 _archiveInput.Enabled = false;
                 _archiveInputBrowseButton.Enabled = false;
+                _openCloseArchiveButton.Enabled = false;
                 _openCloseArchiveButton.Text = "Close archive";
                 _saveAsButton.Enabled = true;
 
@@ -590,20 +600,24 @@ namespace War3App.MapAdapter.WinForms
                 }
 
                 var possibleOriginPatches = new HashSet<GamePatch>();
+
+                _fileList.BeginUpdate();
+
                 foreach (var file in _archive)
                 {
                     if (mapsList.Contains(file.FileName))
                     {
-                        var map = file.FileName;
+                        var mapName = file.FileName;
 
-                        using var mapArchiveStream = _archive.OpenFile(map);
+                        using var mapArchiveStream = _archive.OpenFile(mapName);
                         using var mapArchive = MpqArchive.Open(mapArchiveStream, true);
                         mapArchive.DiscoverFileNames();
 
                         var children = new List<ListViewItem>();
                         foreach (var mapFile in mapArchive)
                         {
-                            var subItem = ListViewItemExtensions.Create(new ItemTag(mapArchive, mapFile, map));
+                            var subItem = ListViewItemExtensions.Create(new ItemTag(mapArchive, mapFile, mapName));
+
                             subItem.IndentCount = 1;
                             children.Add(subItem);
                         }
@@ -635,27 +649,17 @@ namespace War3App.MapAdapter.WinForms
                     }
                 }
 
-                if (_originPatch is null && possibleOriginPatches.Count == 1)
-                {
-                    _originPatch = possibleOriginPatches.Single();
-                }
-
-                var targetPatches = new HashSet<object>(_appSettings.TargetPatches.Select(targetPatch => (object)targetPatch.Patch));
+                _fileList.EndUpdate();
 
                 if (_originPatch is null)
                 {
-                    _originPatch = LatestPatch;
+                    _originPatch = possibleOriginPatches.Count == 1 ? possibleOriginPatches.Single() : LatestPatch;
                 }
 
-                _targetPatchesComboBox.Items.AddRange(targetPatches.OrderByDescending(patch => (int)patch).ToArray());
-                _targetPatchesComboBox.Enabled = true;
-                if (_targetPatchesComboBox.Items.Count == 1)
-                {
-                    _targetPatchesComboBox.SelectedIndex = 0;
-                }
+                _targetPatchesComboBox.Enabled = _targetPatchesComboBox.Items.Count > 1;
 
-                _fileList.ListViewItemSorter = _fileListSorter;
-                _fileList.ColumnClick += _fileListSorter.Sort;
+                _openCloseArchiveButton.Enabled = true;
+                _saveAsButton.Enabled = true;
             }
         }
 
@@ -676,18 +680,20 @@ namespace War3App.MapAdapter.WinForms
             _targetPatchesComboBox.Items.Clear();
             _originPatch = null;
 
-            _fileList.ColumnClick -= _fileListSorter.Sort;
-            _fileList.ListViewItemSorter = null;
             _fileListSorter.Reset();
 
             for (var i = 0; i < _fileList.Items.Count; i++)
             {
-                _fileList.Items[i].GetTag().AdaptResult?.AdaptedFileStream?.Dispose();
+                var item = _fileList.Items[i].GetTag();
+                item.OriginalFileStream?.Dispose();
+                item.AdaptResult?.AdaptedFileStream?.Dispose();
             }
 
             _fileList.Items.Clear();
 
             _diagnosticsDisplay.Text = string.Empty;
+
+            GC.Collect();
         }
 
         private static void SaveArchive(string fileName)
