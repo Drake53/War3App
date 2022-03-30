@@ -3,6 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
+using War3App.MapAdapter.Extensions;
+
 using War3Net.Build.Common;
 using War3Net.CodeAnalysis.Jass;
 using War3Net.CodeAnalysis.Jass.Syntax;
@@ -19,10 +21,30 @@ namespace War3App.MapAdapter.Script
         {
             try
             {
-                var commonJText = File.ReadAllText(Path.Combine(targetPatch.GameDataPath, PathConstants.CommonJPath));
+                var commonJPath = Path.Combine(targetPatch.GameDataPath, PathConstants.CommonJPath);
+                if (!File.Exists(commonJPath))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.ConfigError,
+                        Diagnostics = commonJPath.GetFileNotFoundDiagnostics(),
+                    };
+                }
+
+                var blizzardJPath = Path.Combine(targetPatch.GameDataPath, PathConstants.BlizzardJPath);
+                if (!File.Exists(blizzardJPath))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.ConfigError,
+                        Diagnostics = blizzardJPath.GetFileNotFoundDiagnostics(),
+                    };
+                }
+
+                var commonJText = File.ReadAllText(commonJPath);
                 var commonJCompilationUnit = JassSyntaxFactory.ParseCompilationUnit(commonJText);
 
-                var blizzardJText = File.ReadAllText(Path.Combine(targetPatch.GameDataPath, PathConstants.BlizzardJPath));
+                var blizzardJText = File.ReadAllText(blizzardJPath);
                 var blizzardJCompilationUnit = JassSyntaxFactory.ParseCompilationUnit(blizzardJText);
 
                 string scriptText;

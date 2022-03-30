@@ -53,6 +53,11 @@
         ParseError,
 
         /// <summary>
+        /// The file's adapter cannot run, because the appsettings.json configuration file is invalid.
+        /// </summary>
+        ConfigError,
+
+        /// <summary>
         /// An exception occured when adapting the file.
         /// </summary>
         AdapterError,

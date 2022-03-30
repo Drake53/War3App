@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
+using War3App.MapAdapter.Extensions;
+
 using War3Net.Build.Common;
 using War3Net.Build.Extensions;
 
@@ -18,12 +20,22 @@ namespace War3App.MapAdapter.Script
         {
             try
             {
+                var triggerDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.TriggerDataPath);
+                if (!File.Exists(triggerDataPath))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.ConfigError,
+                        Diagnostics = triggerDataPath.GetFileNotFoundDiagnostics(),
+                    };
+                }
+
                 using var reader = new BinaryReader(stream);
                 var mapTriggers = reader.ReadMapTriggers();
 
                 try
                 {
-                    var triggerDataText = File.ReadAllText(Path.Combine(targetPatch.GameDataPath, PathConstants.TriggerDataPath));
+                    var triggerDataText = File.ReadAllText(triggerDataPath);
                     var triggerDataReader = new StringReader(triggerDataText);
                     var triggerData = triggerDataReader.ReadTriggerData();
 

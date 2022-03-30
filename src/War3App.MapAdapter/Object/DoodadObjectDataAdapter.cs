@@ -23,16 +23,36 @@ namespace War3App.MapAdapter.Object
         {
             try
             {
+                var doodadDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.DoodadDataPath);
+                if (!File.Exists(doodadDataPath))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.ConfigError,
+                        Diagnostics = doodadDataPath.GetFileNotFoundDiagnostics(),
+                    };
+                }
+                
+                var doodadMetaDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.DoodadMetaDataPath);
+                if (!File.Exists(doodadMetaDataPath))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.ConfigError,
+                        Diagnostics = doodadMetaDataPath.GetFileNotFoundDiagnostics(),
+                    };
+                }
+
                 using var reader = new BinaryReader(stream);
                 var mapDoodadObjectData = reader.ReadMapDoodadObjectData();
 
                 try
                 {
                     var knownIds = new HashSet<int>();
-                    knownIds.AddItemsFromSylkTable(Path.Combine(targetPatch.GameDataPath, PathConstants.DoodadDataPath), DataConstants.DoodadDataKeyColumn);
+                    knownIds.AddItemsFromSylkTable(doodadDataPath, DataConstants.DoodadDataKeyColumn);
 
                     var knownProperties = new HashSet<int>();
-                    knownProperties.AddItemsFromSylkTable(Path.Combine(targetPatch.GameDataPath, PathConstants.DoodadMetaDataPath), DataConstants.MetaDataIdColumn);
+                    knownProperties.AddItemsFromSylkTable(doodadMetaDataPath, DataConstants.MetaDataIdColumn);
 
                     var diagnostics = new List<string>();
 

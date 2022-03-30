@@ -236,6 +236,7 @@ namespace War3App.MapAdapter.WinForms
                 { MapFileStatus.Adapted, Color.LimeGreen },
                 { MapFileStatus.AdapterError, Color.Red },
                 { MapFileStatus.Compatible, Color.ForestGreen },
+                { MapFileStatus.ConfigError, Color.DarkSlateBlue },
                 { MapFileStatus.Incompatible, Color.Yellow },
                 { MapFileStatus.Locked, Color.OrangeRed },
                 { MapFileStatus.Modified, Color.Blue },

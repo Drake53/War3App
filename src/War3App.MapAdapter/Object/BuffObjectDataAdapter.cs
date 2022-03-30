@@ -23,16 +23,36 @@ namespace War3App.MapAdapter.Object
         {
             try
             {
+                var buffDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.BuffDataPath);
+                if (!File.Exists(buffDataPath))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.ConfigError,
+                        Diagnostics = buffDataPath.GetFileNotFoundDiagnostics(),
+                    };
+                }
+                
+                var buffMetaDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.BuffMetaDataPath);
+                if (!File.Exists(buffMetaDataPath))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.ConfigError,
+                        Diagnostics = buffMetaDataPath.GetFileNotFoundDiagnostics(),
+                    };
+                }
+
                 using var reader = new BinaryReader(stream);
                 var mapBuffObjectData = reader.ReadMapBuffObjectData();
 
                 try
                 {
                     var knownIds = new HashSet<int>();
-                    knownIds.AddItemsFromSylkTable(Path.Combine(targetPatch.GameDataPath, PathConstants.BuffDataPath), DataConstants.BuffDataKeyColumn);
+                    knownIds.AddItemsFromSylkTable(buffDataPath, DataConstants.BuffDataKeyColumn);
 
                     var knownProperties = new HashSet<int>();
-                    knownProperties.AddItemsFromSylkTable(Path.Combine(targetPatch.GameDataPath, PathConstants.BuffMetaDataPath), DataConstants.MetaDataIdColumn);
+                    knownProperties.AddItemsFromSylkTable(buffMetaDataPath, DataConstants.MetaDataIdColumn);
 
                     var diagnostics = new List<string>();
 

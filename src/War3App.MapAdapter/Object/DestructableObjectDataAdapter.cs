@@ -23,16 +23,36 @@ namespace War3App.MapAdapter.Object
         {
             try
             {
+                var destructableDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.DestructableDataPath);
+                if (!File.Exists(destructableDataPath))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.ConfigError,
+                        Diagnostics = destructableDataPath.GetFileNotFoundDiagnostics(),
+                    };
+                }
+                
+                var destructableMetaDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.DestructableMetaDataPath);
+                if (!File.Exists(destructableMetaDataPath))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.ConfigError,
+                        Diagnostics = destructableMetaDataPath.GetFileNotFoundDiagnostics(),
+                    };
+                }
+
                 using var reader = new BinaryReader(stream);
                 var mapDestructableObjectData = reader.ReadMapDestructableObjectData();
 
                 try
                 {
                     var knownIds = new HashSet<int>();
-                    knownIds.AddItemsFromSylkTable(Path.Combine(targetPatch.GameDataPath, PathConstants.DestructableDataPath), DataConstants.DestructableDataKeyColumn);
+                    knownIds.AddItemsFromSylkTable(destructableDataPath, DataConstants.DestructableDataKeyColumn);
 
                     var knownProperties = new HashSet<int>();
-                    knownProperties.AddItemsFromSylkTable(Path.Combine(targetPatch.GameDataPath, PathConstants.DestructableMetaDataPath), DataConstants.MetaDataIdColumn);
+                    knownProperties.AddItemsFromSylkTable(destructableMetaDataPath, DataConstants.MetaDataIdColumn);
 
                     var diagnostics = new List<string>();
 

@@ -23,20 +23,80 @@ namespace War3App.MapAdapter.Object
         {
             try
             {
+                var unitAbilityDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.UnitAbilityDataPath);
+                if (!File.Exists(unitAbilityDataPath))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.ConfigError,
+                        Diagnostics = unitAbilityDataPath.GetFileNotFoundDiagnostics(),
+                    };
+                }
+
+                var unitBalanceDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.UnitBalanceDataPath);
+                if (!File.Exists(unitBalanceDataPath))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.ConfigError,
+                        Diagnostics = unitBalanceDataPath.GetFileNotFoundDiagnostics(),
+                    };
+                }
+
+                var unitDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.UnitDataPath);
+                if (!File.Exists(unitDataPath))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.ConfigError,
+                        Diagnostics = unitDataPath.GetFileNotFoundDiagnostics(),
+                    };
+                }
+
+                var unitUiDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.UnitUiDataPath);
+                if (!File.Exists(unitUiDataPath))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.ConfigError,
+                        Diagnostics = unitUiDataPath.GetFileNotFoundDiagnostics(),
+                    };
+                }
+
+                var unitWeaponDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.UnitWeaponDataPath);
+                if (!File.Exists(unitWeaponDataPath))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.ConfigError,
+                        Diagnostics = unitWeaponDataPath.GetFileNotFoundDiagnostics(),
+                    };
+                }
+                
+                var unitMetaDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.UnitMetaDataPath);
+                if (!File.Exists(unitMetaDataPath))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.ConfigError,
+                        Diagnostics = unitMetaDataPath.GetFileNotFoundDiagnostics(),
+                    };
+                }
+
                 using var reader = new BinaryReader(stream);
                 var mapUnitObjectData = reader.ReadMapUnitObjectData();
 
                 try
                 {
                     var knownIds = new HashSet<int>();
-                    knownIds.AddItemsFromSylkTable(Path.Combine(targetPatch.GameDataPath, PathConstants.UnitAbilityDataPath), DataConstants.UnitAbilityDataKeyColumn);
-                    knownIds.AddItemsFromSylkTable(Path.Combine(targetPatch.GameDataPath, PathConstants.UnitBalanceDataPath), DataConstants.UnitBalanceDataKeyColumn);
-                    knownIds.AddItemsFromSylkTable(Path.Combine(targetPatch.GameDataPath, PathConstants.UnitDataPath), DataConstants.UnitDataKeyColumn);
-                    knownIds.AddItemsFromSylkTable(Path.Combine(targetPatch.GameDataPath, PathConstants.UnitUiDataPath), DataConstants.UnitUiDataKeyColumn);
-                    knownIds.AddItemsFromSylkTable(Path.Combine(targetPatch.GameDataPath, PathConstants.UnitWeaponDataPath), DataConstants.UnitWeaponDataKeyColumn);
+                    knownIds.AddItemsFromSylkTable(unitAbilityDataPath, DataConstants.UnitAbilityDataKeyColumn);
+                    knownIds.AddItemsFromSylkTable(unitBalanceDataPath, DataConstants.UnitBalanceDataKeyColumn);
+                    knownIds.AddItemsFromSylkTable(unitDataPath, DataConstants.UnitDataKeyColumn);
+                    knownIds.AddItemsFromSylkTable(unitUiDataPath, DataConstants.UnitUiDataKeyColumn);
+                    knownIds.AddItemsFromSylkTable(unitWeaponDataPath, DataConstants.UnitWeaponDataKeyColumn);
 
                     var knownProperties = new HashSet<int>();
-                    knownProperties.AddItemsFromSylkTable(Path.Combine(targetPatch.GameDataPath, PathConstants.UnitMetaDataPath), DataConstants.MetaDataIdColumn);
+                    knownProperties.AddItemsFromSylkTable(unitMetaDataPath, DataConstants.MetaDataIdColumn);
 
                     var diagnostics = new List<string>();
 
