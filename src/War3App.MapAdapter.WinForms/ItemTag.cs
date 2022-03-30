@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -9,7 +10,7 @@ using War3Net.IO.Mpq;
 
 namespace War3App.MapAdapter.WinForms
 {
-    public sealed class ItemTag
+    public sealed class ItemTag : IDisposable
     {
         private MapFileStatus _status;
 
@@ -19,8 +20,17 @@ namespace War3App.MapAdapter.WinForms
             FileName = mpqEntry.FileName;
             ArchiveName = archiveName ?? string.Empty;
             OriginalFileStream = archive.OpenFile(mpqEntry);
-            Adapter = AdapterFactory.GetAdapter(OriginalFileStream, FileName);
-            Status = Adapter is null ? MapFileStatus.Unknown : MapFileStatus.Pending;
+
+            if (!OriginalFileStream.CanRead)
+            {
+                OriginalFileStream.Dispose();
+                Status = MapFileStatus.Locked;
+            }
+            else
+            {
+                Adapter = AdapterFactory.GetAdapter(OriginalFileStream, FileName);
+                Status = Adapter is null ? MapFileStatus.Unknown : MapFileStatus.Pending;
+            }
         }
 
         public ItemTag(MpqArchive archive, MpqEntry mpqEntry, ListViewItem[] children, GamePatch? originPatch)
@@ -46,9 +56,9 @@ namespace War3App.MapAdapter.WinForms
 
         public string ArchiveName { get; private set; }
 
-        public IMapFileAdapter Adapter { get; private set; }
+        public IMapFileAdapter? Adapter { get; private set; }
 
-        public Stream OriginalFileStream { get; private set; }
+        public MpqStream OriginalFileStream { get; private set; }
 
         public ItemTag Parent { get; private set; }
 
@@ -115,6 +125,12 @@ namespace War3App.MapAdapter.WinForms
         public GamePatch GetOriginPatch(GamePatch defaultPatch)
         {
             return OriginPatch ?? Parent?.OriginPatch ?? defaultPatch;
+        }
+
+        public void Dispose()
+        {
+            OriginalFileStream.Dispose();
+            AdaptResult?.Dispose();
         }
     }
 }

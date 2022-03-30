@@ -43,6 +43,11 @@
         Unadaptable,
 
         /// <summary>
+        /// The mpq file can not be read.
+        /// </summary>
+        Locked,
+
+        /// <summary>
         /// An exception occured when parsing the file.
         /// </summary>
         ParseError,

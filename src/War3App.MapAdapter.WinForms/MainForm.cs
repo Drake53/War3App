@@ -237,6 +237,7 @@ namespace War3App.MapAdapter.WinForms
                 { MapFileStatus.AdapterError, Color.Red },
                 { MapFileStatus.Compatible, Color.ForestGreen },
                 { MapFileStatus.Incompatible, Color.Yellow },
+                { MapFileStatus.Locked, Color.OrangeRed },
                 { MapFileStatus.Modified, Color.Blue },
                 { MapFileStatus.ParseError, Color.Maroon },
                 { MapFileStatus.Pending, Color.LightSkyBlue },
@@ -616,7 +617,6 @@ namespace War3App.MapAdapter.WinForms
                 _archiveInputBrowseButton.Enabled = false;
                 _openCloseArchiveButton.Enabled = false;
                 _openCloseArchiveButton.Text = "Close archive";
-                _saveAsButton.Enabled = true;
 
                 _progressBar.Value = 0;
                 _progressBar.Maximum = 1;
