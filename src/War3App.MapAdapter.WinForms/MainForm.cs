@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -7,6 +8,7 @@ using System.Windows.Forms;
 
 using Microsoft.Extensions.Configuration;
 
+using War3App.Common.WinForms;
 using War3App.Common.WinForms.Extensions;
 using War3App.MapAdapter.Info;
 using War3App.MapAdapter.WinForms.Extensions;
@@ -47,6 +49,10 @@ namespace War3App.MapAdapter.WinForms
         private static ToolStripButton _removeContextButton;
 
         private static TextBox _diagnosticsDisplay;
+
+        private static TextProgressBar _progressBar;
+        private static BackgroundWorker _openArchiveWorker;
+        private static BackgroundWorker _saveArchiveWorker;
 
         private static AppSettings _appSettings;
 
@@ -99,6 +105,34 @@ namespace War3App.MapAdapter.WinForms
                 Dock = DockStyle.Fill,
                 ScrollBars = ScrollBars.Vertical,
             };
+
+            _progressBar = new TextProgressBar
+            {
+                Dock = DockStyle.Bottom,
+                Style = ProgressBarStyle.Continuous,
+                VisualMode = TextProgressBar.ProgressBarDisplayMode.CustomText,
+                Visible = false,
+            };
+
+            _openArchiveWorker = new BackgroundWorker
+            {
+                WorkerReportsProgress = true,
+                WorkerSupportsCancellation = false,
+            };
+
+            _openArchiveWorker.DoWork += OpenArchiveBackgroundWork;
+            _openArchiveWorker.ProgressChanged += OpenArchiveProgressChanged;
+            _openArchiveWorker.RunWorkerCompleted += OpenArchiveCompleted;
+
+            _saveArchiveWorker = new BackgroundWorker
+            {
+                WorkerReportsProgress = true,
+                WorkerSupportsCancellation = false,
+            };
+
+            _saveArchiveWorker.DoWork += SaveArchiveBackgroundWork;
+            _saveArchiveWorker.ProgressChanged += SaveArchiveProgressChanged;
+            _saveArchiveWorker.RunWorkerCompleted += SaveArchiveCompleted;
 
             _adaptAllButton = new Button
             {
@@ -331,7 +365,7 @@ namespace War3App.MapAdapter.WinForms
 
             splitContainer.Panel1.AddControls(_diagnosticsDisplay, flowLayout);
             splitContainer.Panel2.AddControls(_fileList);
-            form.AddControls(splitContainer);
+            form.AddControls(splitContainer, _progressBar);
 
             targetPatchLabel.Size = targetPatchLabel.PreferredSize;
 
@@ -353,6 +387,9 @@ namespace War3App.MapAdapter.WinForms
             form.FormClosing += (s, e) =>
             {
                 _archive?.Dispose();
+                _openArchiveWorker?.Dispose();
+                _saveArchiveWorker?.Dispose();
+                _fileSelectionChangedEventTimer?.Dispose();
             };
 
             form.ShowDialog();
@@ -581,85 +618,136 @@ namespace War3App.MapAdapter.WinForms
                 _openCloseArchiveButton.Text = "Close archive";
                 _saveAsButton.Enabled = true;
 
-                _archive = MpqArchive.Open(fileInfo.FullName, true);
-                _archive.DiscoverFileNames();
+                _progressBar.Value = 0;
+                _progressBar.Maximum = 1;
+                _progressBar.CustomText = string.Empty;
+                _progressBar.Visible = true;
 
-                var mapsList = new HashSet<string>();
-                if (_archive.IsCampaignArchive(out var campaignInfo))
+                _openArchiveWorker.RunWorkerAsync(fileInfo.FullName);
+            }
+        }
+
+        private static void OpenArchiveBackgroundWork(object? sender, DoWorkEventArgs e)
+        {
+            _archive = MpqArchive.Open((string)e.Argument, true);
+            _archive.DiscoverFileNames();
+
+            var mapsList = new HashSet<string>();
+            if (_archive.IsCampaignArchive(out var campaignInfo))
+            {
+                for (var i = 0; i < campaignInfo.Maps.Count; i++)
                 {
-                    for (var i = 0; i < campaignInfo.Maps.Count; i++)
+                    mapsList.Add(campaignInfo.Maps[i].MapFilePath);
+                }
+            }
+            else
+            {
+                using var mpqStream = _archive.OpenFile(MapInfo.FileName);
+                using var reader = new BinaryReader(mpqStream);
+                _originPatch = reader.ReadMapInfo().GetOriginGamePatch();
+            }
+
+            var listViewItems = new List<ListViewItem>();
+            var possibleOriginPatches = new HashSet<GamePatch>();
+            var files = _archive.ToList();
+
+            var progress = new OpenArchiveProgress();
+            progress.Maximum = files.Count;
+
+            foreach (var file in files)
+            {
+                if (mapsList.Contains(file.FileName))
+                {
+                    var mapName = file.FileName;
+
+                    using var mapArchiveStream = _archive.OpenFile(mapName);
+                    using var mapArchive = MpqArchive.Open(mapArchiveStream, true);
+                    mapArchive.DiscoverFileNames();
+
+                    var children = new List<ListViewItem>();
+                    var mapFiles = mapArchive.ToList();
+
+                    progress.Maximum += mapFiles.Count;
+
+                    foreach (var mapFile in mapArchive)
                     {
-                        mapsList.Add(campaignInfo.Maps[i].MapFilePath);
+                        var subItem = ListViewItemExtensions.Create(new ItemTag(mapArchive, mapFile, mapName));
+
+                        subItem.IndentCount = 1;
+                        children.Add(subItem);
+
+                        _openArchiveWorker.ReportProgress(0, progress);
+                    }
+
+                    using (var mapInfoFileStream = mapArchive.OpenFile(MapInfo.FileName))
+                    {
+                        using var reader = new BinaryReader(mapInfoFileStream);
+                        var mapArchiveOriginPatch = reader.ReadMapInfo().GetOriginGamePatch();
+
+                        var mapArchiveItem = ListViewItemExtensions.Create(new ItemTag(_archive, file, children.ToArray(), mapArchiveOriginPatch));
+
+                        listViewItems.Add(mapArchiveItem);
+
+                        _openArchiveWorker.ReportProgress(0, progress);
+
+                        if (mapArchiveOriginPatch.HasValue)
+                        {
+                            possibleOriginPatches.Add(mapArchiveOriginPatch.Value);
+                        }
+                    }
+
+                    foreach (var child in children)
+                    {
+                        listViewItems.Add(child);
                     }
                 }
                 else
                 {
-                    using var mpqStream = _archive.OpenFile(MapInfo.FileName);
-                    using var reader = new BinaryReader(mpqStream);
-                    _originPatch = reader.ReadMapInfo().GetOriginGamePatch();
+                    var item = ListViewItemExtensions.Create(new ItemTag(_archive, file));
+
+                    listViewItems.Add(item);
+
+                    _openArchiveWorker.ReportProgress(0, progress);
                 }
+            }
 
-                var possibleOriginPatches = new HashSet<GamePatch>();
+            if (_originPatch is null)
+            {
+                _originPatch = possibleOriginPatches.Count == 1 ? possibleOriginPatches.Single() : LatestPatch;
+            }
 
-                _fileList.BeginUpdate();
+            e.Result = listViewItems;
+        }
 
-                foreach (var file in _archive)
-                {
-                    if (mapsList.Contains(file.FileName))
-                    {
-                        var mapName = file.FileName;
+        private static void OpenArchiveProgressChanged(object? sender, ProgressChangedEventArgs e)
+        {
+            if (e.UserState is OpenArchiveProgress openArchiveProgress)
+            {
+                _progressBar.Value++;
+                _progressBar.Maximum = openArchiveProgress.Maximum;
+                _progressBar.CustomText = $"{_progressBar.Value} / {_progressBar.Maximum}";
+            }
+        }
 
-                        using var mapArchiveStream = _archive.OpenFile(mapName);
-                        using var mapArchive = MpqArchive.Open(mapArchiveStream, true);
-                        mapArchive.DiscoverFileNames();
-
-                        var children = new List<ListViewItem>();
-                        foreach (var mapFile in mapArchive)
-                        {
-                            var subItem = ListViewItemExtensions.Create(new ItemTag(mapArchive, mapFile, mapName));
-
-                            subItem.IndentCount = 1;
-                            children.Add(subItem);
-                        }
-
-                        using (var mapInfoFileStream = mapArchive.OpenFile(MapInfo.FileName))
-                        {
-                            using var reader = new BinaryReader(mapInfoFileStream);
-                            var mapArchiveOriginPatch = reader.ReadMapInfo().GetOriginGamePatch();
-
-                            var mapArchiveItem = ListViewItemExtensions.Create(new ItemTag(_archive, file, children.ToArray(), mapArchiveOriginPatch));
-
-                            _fileList.Items.Add(mapArchiveItem);
-                            if (mapArchiveOriginPatch.HasValue)
-                            {
-                                possibleOriginPatches.Add(mapArchiveOriginPatch.Value);
-                            }
-                        }
-
-                        foreach (var child in children)
-                        {
-                            _fileList.Items.Add(child);
-                        }
-                    }
-                    else
-                    {
-                        var item = ListViewItemExtensions.Create(new ItemTag(_archive, file));
-
-                        _fileList.Items.Add(item);
-                    }
-                }
-
-                _fileList.EndUpdate();
-
-                if (_originPatch is null)
-                {
-                    _originPatch = possibleOriginPatches.Count == 1 ? possibleOriginPatches.Single() : LatestPatch;
-                }
+        private static void OpenArchiveCompleted(object? sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Error is not null)
+            {
+                throw e.Error;
+            }
+            else
+            {
+                _fileList.Items.AddRange(((List<ListViewItem>)e.Result).ToArray());
 
                 _targetPatchesComboBox.Enabled = _targetPatchesComboBox.Items.Count > 1;
 
+                _targetPatch = (GamePatch?)_targetPatchesComboBox.SelectedItem;
+                _adaptAllButton.Enabled = _targetPatch.HasValue && _fileList.Items.Count > 0;
+
                 _openCloseArchiveButton.Enabled = true;
                 _saveAsButton.Enabled = true;
+
+                _progressBar.Visible = false;
             }
         }
 
@@ -698,12 +786,35 @@ namespace War3App.MapAdapter.WinForms
 
         private static void SaveArchive(string fileName)
         {
+            var itemCount = 0;
+            for (var i = 0; i < _fileList.Items.Count; i++)
+            {
+                var tag = _fileList.Items[i].GetTag();
+                if (tag.Status != MapFileStatus.Removed)
+                {
+                    itemCount++;
+                }
+            }
+
+            _progressBar.Value = 0;
+            _progressBar.Maximum = itemCount;
+            _progressBar.CustomText = string.Empty;
+            _progressBar.Visible = true;
+
+            _saveArchiveWorker.RunWorkerAsync(fileName);
+        }
+
+        private static void SaveArchiveBackgroundWork(object? sender, DoWorkEventArgs e)
+        {
             var archiveBuilder = new MpqArchiveBuilder(_archive);
+
+            var progress = new SaveArchiveProgress();
+            progress.Saving = false;
 
             for (var i = 0; i < _fileList.Items.Count; i++)
             {
                 var tag = _fileList.Items[i].GetTag();
-                if (tag.Parent != null)
+                if (tag.Parent is not null)
                 {
                     continue;
                 }
@@ -719,18 +830,11 @@ namespace War3App.MapAdapter.WinForms
                         archiveBuilder.RemoveFile(_archive, tag.MpqEntry);
                     }
                 }
-                else if (tag.Children != null)
+                else if (tag.Children is not null)
                 {
                     if (tag.Children.All(child => child.Status == MapFileStatus.Removed))
                     {
-                        if (tag.TryGetHashedFileName(out var hashedFileName))
-                        {
-                            archiveBuilder.RemoveFile(hashedFileName);
-                        }
-                        else
-                        {
-                            archiveBuilder.RemoveFile(_archive, tag.MpqEntry);
-                        }
+                        throw new InvalidOperationException("Parent tag should have been removed since all child tags are removed, but was " + tag.Status);
                     }
                     else if (tag.Children.Any(child => child.IsModified || child.Status == MapFileStatus.Removed))
                     {
@@ -761,6 +865,12 @@ namespace War3App.MapAdapter.WinForms
                             else if (child.TryGetModifiedMpqFile(out var subArchiveAdaptedFile))
                             {
                                 subArchiveBuilder.AddFile(subArchiveAdaptedFile);
+
+                                _saveArchiveWorker.ReportProgress(0, progress);
+                            }
+                            else
+                            {
+                                _saveArchiveWorker.ReportProgress(0, progress);
                             }
                         }
 
@@ -771,17 +881,61 @@ namespace War3App.MapAdapter.WinForms
                         var adaptedFile = MpqFile.New(adaptedSubArchiveStream, tag.FileName, false);
                         adaptedFile.TargetFlags = tag.MpqEntry.Flags;
                         archiveBuilder.AddFile(adaptedFile);
+
+                        _saveArchiveWorker.ReportProgress(0, progress);
+                    }
+                    else
+                    {
+                        _saveArchiveWorker.ReportProgress(tag.Children.Length, progress);
                     }
                 }
                 else if (tag.TryGetModifiedMpqFile(out var adaptedFile))
                 {
                     archiveBuilder.AddFile(adaptedFile);
+
+                    _saveArchiveWorker.ReportProgress(0, progress);
+                }
+                else
+                {
+                    _saveArchiveWorker.ReportProgress(0, progress);
                 }
             }
 
-            using (var fileStream = File.Create(fileName))
+            progress.Saving = true;
+            _saveArchiveWorker.ReportProgress(0, progress);
+
+            using (var fileStream = File.Create((string)e.Argument))
             {
                 archiveBuilder.SaveWithPreArchiveData(fileStream);
+            }
+        }
+
+        private static void SaveArchiveProgressChanged(object? sender, ProgressChangedEventArgs e)
+        {
+            if (e.UserState is SaveArchiveProgress saveArchiveProgress)
+            {
+                if (saveArchiveProgress.Saving)
+                {
+                    _progressBar.CustomText = "Saving...";
+                }
+                else
+                {
+                    _progressBar.Value++;
+                    _progressBar.Value += e.ProgressPercentage;
+                    _progressBar.CustomText = $"{_progressBar.Value} / {_progressBar.Maximum}";
+                }
+            }
+        }
+
+        private static void SaveArchiveCompleted(object? sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Error is not null)
+            {
+                throw e.Error;
+            }
+            else
+            {
+                _progressBar.Visible = false;
             }
         }
 
