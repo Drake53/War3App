@@ -22,7 +22,7 @@ namespace War3App.MapAdapter.WinForms
 {
     internal static class MainForm
     {
-        private const string Title = "Map Adapter v1.0.0";
+        private const string Title = "Map Adapter v1.1.0";
 
         private const GamePatch LatestPatch = GamePatch.v1_32_10;
 
@@ -765,8 +765,6 @@ namespace War3App.MapAdapter.WinForms
             _saveAsButton.Enabled = false;
 
             _targetPatchesComboBox.Enabled = false;
-            _targetPatchesComboBox.SelectedIndex = -1;
-            _targetPatchesComboBox.Items.Clear();
             _originPatch = null;
 
             _fileListSorter.Reset();
