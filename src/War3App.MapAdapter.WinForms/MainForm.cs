@@ -22,7 +22,7 @@ namespace War3App.MapAdapter.WinForms
 {
     internal static class MainForm
     {
-        private const string Title = "Map Adapter v1.1.0";
+        private const string Title = "Map Adapter v1.1.1";
 
         private const GamePatch LatestPatch = GamePatch.v1_32_10;
 
@@ -734,7 +734,7 @@ namespace War3App.MapAdapter.WinForms
         {
             if (e.Error is not null)
             {
-                throw e.Error;
+                throw new ApplicationException("Background task 'open archive' did not complete succesfully.", e.Error);
             }
             else
             {
@@ -930,7 +930,7 @@ namespace War3App.MapAdapter.WinForms
         {
             if (e.Error is not null)
             {
-                throw e.Error;
+                throw new ApplicationException("Background task 'save archive' did not complete succesfully.", e.Error);
             }
             else
             {
