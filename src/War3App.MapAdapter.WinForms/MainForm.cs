@@ -22,9 +22,9 @@ namespace War3App.MapAdapter.WinForms
 {
     internal static class MainForm
     {
-        private const string Title = "Map Adapter v1.1.1";
+        private const string Title = "Map Adapter v1.1.2";
 
-        private const GamePatch LatestPatch = GamePatch.v1_32_10;
+        private static readonly GamePatch _latestPatch = Enum.GetValues<GamePatch>().Max();
 
         private static MpqArchive _archive;
 
@@ -714,7 +714,7 @@ namespace War3App.MapAdapter.WinForms
 
             if (_originPatch is null)
             {
-                _originPatch = possibleOriginPatches.Count == 1 ? possibleOriginPatches.Single() : LatestPatch;
+                _originPatch = possibleOriginPatches.Count == 1 ? possibleOriginPatches.Single() : _latestPatch;
             }
 
             e.Result = listViewItems;
