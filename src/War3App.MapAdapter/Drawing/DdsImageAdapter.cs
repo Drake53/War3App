@@ -4,9 +4,9 @@ using War3Net.Build.Common;
 
 namespace War3App.MapAdapter.Drawing
 {
-    public sealed class TgaImageAdapter : IMapFileAdapter
+    public sealed class DdsImageAdapter : IMapFileAdapter
     {
-        public string MapFileDescription => "Image File (TGA)";
+        public string MapFileDescription => "Image File (DDS)";
 
         public bool IsTextFile => false;
 
@@ -14,7 +14,7 @@ namespace War3App.MapAdapter.Drawing
         {
             return new AdaptResult
             {
-                Status = MapFileStatus.Compatible,
+                Status = targetPatch.Patch >= GamePatch.v1_32_0 ? MapFileStatus.Compatible : MapFileStatus.Unadaptable,
             };
         }
     }

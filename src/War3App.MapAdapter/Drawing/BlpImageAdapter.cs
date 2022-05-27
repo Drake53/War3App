@@ -7,7 +7,7 @@ namespace War3App.MapAdapter.Drawing
 {
     public sealed class BlpImageAdapter : IMapFileAdapter
     {
-        public string MapFileDescription => "BLP Image";
+        public string MapFileDescription => "Image File (BLP)";
 
         public bool IsTextFile => false;
 

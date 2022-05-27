@@ -107,6 +107,7 @@ namespace War3App.MapAdapter
             yield return new(".wav", new WavAdapter());
 
             yield return new(".blp", new BlpImageAdapter());
+            yield return new(".dds", new DdsImageAdapter());
             yield return new(".tga", new TgaImageAdapter());
 
             yield return new(MapCameras.FileName.GetFileExtension(), new MapCamerasAdapter());
