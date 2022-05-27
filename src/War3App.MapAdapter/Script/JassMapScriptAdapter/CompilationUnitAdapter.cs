@@ -17,7 +17,7 @@ namespace War3App.MapAdapter.Script
 
             var isAdapted = false;
 
-            var declarationsBuilder = ImmutableArray.CreateBuilder<IDeclarationSyntax>();
+            var declarationsBuilder = ImmutableArray.CreateBuilder<ITopLevelDeclarationSyntax>();
             foreach (var declaration in compilationUnit.Declarations)
             {
                 if (TryAdaptDeclaration(context, declaration, out var adaptedDeclaration))

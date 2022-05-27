@@ -7,7 +7,7 @@ namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptGlobalDeclarationList(JassMapScriptAdapterContext context, JassGlobalDeclarationListSyntax globalDeclarationList, [NotNullWhen(true)] out IDeclarationSyntax? adaptedGlobalDeclarationList)
+        private bool TryAdaptGlobalDeclarationList(JassMapScriptAdapterContext context, JassGlobalDeclarationListSyntax globalDeclarationList, [NotNullWhen(true)] out ITopLevelDeclarationSyntax? adaptedGlobalDeclarationList)
         {
             var isAdapted = false;
 

@@ -6,7 +6,7 @@ namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptDeclaration(JassMapScriptAdapterContext context, IDeclarationSyntax declaration, [NotNullWhen(true)] out IDeclarationSyntax? adaptedDeclaration)
+        private bool TryAdaptDeclaration(JassMapScriptAdapterContext context, ITopLevelDeclarationSyntax declaration, [NotNullWhen(true)] out ITopLevelDeclarationSyntax? adaptedDeclaration)
         {
             return declaration switch
             {

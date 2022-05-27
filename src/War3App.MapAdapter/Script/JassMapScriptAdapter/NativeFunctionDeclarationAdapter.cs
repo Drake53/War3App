@@ -6,7 +6,7 @@ namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptNativeFunctionDeclaration(JassMapScriptAdapterContext context, JassNativeFunctionDeclarationSyntax nativeFunctionDeclaration, [NotNullWhen(true)] out IDeclarationSyntax? adaptedNativeFunctionDeclaration)
+        private bool TryAdaptNativeFunctionDeclaration(JassMapScriptAdapterContext context, JassNativeFunctionDeclarationSyntax nativeFunctionDeclaration, [NotNullWhen(true)] out ITopLevelDeclarationSyntax? adaptedNativeFunctionDeclaration)
         {
             if (TryAdaptFunctionDeclarator(context, nativeFunctionDeclaration.FunctionDeclarator, out var adaptedFunctionDeclarator))
             {

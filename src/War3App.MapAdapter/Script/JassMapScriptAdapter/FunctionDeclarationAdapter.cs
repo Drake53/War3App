@@ -6,7 +6,7 @@ namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptFunctionDeclaration(JassMapScriptAdapterContext context, JassFunctionDeclarationSyntax functionDeclaration, [NotNullWhen(true)] out IDeclarationSyntax? adaptedFunctionDeclaration)
+        private bool TryAdaptFunctionDeclaration(JassMapScriptAdapterContext context, JassFunctionDeclarationSyntax functionDeclaration, [NotNullWhen(true)] out ITopLevelDeclarationSyntax? adaptedFunctionDeclaration)
         {
             foreach (var parameter in functionDeclaration.FunctionDeclarator.ParameterList.Parameters)
             {

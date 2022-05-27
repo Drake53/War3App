@@ -6,7 +6,7 @@ namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptTypeDeclaration(JassMapScriptAdapterContext context, JassTypeDeclarationSyntax typeDeclaration, [NotNullWhen(true)] out IDeclarationSyntax? adaptedTypeDeclaration)
+        private bool TryAdaptTypeDeclaration(JassMapScriptAdapterContext context, JassTypeDeclarationSyntax typeDeclaration, [NotNullWhen(true)] out ITopLevelDeclarationSyntax? adaptedTypeDeclaration)
         {
             if (!context.KnownTypes.ContainsKey(typeDeclaration.BaseType.TypeName.Name))
             {

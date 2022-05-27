@@ -129,7 +129,7 @@ namespace War3App.MapAdapter.Script
             }
         }
 
-        private static void RegisterDeclaration(IDeclarationSyntax declaration, JassMapScriptAdapterContext context)
+        private static void RegisterDeclaration(ITopLevelDeclarationSyntax declaration, JassMapScriptAdapterContext context)
         {
             if (declaration is JassTypeDeclarationSyntax typeDeclaration)
             {
