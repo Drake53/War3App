@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="War3Net.Build.Core" Version="5.1.0" />
-    <PackageReference Include="War3Net.CodeAnalysis.Transpilers" Version="5.2.0" />
+    <PackageReference Include="War3Net.Build.Core" Version="5.5.0" />
+    <PackageReference Include="War3Net.CodeAnalysis.Transpilers" Version="5.5.0" />
   </ItemGroup>
 
 </Project>
