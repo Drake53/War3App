@@ -107,7 +107,7 @@ namespace War3App.MapUnlocker
             if (filesToDecompile.HasFlag(MapFiles.Units)) toDecompileCount++;
 
             var gameVersion = map.Info?.GameVersion;
-            var gamePatch = gameVersion is null ? GamePatch.v1_26a : GamePatchVersionProvider.GetGamePatch(gameVersion);
+            var gamePatch = gameVersion is null ? GamePatch.v1_26a : GameBuildsProvider.GetGameBuilds(gameVersion)[0].GamePatch;
 
             var progressState = new ProgressState();
 

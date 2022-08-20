@@ -44,7 +44,7 @@ namespace War3App.MapTranspiler
                 mapInfo.FormatVersion = MapInfoFormatVersion.Lua;
                 if (mapInfo.GameVersion is null)
                 {
-                    mapInfo.GameVersion = GamePatchVersionProvider.GetGameVersion(GamePatch.v1_31_1);
+                    mapInfo.GameVersion = GameBuildsProvider.GetGameBuilds(GamePatch.v1_31_1)[0].Version;
                 }
             }
 
