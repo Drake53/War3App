@@ -22,7 +22,7 @@ namespace War3App.MapAdapter.WinForms
 {
     internal static class MainForm
     {
-        private const string Title = "Map Adapter v1.1.2";
+        private const string Title = "Map Adapter v1.1.3";
 
         private static readonly GamePatch _latestPatch = Enum.GetValues<GamePatch>().Max();
 
