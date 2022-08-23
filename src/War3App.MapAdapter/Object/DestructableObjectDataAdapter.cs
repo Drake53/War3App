@@ -43,106 +43,117 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                using var reader = new BinaryReader(stream);
-                var mapDestructableObjectData = reader.ReadMapDestructableObjectData();
-
+                MapDestructableObjectData mapDestructableObjectData;
                 try
                 {
-                    var knownIds = new HashSet<int>();
-                    knownIds.AddItemsFromSylkTable(destructableDataPath, DataConstants.DestructableDataKeyColumn);
-
-                    var knownProperties = new HashSet<int>();
-                    knownProperties.AddItemsFromSylkTable(destructableMetaDataPath, DataConstants.MetaDataIdColumn);
-
-                    var diagnostics = new List<string>();
-
-                    var baseDestructables = new List<SimpleObjectModification>();
-                    foreach (var destructable in mapDestructableObjectData.BaseDestructables)
-                    {
-                        if (!knownIds.Contains(destructable.OldId))
-                        {
-                            diagnostics.Add($"Unknown base destructable: '{destructable.OldId.ToRawcode()}'");
-                            continue;
-                        }
-
-                        if (destructable.Modifications.Any(property => !knownProperties.Contains(property.Id)))
-                        {
-                            diagnostics.AddRange(destructable.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
-                            destructable.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
-                        }
-
-                        baseDestructables.Add(destructable);
-                    }
-
-                    var newDestructables = new List<SimpleObjectModification>();
-                    foreach (var destructable in mapDestructableObjectData.NewDestructables)
-                    {
-                        if (!knownIds.Contains(destructable.OldId))
-                        {
-                            diagnostics.Add($"Unknown base destructable: '{destructable.OldId.ToRawcode()}'");
-                            continue;
-                        }
-
-                        if (knownIds.Contains(destructable.NewId))
-                        {
-                            diagnostics.Add($"Conflicting destructable: '{destructable.NewId.ToRawcode()}'");
-                            continue;
-                        }
-
-                        if (destructable.Modifications.Any(property => !knownProperties.Contains(property.Id)))
-                        {
-                            diagnostics.AddRange(destructable.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
-                            destructable.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
-                        }
-
-                        newDestructables.Add(destructable);
-                    }
-
-                    if (diagnostics.Count > 0)
-                    {
-                        var memoryStream = new MemoryStream();
-                        using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
-                        writer.Write(new MapDestructableObjectData(mapDestructableObjectData.FormatVersion)
-                        {
-                            BaseDestructables = baseDestructables,
-                            NewDestructables = newDestructables,
-                        });
-
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Adapted,
-                            Diagnostics = diagnostics.ToArray(),
-                            AdaptedFileStream = memoryStream,
-                        };
-                    }
-                    else
-                    {
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Compatible,
-                        };
-                    }
+                    using var reader = new BinaryReader(stream);
+                    mapDestructableObjectData = reader.ReadMapDestructableObjectData();
                 }
-                catch
+                catch (Exception e)
                 {
                     return new AdaptResult
                     {
-                        Status = MapFileStatus.AdapterError,
+                        Status = MapFileStatus.ParseError,
+                        Diagnostics = new[] { e.Message },
+                    };
+                }
+
+                if (!mapDestructableObjectData.TryDowngrade(targetPatch.Patch))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Unadaptable,
+                    };
+                }
+
+                var knownIds = new HashSet<int>();
+                knownIds.AddItemsFromSylkTable(destructableDataPath, DataConstants.DestructableDataKeyColumn);
+
+                var knownProperties = new HashSet<int>();
+                knownProperties.AddItemsFromSylkTable(destructableMetaDataPath, DataConstants.MetaDataIdColumn);
+
+                var diagnostics = new List<string>();
+
+                var baseDestructables = new List<SimpleObjectModification>();
+                foreach (var destructable in mapDestructableObjectData.BaseDestructables)
+                {
+                    if (!knownIds.Contains(destructable.OldId))
+                    {
+                        diagnostics.Add($"Unknown base destructable: '{destructable.OldId.ToRawcode()}'");
+                        continue;
+                    }
+
+                    if (destructable.Modifications.Any(property => !knownProperties.Contains(property.Id)))
+                    {
+                        diagnostics.AddRange(destructable.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                        destructable.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
+                    }
+
+                    baseDestructables.Add(destructable);
+                }
+
+                var newDestructables = new List<SimpleObjectModification>();
+                foreach (var destructable in mapDestructableObjectData.NewDestructables)
+                {
+                    if (!knownIds.Contains(destructable.OldId))
+                    {
+                        diagnostics.Add($"Unknown base destructable: '{destructable.OldId.ToRawcode()}'");
+                        continue;
+                    }
+
+                    if (knownIds.Contains(destructable.NewId))
+                    {
+                        diagnostics.Add($"Conflicting destructable: '{destructable.NewId.ToRawcode()}'");
+                        continue;
+                    }
+
+                    if (destructable.Modifications.Any(property => !knownProperties.Contains(property.Id)))
+                    {
+                        diagnostics.AddRange(destructable.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                        destructable.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
+                    }
+
+                    newDestructables.Add(destructable);
+                }
+
+                if (diagnostics.Count > 0)
+                {
+                    var memoryStream = new MemoryStream();
+                    using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
+                    writer.Write(new MapDestructableObjectData(mapDestructableObjectData.FormatVersion)
+                    {
+                        BaseDestructables = baseDestructables,
+                        NewDestructables = newDestructables,
+                    });
+
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Adapted,
+                        Diagnostics = diagnostics.ToArray(),
+                        AdaptedFileStream = memoryStream,
+                    };
+                }
+                else
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Compatible,
                     };
                 }
             }
-            catch (NotSupportedException)
+            catch (NotSupportedException e)
             {
                 return new AdaptResult
                 {
                     Status = MapFileStatus.Unadaptable,
+                    Diagnostics = new[] { e.Message },
                 };
             }
             catch (Exception e)
             {
                 return new AdaptResult
                 {
-                    Status = MapFileStatus.ParseError,
+                    Status = MapFileStatus.AdapterError,
                     Diagnostics = new[] { e.Message },
                 };
             }

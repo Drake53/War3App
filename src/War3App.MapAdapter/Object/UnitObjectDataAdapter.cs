@@ -83,110 +83,121 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                using var reader = new BinaryReader(stream);
-                var mapUnitObjectData = reader.ReadMapUnitObjectData();
-
+                MapUnitObjectData mapUnitObjectData;
                 try
                 {
-                    var knownIds = new HashSet<int>();
-                    knownIds.AddItemsFromSylkTable(unitAbilityDataPath, DataConstants.UnitAbilityDataKeyColumn);
-                    knownIds.AddItemsFromSylkTable(unitBalanceDataPath, DataConstants.UnitBalanceDataKeyColumn);
-                    knownIds.AddItemsFromSylkTable(unitDataPath, DataConstants.UnitDataKeyColumn);
-                    knownIds.AddItemsFromSylkTable(unitUiDataPath, DataConstants.UnitUiDataKeyColumn);
-                    knownIds.AddItemsFromSylkTable(unitWeaponDataPath, DataConstants.UnitWeaponDataKeyColumn);
-
-                    var knownProperties = new HashSet<int>();
-                    knownProperties.AddItemsFromSylkTable(unitMetaDataPath, DataConstants.MetaDataIdColumn);
-
-                    var diagnostics = new List<string>();
-
-                    var baseUnits = new List<SimpleObjectModification>();
-                    foreach (var unit in mapUnitObjectData.BaseUnits)
-                    {
-                        if (!knownIds.Contains(unit.OldId))
-                        {
-                            diagnostics.Add($"Unknown base unit: '{unit.OldId.ToRawcode()}'");
-                            continue;
-                        }
-
-                        if (unit.Modifications.Any(property => !knownProperties.Contains(property.Id)))
-                        {
-                            diagnostics.AddRange(unit.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
-                            unit.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
-                        }
-
-                        baseUnits.Add(unit);
-                    }
-
-                    var newUnits = new List<SimpleObjectModification>();
-                    foreach (var unit in mapUnitObjectData.NewUnits)
-                    {
-                        if (!knownIds.Contains(unit.OldId))
-                        {
-                            diagnostics.Add($"Unknown base unit: '{unit.OldId.ToRawcode()}'");
-                            continue;
-                        }
-
-                        if (knownIds.Contains(unit.NewId))
-                        {
-                            diagnostics.Add($"Conflicting unit: '{unit.NewId.ToRawcode()}'");
-                            continue;
-                        }
-
-                        if (unit.Modifications.Any(property => !knownProperties.Contains(property.Id)))
-                        {
-                            diagnostics.AddRange(unit.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
-                            unit.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
-                        }
-
-                        newUnits.Add(unit);
-                    }
-
-                    if (diagnostics.Count > 0)
-                    {
-                        var memoryStream = new MemoryStream();
-                        using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
-                        writer.Write(new MapUnitObjectData(mapUnitObjectData.FormatVersion)
-                        {
-                            BaseUnits = baseUnits,
-                            NewUnits = newUnits,
-                        });
-
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Adapted,
-                            Diagnostics = diagnostics.ToArray(),
-                            AdaptedFileStream = memoryStream,
-                        };
-                    }
-                    else
-                    {
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Compatible,
-                        };
-                    }
+                    using var reader = new BinaryReader(stream);
+                    mapUnitObjectData = reader.ReadMapUnitObjectData();
                 }
-                catch
+                catch (Exception e)
                 {
                     return new AdaptResult
                     {
-                        Status = MapFileStatus.AdapterError,
+                        Status = MapFileStatus.ParseError,
+                        Diagnostics = new[] { e.Message },
+                    };
+                }
+
+                if (!mapUnitObjectData.TryDowngrade(targetPatch.Patch))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Unadaptable,
+                    };
+                }
+
+                var knownIds = new HashSet<int>();
+                knownIds.AddItemsFromSylkTable(unitAbilityDataPath, DataConstants.UnitAbilityDataKeyColumn);
+                knownIds.AddItemsFromSylkTable(unitBalanceDataPath, DataConstants.UnitBalanceDataKeyColumn);
+                knownIds.AddItemsFromSylkTable(unitDataPath, DataConstants.UnitDataKeyColumn);
+                knownIds.AddItemsFromSylkTable(unitUiDataPath, DataConstants.UnitUiDataKeyColumn);
+                knownIds.AddItemsFromSylkTable(unitWeaponDataPath, DataConstants.UnitWeaponDataKeyColumn);
+
+                var knownProperties = new HashSet<int>();
+                knownProperties.AddItemsFromSylkTable(unitMetaDataPath, DataConstants.MetaDataIdColumn);
+
+                var diagnostics = new List<string>();
+
+                var baseUnits = new List<SimpleObjectModification>();
+                foreach (var unit in mapUnitObjectData.BaseUnits)
+                {
+                    if (!knownIds.Contains(unit.OldId))
+                    {
+                        diagnostics.Add($"Unknown base unit: '{unit.OldId.ToRawcode()}'");
+                        continue;
+                    }
+
+                    if (unit.Modifications.Any(property => !knownProperties.Contains(property.Id)))
+                    {
+                        diagnostics.AddRange(unit.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                        unit.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
+                    }
+
+                    baseUnits.Add(unit);
+                }
+
+                var newUnits = new List<SimpleObjectModification>();
+                foreach (var unit in mapUnitObjectData.NewUnits)
+                {
+                    if (!knownIds.Contains(unit.OldId))
+                    {
+                        diagnostics.Add($"Unknown base unit: '{unit.OldId.ToRawcode()}'");
+                        continue;
+                    }
+
+                    if (knownIds.Contains(unit.NewId))
+                    {
+                        diagnostics.Add($"Conflicting unit: '{unit.NewId.ToRawcode()}'");
+                        continue;
+                    }
+
+                    if (unit.Modifications.Any(property => !knownProperties.Contains(property.Id)))
+                    {
+                        diagnostics.AddRange(unit.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                        unit.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
+                    }
+
+                    newUnits.Add(unit);
+                }
+
+                if (diagnostics.Count > 0)
+                {
+                    var memoryStream = new MemoryStream();
+                    using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
+                    writer.Write(new MapUnitObjectData(mapUnitObjectData.FormatVersion)
+                    {
+                        BaseUnits = baseUnits,
+                        NewUnits = newUnits,
+                    });
+
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Adapted,
+                        Diagnostics = diagnostics.ToArray(),
+                        AdaptedFileStream = memoryStream,
+                    };
+                }
+                else
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Compatible,
                     };
                 }
             }
-            catch (NotSupportedException)
+            catch (NotSupportedException e)
             {
                 return new AdaptResult
                 {
                     Status = MapFileStatus.Unadaptable,
+                    Diagnostics = new[] { e.Message },
                 };
             }
             catch (Exception e)
             {
                 return new AdaptResult
                 {
-                    Status = MapFileStatus.ParseError,
+                    Status = MapFileStatus.AdapterError,
                     Diagnostics = new[] { e.Message },
                 };
             }

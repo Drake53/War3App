@@ -43,106 +43,117 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                using var reader = new BinaryReader(stream);
-                var mapAbilityObjectData = reader.ReadMapAbilityObjectData();
-
+                MapAbilityObjectData mapAbilityObjectData;
                 try
                 {
-                    var knownIds = new HashSet<int>();
-                    knownIds.AddItemsFromSylkTable(abilityDataPath, DataConstants.AbilityDataKeyColumn);
-
-                    var knownProperties = new HashSet<int>();
-                    knownProperties.AddItemsFromSylkTable(abilityMetaDataPath, DataConstants.MetaDataIdColumn);
-
-                    var diagnostics = new List<string>();
-
-                    var baseAbilities = new List<LevelObjectModification>();
-                    foreach (var ability in mapAbilityObjectData.BaseAbilities)
-                    {
-                        if (!knownIds.Contains(ability.OldId))
-                        {
-                            diagnostics.Add($"Unknown base ability: '{ability.OldId.ToRawcode()}'");
-                            continue;
-                        }
-
-                        if (ability.Modifications.Any(property => !knownProperties.Contains(property.Id)))
-                        {
-                            diagnostics.AddRange(ability.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
-                            ability.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
-                        }
-
-                        baseAbilities.Add(ability);
-                    }
-
-                    var newAbilities = new List<LevelObjectModification>();
-                    foreach (var ability in mapAbilityObjectData.NewAbilities)
-                    {
-                        if (!knownIds.Contains(ability.OldId))
-                        {
-                            diagnostics.Add($"Unknown base ability: '{ability.OldId.ToRawcode()}'");
-                            continue;
-                        }
-
-                        if (knownIds.Contains(ability.NewId))
-                        {
-                            diagnostics.Add($"Conflicting ability: '{ability.NewId.ToRawcode()}'");
-                            continue;
-                        }
-
-                        if (ability.Modifications.Any(property => !knownProperties.Contains(property.Id)))
-                        {
-                            diagnostics.AddRange(ability.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
-                            ability.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
-                        }
-
-                        newAbilities.Add(ability);
-                    }
-
-                    if (diagnostics.Count > 0)
-                    {
-                        var memoryStream = new MemoryStream();
-                        using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
-                        writer.Write(new MapAbilityObjectData(mapAbilityObjectData.FormatVersion)
-                        {
-                            BaseAbilities = baseAbilities,
-                            NewAbilities = newAbilities,
-                        });
-
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Adapted,
-                            Diagnostics = diagnostics.ToArray(),
-                            AdaptedFileStream = memoryStream,
-                        };
-                    }
-                    else
-                    {
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Compatible,
-                        };
-                    }
+                    using var reader = new BinaryReader(stream);
+                    mapAbilityObjectData = reader.ReadMapAbilityObjectData();
                 }
-                catch
+                catch (Exception e)
                 {
                     return new AdaptResult
                     {
-                        Status = MapFileStatus.AdapterError,
+                        Status = MapFileStatus.ParseError,
+                        Diagnostics = new[] { e.Message },
+                    };
+                }
+
+                if (!mapAbilityObjectData.TryDowngrade(targetPatch.Patch))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Unadaptable,
+                    };
+                }
+
+                var knownIds = new HashSet<int>();
+                knownIds.AddItemsFromSylkTable(abilityDataPath, DataConstants.AbilityDataKeyColumn);
+
+                var knownProperties = new HashSet<int>();
+                knownProperties.AddItemsFromSylkTable(abilityMetaDataPath, DataConstants.MetaDataIdColumn);
+
+                var diagnostics = new List<string>();
+
+                var baseAbilities = new List<LevelObjectModification>();
+                foreach (var ability in mapAbilityObjectData.BaseAbilities)
+                {
+                    if (!knownIds.Contains(ability.OldId))
+                    {
+                        diagnostics.Add($"Unknown base ability: '{ability.OldId.ToRawcode()}'");
+                        continue;
+                    }
+
+                    if (ability.Modifications.Any(property => !knownProperties.Contains(property.Id)))
+                    {
+                        diagnostics.AddRange(ability.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                        ability.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
+                    }
+
+                    baseAbilities.Add(ability);
+                }
+
+                var newAbilities = new List<LevelObjectModification>();
+                foreach (var ability in mapAbilityObjectData.NewAbilities)
+                {
+                    if (!knownIds.Contains(ability.OldId))
+                    {
+                        diagnostics.Add($"Unknown base ability: '{ability.OldId.ToRawcode()}'");
+                        continue;
+                    }
+
+                    if (knownIds.Contains(ability.NewId))
+                    {
+                        diagnostics.Add($"Conflicting ability: '{ability.NewId.ToRawcode()}'");
+                        continue;
+                    }
+
+                    if (ability.Modifications.Any(property => !knownProperties.Contains(property.Id)))
+                    {
+                        diagnostics.AddRange(ability.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                        ability.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
+                    }
+
+                    newAbilities.Add(ability);
+                }
+
+                if (diagnostics.Count > 0)
+                {
+                    var memoryStream = new MemoryStream();
+                    using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
+                    writer.Write(new MapAbilityObjectData(mapAbilityObjectData.FormatVersion)
+                    {
+                        BaseAbilities = baseAbilities,
+                        NewAbilities = newAbilities,
+                    });
+
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Adapted,
+                        Diagnostics = diagnostics.ToArray(),
+                        AdaptedFileStream = memoryStream,
+                    };
+                }
+                else
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Compatible,
                     };
                 }
             }
-            catch (NotSupportedException)
+            catch (NotSupportedException e)
             {
                 return new AdaptResult
                 {
                     Status = MapFileStatus.Unadaptable,
+                    Diagnostics = new[] { e.Message },
                 };
             }
             catch (Exception e)
             {
                 return new AdaptResult
                 {
-                    Status = MapFileStatus.ParseError,
+                    Status = MapFileStatus.AdapterError,
                     Diagnostics = new[] { e.Message },
                 };
             }

@@ -43,106 +43,117 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                using var reader = new BinaryReader(stream);
-                var mapUpgradeObjectData = reader.ReadMapUpgradeObjectData();
-
+                MapUpgradeObjectData mapUpgradeObjectData;
                 try
                 {
-                    var knownIds = new HashSet<int>();
-                    knownIds.AddItemsFromSylkTable(upgradeDataPath, DataConstants.UpgradeDataKeyColumn);
-
-                    var knownProperties = new HashSet<int>();
-                    knownProperties.AddItemsFromSylkTable(upgradeMetaDataPath, DataConstants.MetaDataIdColumn);
-
-                    var diagnostics = new List<string>();
-
-                    var baseUpgrades = new List<LevelObjectModification>();
-                    foreach (var upgrade in mapUpgradeObjectData.BaseUpgrades)
-                    {
-                        if (!knownIds.Contains(upgrade.OldId))
-                        {
-                            diagnostics.Add($"Unknown base upgrade: '{upgrade.OldId.ToRawcode()}'");
-                            continue;
-                        }
-
-                        if (upgrade.Modifications.Any(property => !knownProperties.Contains(property.Id)))
-                        {
-                            diagnostics.AddRange(upgrade.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
-                            upgrade.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
-                        }
-
-                        baseUpgrades.Add(upgrade);
-                    }
-
-                    var newUpgrades = new List<LevelObjectModification>();
-                    foreach (var upgrade in mapUpgradeObjectData.NewUpgrades)
-                    {
-                        if (!knownIds.Contains(upgrade.OldId))
-                        {
-                            diagnostics.Add($"Unknown base upgrade: '{upgrade.OldId.ToRawcode()}'");
-                            continue;
-                        }
-
-                        if (knownIds.Contains(upgrade.NewId))
-                        {
-                            diagnostics.Add($"Conflicting upgrade: '{upgrade.NewId.ToRawcode()}'");
-                            continue;
-                        }
-
-                        if (upgrade.Modifications.Any(property => !knownProperties.Contains(property.Id)))
-                        {
-                            diagnostics.AddRange(upgrade.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
-                            upgrade.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
-                        }
-
-                        newUpgrades.Add(upgrade);
-                    }
-
-                    if (diagnostics.Count > 0)
-                    {
-                        var memoryStream = new MemoryStream();
-                        using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
-                        writer.Write(new MapUpgradeObjectData(mapUpgradeObjectData.FormatVersion)
-                        {
-                            BaseUpgrades = baseUpgrades,
-                            NewUpgrades = newUpgrades,
-                        });
-
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Adapted,
-                            Diagnostics = diagnostics.ToArray(),
-                            AdaptedFileStream = memoryStream,
-                        };
-                    }
-                    else
-                    {
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Compatible,
-                        };
-                    }
+                    using var reader = new BinaryReader(stream);
+                    mapUpgradeObjectData = reader.ReadMapUpgradeObjectData();
                 }
-                catch
+                catch (Exception e)
                 {
                     return new AdaptResult
                     {
-                        Status = MapFileStatus.AdapterError,
+                        Status = MapFileStatus.ParseError,
+                        Diagnostics = new[] { e.Message },
+                    };
+                }
+
+                if (!mapUpgradeObjectData.TryDowngrade(targetPatch.Patch))
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Unadaptable,
+                    };
+                }
+
+                var knownIds = new HashSet<int>();
+                knownIds.AddItemsFromSylkTable(upgradeDataPath, DataConstants.UpgradeDataKeyColumn);
+
+                var knownProperties = new HashSet<int>();
+                knownProperties.AddItemsFromSylkTable(upgradeMetaDataPath, DataConstants.MetaDataIdColumn);
+
+                var diagnostics = new List<string>();
+
+                var baseUpgrades = new List<LevelObjectModification>();
+                foreach (var upgrade in mapUpgradeObjectData.BaseUpgrades)
+                {
+                    if (!knownIds.Contains(upgrade.OldId))
+                    {
+                        diagnostics.Add($"Unknown base upgrade: '{upgrade.OldId.ToRawcode()}'");
+                        continue;
+                    }
+
+                    if (upgrade.Modifications.Any(property => !knownProperties.Contains(property.Id)))
+                    {
+                        diagnostics.AddRange(upgrade.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                        upgrade.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
+                    }
+
+                    baseUpgrades.Add(upgrade);
+                }
+
+                var newUpgrades = new List<LevelObjectModification>();
+                foreach (var upgrade in mapUpgradeObjectData.NewUpgrades)
+                {
+                    if (!knownIds.Contains(upgrade.OldId))
+                    {
+                        diagnostics.Add($"Unknown base upgrade: '{upgrade.OldId.ToRawcode()}'");
+                        continue;
+                    }
+
+                    if (knownIds.Contains(upgrade.NewId))
+                    {
+                        diagnostics.Add($"Conflicting upgrade: '{upgrade.NewId.ToRawcode()}'");
+                        continue;
+                    }
+
+                    if (upgrade.Modifications.Any(property => !knownProperties.Contains(property.Id)))
+                    {
+                        diagnostics.AddRange(upgrade.Modifications.Where(property => !knownProperties.Contains(property.Id)).Select(property => $"Unknown property: '{property.Id.ToRawcode()}'"));
+                        upgrade.Modifications.RemoveAll(property => !knownProperties.Contains(property.Id));
+                    }
+
+                    newUpgrades.Add(upgrade);
+                }
+
+                if (diagnostics.Count > 0)
+                {
+                    var memoryStream = new MemoryStream();
+                    using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
+                    writer.Write(new MapUpgradeObjectData(mapUpgradeObjectData.FormatVersion)
+                    {
+                        BaseUpgrades = baseUpgrades,
+                        NewUpgrades = newUpgrades,
+                    });
+
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Adapted,
+                        Diagnostics = diagnostics.ToArray(),
+                        AdaptedFileStream = memoryStream,
+                    };
+                }
+                else
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Compatible,
                     };
                 }
             }
-            catch (NotSupportedException)
+            catch (NotSupportedException e)
             {
                 return new AdaptResult
                 {
                     Status = MapFileStatus.Unadaptable,
+                    Diagnostics = new[] { e.Message },
                 };
             }
             catch (Exception e)
             {
                 return new AdaptResult
                 {
-                    Status = MapFileStatus.ParseError,
+                    Status = MapFileStatus.AdapterError,
                     Diagnostics = new[] { e.Message },
                 };
             }
