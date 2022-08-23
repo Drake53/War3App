@@ -98,7 +98,8 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                if (!mapUnitObjectData.TryDowngrade(targetPatch.Patch))
+                var shouldDowngrade = mapUnitObjectData.GetMinimumPatch() > targetPatch.Patch;
+                if (shouldDowngrade && !mapUnitObjectData.TryDowngrade(targetPatch.Patch))
                 {
                     return new AdaptResult
                     {
@@ -160,7 +161,7 @@ namespace War3App.MapAdapter.Object
                     newUnits.Add(unit);
                 }
 
-                if (diagnostics.Count > 0)
+                if (shouldDowngrade || diagnostics.Count > 0)
                 {
                     var memoryStream = new MemoryStream();
                     using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);

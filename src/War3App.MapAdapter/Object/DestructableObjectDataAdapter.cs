@@ -58,7 +58,8 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                if (!mapDestructableObjectData.TryDowngrade(targetPatch.Patch))
+                var shouldDowngrade = mapDestructableObjectData.GetMinimumPatch() > targetPatch.Patch;
+                if (shouldDowngrade && !mapDestructableObjectData.TryDowngrade(targetPatch.Patch))
                 {
                     return new AdaptResult
                     {
@@ -116,7 +117,7 @@ namespace War3App.MapAdapter.Object
                     newDestructables.Add(destructable);
                 }
 
-                if (diagnostics.Count > 0)
+                if (shouldDowngrade || diagnostics.Count > 0)
                 {
                     var memoryStream = new MemoryStream();
                     using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
