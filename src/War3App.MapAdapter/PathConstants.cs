@@ -1,44 +1,44 @@
 ﻿namespace War3App.MapAdapter
 {
-    internal static class PathConstants
+    public static class PathConstants
     {
         // Script
-        internal const string TriggerDataPath = @"ui\triggerdata.txt";
-        internal const string CommonJPath = @"scripts\common.j";
-        internal const string BlizzardJPath = @"scripts\blizzard.j";
+        public const string TriggerDataPath = @"ui\triggerdata.txt";
+        public const string CommonJPath = @"scripts\common.j";
+        public const string BlizzardJPath = @"scripts\blizzard.j";
 
         // Unit
-        internal const string UnitDataPath = @"units\unitdata.slk";
-        internal const string UnitAbilityDataPath = @"units\unitabilities.slk";
-        internal const string UnitBalanceDataPath = @"units\unitbalance.slk";
-        internal const string UnitUiDataPath = @"units\unitui.slk";
-        internal const string UnitWeaponDataPath = @"units\unitweapons.slk";
+        public const string UnitDataPath = @"units\unitdata.slk";
+        public const string UnitAbilityDataPath = @"units\unitabilities.slk";
+        public const string UnitBalanceDataPath = @"units\unitbalance.slk";
+        public const string UnitUiDataPath = @"units\unitui.slk";
+        public const string UnitWeaponDataPath = @"units\unitweapons.slk";
 
         // Item
-        internal const string ItemDataPath = @"units\itemdata.slk";
+        public const string ItemDataPath = @"units\itemdata.slk";
 
         // Destructable
-        internal const string DestructableDataPath = @"units\destructabledata.slk";
+        public const string DestructableDataPath = @"units\destructabledata.slk";
 
         // Doodad
-        internal const string DoodadDataPath = @"doodads\doodads.slk";
+        public const string DoodadDataPath = @"doodads\doodads.slk";
 
         // Ability
-        internal const string AbilityDataPath = @"units\abilitydata.slk";
+        public const string AbilityDataPath = @"units\abilitydata.slk";
 
         // Buff
-        internal const string BuffDataPath = @"units\abilitybuffdata.slk";
+        public const string BuffDataPath = @"units\abilitybuffdata.slk";
 
         // Upgrade
-        internal const string UpgradeDataPath = @"units\upgradedata.slk";
+        public const string UpgradeDataPath = @"units\upgradedata.slk";
 
         // Metadata
-        internal const string UnitMetaDataPath = @"units\unitmetadata.slk";
-        internal const string ItemMetaDataPath = UnitMetaDataPath;
-        internal const string DestructableMetaDataPath = @"units\destructablemetadata.slk";
-        internal const string DoodadMetaDataPath = @"doodads\doodadmetadata.slk";
-        internal const string AbilityMetaDataPath = @"units\abilitymetadata.slk";
-        internal const string BuffMetaDataPath = @"units\abilitybuffmetadata.slk";
-        internal const string UpgradeMetaDataPath = @"units\upgrademetadata.slk";
+        public const string UnitMetaDataPath = @"units\unitmetadata.slk";
+        public const string ItemMetaDataPath = UnitMetaDataPath;
+        public const string DestructableMetaDataPath = @"units\destructablemetadata.slk";
+        public const string DoodadMetaDataPath = @"doodads\doodadmetadata.slk";
+        public const string AbilityMetaDataPath = @"units\abilitymetadata.slk";
+        public const string BuffMetaDataPath = @"units\abilitybuffmetadata.slk";
+        public const string UpgradeMetaDataPath = @"units\upgrademetadata.slk";
     }
 }
