@@ -334,7 +334,7 @@ namespace War3App.MapAdapter.Script
             }
             else if (statement is JassDebugStatementSyntax debugStatement)
             {
-                RegisterStatement(debugStatement, context);
+                RegisterStatement(debugStatement.Statement, context);
             }
             else if (statement is JassExitStatementSyntax exitStatement)
             {
