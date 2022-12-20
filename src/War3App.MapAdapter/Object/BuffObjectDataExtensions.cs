@@ -26,8 +26,8 @@ namespace War3App.MapAdapter.Object
         {
             switch (buffObjectData.FormatVersion)
             {
-                case ObjectDataFormatVersion.V3:
-                    buffObjectData.FormatVersion = ObjectDataFormatVersion.Normal;
+                case ObjectDataFormatVersion.v3:
+                    buffObjectData.FormatVersion = ObjectDataFormatVersion.v2;
                     break;
 
                 default:
@@ -39,9 +39,9 @@ namespace War3App.MapAdapter.Object
         {
             return buffObjectData.FormatVersion switch
             {
-                ObjectDataFormatVersion.V1 => GamePatch.v1_00,
-                ObjectDataFormatVersion.Normal => GamePatch.v1_00,
-                ObjectDataFormatVersion.V3 => GamePatch.v1_33_0,
+                ObjectDataFormatVersion.v1 => GamePatch.v1_00,
+                ObjectDataFormatVersion.v2 => GamePatch.v1_00,
+                ObjectDataFormatVersion.v3 => GamePatch.v1_33_0,
             };
         }
     }

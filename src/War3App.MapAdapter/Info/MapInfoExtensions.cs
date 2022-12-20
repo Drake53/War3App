@@ -29,7 +29,7 @@ namespace War3App.MapAdapter.Info
                 var targetGameBuild = GameBuildsProvider.GetGameBuilds(targetPatch)[0];
 
                 mapInfo.EditorVersion = targetGameBuild.EditorVersion.Value;
-                if (mapInfo.FormatVersion >= MapInfoFormatVersion.Lua)
+                if (mapInfo.FormatVersion >= MapInfoFormatVersion.v28)
                 {
                     mapInfo.GameVersion = targetGameBuild.Version;
                 }
@@ -46,15 +46,15 @@ namespace War3App.MapAdapter.Info
         {
             switch (mapInfo.FormatVersion)
             {
-                case MapInfoFormatVersion.Reforged:
+                case MapInfoFormatVersion.v31:
                     mapInfo.MapFlags &= ~(MapFlags.AccurateProbabilityForCalculations | MapFlags.CustomAbilitySkin);
                     mapInfo.EditorVersion = EditorVersion.v6072;
                     mapInfo.GameVersion = new Version(1, 31, 1, 12173);
 
-                    mapInfo.FormatVersion = MapInfoFormatVersion.Lua;
+                    mapInfo.FormatVersion = MapInfoFormatVersion.v28;
                     break;
 
-                case MapInfoFormatVersion.Lua:
+                case MapInfoFormatVersion.v28:
                     if (mapInfo.ScriptLanguage == ScriptLanguage.Lua)
                     {
                         throw new NotSupportedException("Cannot downgrade, because map is set to use Lua as script language.");
@@ -62,10 +62,10 @@ namespace War3App.MapAdapter.Info
 
                     mapInfo.GameVersion = null;
 
-                    mapInfo.FormatVersion = MapInfoFormatVersion.Tft;
+                    mapInfo.FormatVersion = MapInfoFormatVersion.v25;
                     break;
 
-                case MapInfoFormatVersion.Tft:
+                case MapInfoFormatVersion.v25:
                     if (mapInfo.Players.Count > 12 || mapInfo.Forces.Count > 12)
                     {
                         throw new NotSupportedException("Cannot downgrade, because the map uses more than 12 players and/or teams.");
@@ -85,10 +85,10 @@ namespace War3App.MapAdapter.Info
             var minimumBySlotCounts = mapInfo.Players.Count > 12 || mapInfo.Forces.Count > 12 ? GamePatch.v1_29_0 : GamePatch.v1_00;
             var minimumByFormatVersion = mapInfo.FormatVersion switch
             {
-                MapInfoFormatVersion.RoC => GamePatch.v1_00,
-                MapInfoFormatVersion.Tft => GamePatch.v1_07,
-                MapInfoFormatVersion.Lua => GamePatch.v1_31_0,
-                MapInfoFormatVersion.Reforged => GamePatch.v1_32_0,
+                MapInfoFormatVersion.v18 => GamePatch.v1_00,
+                MapInfoFormatVersion.v25 => GamePatch.v1_07,
+                MapInfoFormatVersion.v28 => GamePatch.v1_31_0,
+                MapInfoFormatVersion.v31 => GamePatch.v1_32_0,
 
                 MapInfoFormatVersion.v8 => GamePatch.v1_00,
                 MapInfoFormatVersion.v10 => GamePatch.v1_00,

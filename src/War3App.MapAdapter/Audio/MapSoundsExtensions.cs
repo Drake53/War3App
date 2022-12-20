@@ -32,18 +32,18 @@ namespace War3App.MapAdapter.Audio
         {
             switch (mapSounds.FormatVersion)
             {
-                case MapSoundsFormatVersion.ReforgedV3:
-                    mapSounds.FormatVersion = MapSoundsFormatVersion.Reforged;
+                case MapSoundsFormatVersion.v3:
+                    mapSounds.FormatVersion = MapSoundsFormatVersion.v2;
                     break;
 
-                case MapSoundsFormatVersion.Reforged:
+                case MapSoundsFormatVersion.v2:
                     foreach (var sound in mapSounds.Sounds)
                     {
                         // TODO: warn/error if it's a .flac file
                         sound.SoundName = null;
                     }
 
-                    mapSounds.FormatVersion = MapSoundsFormatVersion.Normal;
+                    mapSounds.FormatVersion = MapSoundsFormatVersion.v1;
                     break;
 
                 default: break;
@@ -54,9 +54,9 @@ namespace War3App.MapAdapter.Audio
         {
             return mapSounds.FormatVersion switch
             {
-                MapSoundsFormatVersion.Normal => GamePatch.v1_00,
-                MapSoundsFormatVersion.Reforged => GamePatch.v1_32_0,
-                MapSoundsFormatVersion.ReforgedV3 => GamePatch.v1_32_6, // todo; verify correctness
+                MapSoundsFormatVersion.v1 => GamePatch.v1_00,
+                MapSoundsFormatVersion.v2 => GamePatch.v1_32_0,
+                MapSoundsFormatVersion.v3 => GamePatch.v1_32_6,
             };
         }
     }

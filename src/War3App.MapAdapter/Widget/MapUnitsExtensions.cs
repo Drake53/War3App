@@ -36,8 +36,8 @@ namespace War3App.MapAdapter.Widget
             }
             else
             {
-                mapUnits.FormatVersion = MapWidgetsFormatVersion.RoC;
-                mapUnits.SubVersion = MapWidgetsSubVersion.V9;
+                mapUnits.FormatVersion = MapWidgetsFormatVersion.v7;
+                mapUnits.SubVersion = MapWidgetsSubVersion.v9;
             }
         }
 
@@ -50,8 +50,8 @@ namespace War3App.MapAdapter.Widget
 
             return mapUnits.FormatVersion switch
             {
-                MapWidgetsFormatVersion.RoC => GamePatch.v1_00,
-                MapWidgetsFormatVersion.TFT => GamePatch.v1_07,
+                MapWidgetsFormatVersion.v7 => GamePatch.v1_00,
+                MapWidgetsFormatVersion.v8 => GamePatch.v1_07,
             };
         }
     }
