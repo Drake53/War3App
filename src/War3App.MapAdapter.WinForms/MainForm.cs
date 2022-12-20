@@ -12,6 +12,7 @@ using War3App.Common.WinForms;
 using War3App.Common.WinForms.Extensions;
 using War3App.MapAdapter.Info;
 using War3App.MapAdapter.WinForms.Extensions;
+using War3App.MapAdapter.WinForms.Forms;
 
 using War3Net.Build.Common;
 using War3Net.Build.Extensions;
@@ -22,7 +23,7 @@ namespace War3App.MapAdapter.WinForms
 {
     internal static class MainForm
     {
-        private const string Title = "Map Adapter v1.1.4";
+        private const string Title = "Map Adapter v1.2.0";
 
         private static readonly GamePatch _latestPatch = Enum.GetValues<GamePatch>().Max();
 
@@ -45,6 +46,7 @@ namespace War3App.MapAdapter.WinForms
         private static Timer? _fileSelectionChangedEventTimer;
 
         private static ToolStripButton _editContextButton;
+        private static ToolStripButton _diffContextButton;
         private static ToolStripButton _adaptContextButton;
         private static ToolStripButton _removeContextButton;
 
@@ -54,23 +56,17 @@ namespace War3App.MapAdapter.WinForms
         private static BackgroundWorker _openArchiveWorker;
         private static BackgroundWorker _saveArchiveWorker;
 
+        private static IConfiguration _configuration;
         private static AppSettings _appSettings;
 
         [STAThread]
         private static void Main(string[] args)
         {
-            var configuration = new ConfigurationBuilder()
+            _configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
                 .Build();
 
-            _appSettings = new AppSettings
-            {
-                TargetPatches = configuration.GetSection(nameof(AppSettings.TargetPatches)).GetChildren().Select(targetPatch => new TargetPatch
-                {
-                    Patch = Enum.Parse<GamePatch>(targetPatch.GetSection(nameof(TargetPatch.Patch)).Value),
-                    GameDataPath = targetPatch.GetSection(nameof(TargetPatch.GameDataPath)).Value,
-                }).ToList(),
-            };
+            ReloadSettings();
 
             _watcher = new FileSystemWatcher();
             _watcher.Created += OnWatchedFileEvent;
@@ -260,6 +256,10 @@ namespace War3App.MapAdapter.WinForms
             _editContextButton.Enabled = false;
             _editContextButton.Click += OnClickEditSelected;
 
+            _diffContextButton = new ToolStripButton("Diff");
+            _diffContextButton.Enabled = false;
+            _diffContextButton.Click += OnClickDiffSelected;
+
             _adaptContextButton = new ToolStripButton("Adapt");
             _adaptContextButton.Enabled = false;
             _adaptContextButton.Click += OnClickAdaptSelected;
@@ -272,6 +272,7 @@ namespace War3App.MapAdapter.WinForms
             {
                 _adaptContextButton,
                 _editContextButton,
+                _diffContextButton,
                 _removeContextButton,
             });
 
@@ -379,8 +380,8 @@ namespace War3App.MapAdapter.WinForms
                 inputArchiveFlowLayout.Size = inputArchiveFlowLayout.GetPreferredSize(new Size(width, 0));
                 buttonsFlowLayout.Size = buttonsFlowLayout.GetPreferredSize(new Size(width, 0));
                 flowLayout.Height
-                    = inputArchiveFlowLayout.Margin.Top + inputArchiveFlowLayout.Height + inputArchiveFlowLayout.Margin.Bottom
-                    + buttonsFlowLayout.Margin.Top + buttonsFlowLayout.Height + buttonsFlowLayout.Margin.Bottom;
+                    = inputArchiveFlowLayout.Height + inputArchiveFlowLayout.Margin.Vertical
+                    + buttonsFlowLayout.Height + buttonsFlowLayout.Margin.Vertical;
             };
 
             splitContainer.SplitterDistance = 640 - splitContainer.SplitterWidth;
@@ -395,6 +396,18 @@ namespace War3App.MapAdapter.WinForms
             };
 
             form.ShowDialog();
+        }
+
+        private static void ReloadSettings()
+        {
+            _appSettings = new AppSettings
+            {
+                TargetPatches = _configuration.GetSection(nameof(AppSettings.TargetPatches)).GetChildren().Select(targetPatch => new TargetPatch
+                {
+                    Patch = Enum.Parse<GamePatch>(targetPatch.GetSection(nameof(TargetPatch.Patch)).Value),
+                    GameDataPath = targetPatch.GetSection(nameof(TargetPatch.GameDataPath)).Value,
+                }).ToList(),
+            };
         }
 
         private static void OnClickOpenCloseMap(object sender, EventArgs e)
@@ -418,6 +431,7 @@ namespace War3App.MapAdapter.WinForms
                 _fileSelectionChangedEventTimer.Interval = 50;
 
                 _editContextButton.Enabled = false;
+                _diffContextButton.Enabled = false;
                 _adaptContextButton.Enabled = false;
                 _removeContextButton.Enabled = false;
             }
@@ -432,6 +446,7 @@ namespace War3App.MapAdapter.WinForms
             if (_fileList.TryGetSelectedItemTag(out var tag))
             {
                 _editContextButton.Enabled = tag.Adapter?.IsTextFile ?? false;
+                _diffContextButton.Enabled = tag.Adapter is not null && tag.AdaptResult?.AdaptedFileStream is not null && (tag.Adapter.IsTextFile || tag.Adapter.IsJsonSerializationSupported);
                 _adaptContextButton.Enabled = _targetPatch.HasValue && (tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified);
                 _removeContextButton.Enabled = tag.Status != MapFileStatus.Removed;
             }
@@ -440,6 +455,7 @@ namespace War3App.MapAdapter.WinForms
                 var tags = _fileList.GetSelectedItemTags();
 
                 _editContextButton.Enabled = false;
+                _diffContextButton.Enabled = false;
                 _adaptContextButton.Enabled = _targetPatch.HasValue && tags.Any(tag => tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified);
                 _removeContextButton.Enabled = tags.Any(tag => tag.Status != MapFileStatus.Removed);
             }
@@ -483,6 +499,50 @@ namespace War3App.MapAdapter.WinForms
 
                     _diagnosticsDisplay.Text = string.Empty;
                 }
+            }
+        }
+
+        private static void OnClickDiffSelected(object sender, EventArgs e)
+        {
+            if (!_diffContextButton.Enabled)
+            {
+                return;
+            }
+
+            if (_fileList.TryGetSelectedItemTag(out var tag))
+            {
+                if (tag.Adapter is null || tag.AdaptResult?.AdaptedFileStream is null)
+                {
+                    return;
+                }
+
+                string oldText, newText;
+                if (tag.Adapter.IsTextFile)
+                {
+                    tag.OriginalFileStream.Position = 0;
+                    tag.AdaptResult.AdaptedFileStream.Position = 0;
+
+                    using var oldStreamReader = new StreamReader(tag.OriginalFileStream, leaveOpen: true);
+                    using var newStreamReader = new StreamReader(tag.AdaptResult.AdaptedFileStream, leaveOpen: true);
+
+                    oldText = oldStreamReader.ReadToEnd();
+                    newText = newStreamReader.ReadToEnd();
+                }
+                else if (tag.Adapter.IsJsonSerializationSupported)
+                {
+                    tag.OriginalFileStream.Position = 0;
+                    tag.AdaptResult.AdaptedFileStream.Position = 0;
+
+                    oldText = tag.Adapter.SerializeFileToJson(tag.OriginalFileStream, tag.GetOriginPatch(_originPatch.Value));
+                    newText = tag.Adapter.SerializeFileToJson(tag.AdaptResult.AdaptedFileStream, _targetPatch.Value);
+                }
+                else
+                {
+                    return;
+                }
+
+                var diffForm = new DiffForm(oldText, newText);
+                diffForm.ShowDialog();
             }
         }
 
