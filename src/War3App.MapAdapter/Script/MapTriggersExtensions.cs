@@ -44,7 +44,7 @@ namespace War3App.MapAdapter.Script
         {
             return mapTriggers.SubVersion.HasValue
                 ? GamePatch.v1_31_0
-                : mapTriggers.FormatVersion == MapTriggersFormatVersion.Tft
+                : mapTriggers.FormatVersion == MapTriggersFormatVersion.v7
                     ? GamePatch.v1_07
                     : GamePatch.v1_00;
         }

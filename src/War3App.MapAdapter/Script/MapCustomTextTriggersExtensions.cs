@@ -44,7 +44,7 @@ namespace War3App.MapAdapter.Script
         {
             return mapCustomTextTriggers.SubVersion.HasValue
                 ? GamePatch.v1_31_0
-                : mapCustomTextTriggers.FormatVersion == MapCustomTextTriggersFormatVersion.Tft
+                : mapCustomTextTriggers.FormatVersion == MapCustomTextTriggersFormatVersion.v1
                     ? GamePatch.v1_07
                     : GamePatch.v1_00;
         }
