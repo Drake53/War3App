@@ -17,6 +17,8 @@ namespace War3App.MapAdapter.Script
 
         public bool IsTextFile => true;
 
+        public bool IsJsonSerializationSupported => false;
+
         public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
         {
             try
@@ -127,6 +129,11 @@ namespace War3App.MapAdapter.Script
                     Diagnostics = new[] { e.Message },
                 };
             }
+        }
+
+        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
+        {
+            throw new NotSupportedException();
         }
 
         private static void RegisterDeclaration(ITopLevelDeclarationSyntax declaration, JassMapScriptAdapterContext context)

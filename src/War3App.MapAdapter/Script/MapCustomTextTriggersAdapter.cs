@@ -13,6 +13,8 @@ namespace War3App.MapAdapter.Script
 
         public bool IsTextFile => false;
 
+        public bool IsJsonSerializationSupported => false;
+
         public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
         {
             var encoding = new UTF8Encoding(false, true);
@@ -67,6 +69,11 @@ namespace War3App.MapAdapter.Script
                     Diagnostics = new[] { e.Message },
                 };
             }
+        }
+
+        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
+        {
+            throw new NotSupportedException();
         }
     }
 }

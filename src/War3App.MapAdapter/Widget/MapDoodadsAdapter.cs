@@ -13,6 +13,8 @@ namespace War3App.MapAdapter.Widget
 
         public bool IsTextFile => false;
 
+        public bool IsJsonSerializationSupported => true;
+
         public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
         {
             try
@@ -71,6 +73,21 @@ namespace War3App.MapAdapter.Widget
                     Status = MapFileStatus.ParseError,
                     Diagnostics = new[] { e.Message },
                 };
+            }
+        }
+
+        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
+        {
+            try
+            {
+                using var reader = new BinaryReader(stream);
+                var mapDoodads = reader.ReadMapDoodads();
+
+                return System.Text.Json.JsonSerializer.Serialize(mapDoodads);
+            }
+            catch
+            {
+                return string.Empty;
             }
         }
     }

@@ -13,6 +13,8 @@ namespace War3App.MapAdapter.Audio
 
         public bool IsTextFile => false;
 
+        public bool IsJsonSerializationSupported => true;
+
         public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
         {
             try
@@ -71,6 +73,21 @@ namespace War3App.MapAdapter.Audio
                     Status = MapFileStatus.ParseError,
                     Diagnostics = new[] { e.Message },
                 };
+            }
+        }
+
+        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
+        {
+            try
+            {
+                using var reader = new BinaryReader(stream);
+                var mapSounds = reader.ReadMapSounds();
+
+                return System.Text.Json.JsonSerializer.Serialize(mapSounds);
+            }
+            catch
+            {
+                return string.Empty;
             }
         }
     }
