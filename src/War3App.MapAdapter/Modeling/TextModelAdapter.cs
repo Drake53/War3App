@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 using War3Net.Build.Common;
 
@@ -10,6 +11,8 @@ namespace War3App.MapAdapter.Modeling
 
         public bool IsTextFile => true;
 
+        public bool IsJsonSerializationSupported => false;
+
         public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
         {
             // TODO
@@ -17,6 +20,11 @@ namespace War3App.MapAdapter.Modeling
             {
                 Status = MapFileStatus.Unknown,
             };
+        }
+
+        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
+        {
+            throw new NotSupportedException();
         }
     }
 }

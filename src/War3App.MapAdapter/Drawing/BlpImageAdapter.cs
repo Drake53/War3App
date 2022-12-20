@@ -11,6 +11,8 @@ namespace War3App.MapAdapter.Drawing
 
         public bool IsTextFile => false;
 
+        public bool IsJsonSerializationSupported => false;
+
         public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
         {
             try
@@ -37,6 +39,11 @@ namespace War3App.MapAdapter.Drawing
                     Diagnostics = new[] { e.Message },
                 };
             }
+        }
+
+        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
+        {
+            throw new NotSupportedException();
         }
     }
 }

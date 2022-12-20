@@ -6,10 +6,14 @@ namespace War3App.MapAdapter
 {
     public interface IMapFileAdapter
     {
-        public string MapFileDescription { get; }
+        string MapFileDescription { get; }
 
-        public bool IsTextFile { get; }
+        bool IsTextFile { get; }
+
+        bool IsJsonSerializationSupported { get; }
 
         AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch);
+
+        string SerializeFileToJson(Stream stream, GamePatch gamePatch);
     }
 }
