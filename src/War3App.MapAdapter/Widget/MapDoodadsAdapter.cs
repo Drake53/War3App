@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 
 using War3Net.Build.Common;
 using War3Net.Build.Extensions;
@@ -80,14 +81,19 @@ namespace War3App.MapAdapter.Widget
         {
             try
             {
-                using var reader = new BinaryReader(stream);
+                using var reader = new BinaryReader(stream, Encoding.UTF8, true);
                 var mapDoodads = reader.ReadMapDoodads();
 
-                return System.Text.Json.JsonSerializer.Serialize(mapDoodads);
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                };
+
+                return JsonSerializer.Serialize(mapDoodads, options);
             }
-            catch
+            catch (Exception e)
             {
-                return string.Empty;
+                return $"{e.GetType().FullName}{System.Environment.NewLine}{e.Message}";
             }
         }
     }

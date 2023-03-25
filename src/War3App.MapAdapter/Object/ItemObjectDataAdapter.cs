@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 
 using War3App.MapAdapter.Extensions;
 
@@ -166,14 +167,19 @@ namespace War3App.MapAdapter.Object
         {
             try
             {
-                using var reader = new BinaryReader(stream);
-                var mapItemObjectData = reader.ReadMapItemObjectData();
+                using var reader = new BinaryReader(stream, Encoding.UTF8, true);
+                var itemObjectData = reader.ReadItemObjectData();
 
-                return System.Text.Json.JsonSerializer.Serialize(mapItemObjectData);
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                };
+
+                return JsonSerializer.Serialize(itemObjectData, options);
             }
-            catch
+            catch (Exception e)
             {
-                return string.Empty;
+                return $"{e.GetType().FullName}{System.Environment.NewLine}{e.Message}";
             }
         }
     }
