@@ -86,11 +86,11 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                MapUnitObjectData mapUnitObjectData;
+                UnitObjectData unitObjectData;
                 try
                 {
                     using var reader = new BinaryReader(stream);
-                    mapUnitObjectData = reader.ReadMapUnitObjectData();
+                    unitObjectData = reader.ReadUnitObjectData();
                 }
                 catch (Exception e)
                 {
@@ -101,8 +101,8 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                var shouldDowngrade = mapUnitObjectData.GetMinimumPatch() > targetPatch.Patch;
-                if (shouldDowngrade && !mapUnitObjectData.TryDowngrade(targetPatch.Patch))
+                var shouldDowngrade = unitObjectData.GetMinimumPatch() > targetPatch.Patch;
+                if (shouldDowngrade && !unitObjectData.TryDowngrade(targetPatch.Patch))
                 {
                     return new AdaptResult
                     {
@@ -123,7 +123,7 @@ namespace War3App.MapAdapter.Object
                 var diagnostics = new List<string>();
 
                 var baseUnits = new List<SimpleObjectModification>();
-                foreach (var unit in mapUnitObjectData.BaseUnits)
+                foreach (var unit in unitObjectData.BaseUnits)
                 {
                     if (!knownIds.Contains(unit.OldId))
                     {
@@ -141,7 +141,7 @@ namespace War3App.MapAdapter.Object
                 }
 
                 var newUnits = new List<SimpleObjectModification>();
-                foreach (var unit in mapUnitObjectData.NewUnits)
+                foreach (var unit in unitObjectData.NewUnits)
                 {
                     if (!knownIds.Contains(unit.OldId))
                     {
@@ -168,7 +168,7 @@ namespace War3App.MapAdapter.Object
                 {
                     var memoryStream = new MemoryStream();
                     using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
-                    writer.Write(new MapUnitObjectData(mapUnitObjectData.FormatVersion)
+                    writer.Write(new UnitObjectData(unitObjectData.FormatVersion)
                     {
                         BaseUnits = baseUnits,
                         NewUnits = newUnits,

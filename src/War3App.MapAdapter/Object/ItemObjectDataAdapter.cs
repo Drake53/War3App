@@ -46,11 +46,11 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                MapItemObjectData mapItemObjectData;
+                ItemObjectData itemObjectData;
                 try
                 {
                     using var reader = new BinaryReader(stream);
-                    mapItemObjectData = reader.ReadMapItemObjectData();
+                    itemObjectData = reader.ReadItemObjectData();
                 }
                 catch (Exception e)
                 {
@@ -61,8 +61,8 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                var shouldDowngrade = mapItemObjectData.GetMinimumPatch() > targetPatch.Patch;
-                if (shouldDowngrade && !mapItemObjectData.TryDowngrade(targetPatch.Patch))
+                var shouldDowngrade = itemObjectData.GetMinimumPatch() > targetPatch.Patch;
+                if (shouldDowngrade && !itemObjectData.TryDowngrade(targetPatch.Patch))
                 {
                     return new AdaptResult
                     {
@@ -79,7 +79,7 @@ namespace War3App.MapAdapter.Object
                 var diagnostics = new List<string>();
 
                 var baseItems = new List<SimpleObjectModification>();
-                foreach (var item in mapItemObjectData.BaseItems)
+                foreach (var item in itemObjectData.BaseItems)
                 {
                     if (!knownIds.Contains(item.OldId))
                     {
@@ -97,7 +97,7 @@ namespace War3App.MapAdapter.Object
                 }
 
                 var newItems = new List<SimpleObjectModification>();
-                foreach (var item in mapItemObjectData.NewItems)
+                foreach (var item in itemObjectData.NewItems)
                 {
                     if (!knownIds.Contains(item.OldId))
                     {
@@ -124,7 +124,7 @@ namespace War3App.MapAdapter.Object
                 {
                     var memoryStream = new MemoryStream();
                     using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
-                    writer.Write(new MapItemObjectData(mapItemObjectData.FormatVersion)
+                    writer.Write(new ItemObjectData(itemObjectData.FormatVersion)
                     {
                         BaseItems = baseItems,
                         NewItems = newItems,

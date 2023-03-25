@@ -46,11 +46,11 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                MapBuffObjectData mapBuffObjectData;
+                BuffObjectData buffObjectData;
                 try
                 {
                     using var reader = new BinaryReader(stream);
-                    mapBuffObjectData = reader.ReadMapBuffObjectData();
+                    buffObjectData = reader.ReadBuffObjectData();
                 }
                 catch (Exception e)
                 {
@@ -61,8 +61,8 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                var shouldDowngrade = mapBuffObjectData.GetMinimumPatch() > targetPatch.Patch;
-                if (shouldDowngrade && !mapBuffObjectData.TryDowngrade(targetPatch.Patch))
+                var shouldDowngrade = buffObjectData.GetMinimumPatch() > targetPatch.Patch;
+                if (shouldDowngrade && !buffObjectData.TryDowngrade(targetPatch.Patch))
                 {
                     return new AdaptResult
                     {
@@ -79,7 +79,7 @@ namespace War3App.MapAdapter.Object
                 var diagnostics = new List<string>();
 
                 var baseBuffs = new List<SimpleObjectModification>();
-                foreach (var buff in mapBuffObjectData.BaseBuffs)
+                foreach (var buff in buffObjectData.BaseBuffs)
                 {
                     if (!knownIds.Contains(buff.OldId))
                     {
@@ -97,7 +97,7 @@ namespace War3App.MapAdapter.Object
                 }
 
                 var newBuffs = new List<SimpleObjectModification>();
-                foreach (var buff in mapBuffObjectData.NewBuffs)
+                foreach (var buff in buffObjectData.NewBuffs)
                 {
                     if (!knownIds.Contains(buff.OldId))
                     {
@@ -124,7 +124,7 @@ namespace War3App.MapAdapter.Object
                 {
                     var memoryStream = new MemoryStream();
                     using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
-                    writer.Write(new MapBuffObjectData(mapBuffObjectData.FormatVersion)
+                    writer.Write(new BuffObjectData(buffObjectData.FormatVersion)
                     {
                         BaseBuffs = baseBuffs,
                         NewBuffs = newBuffs,

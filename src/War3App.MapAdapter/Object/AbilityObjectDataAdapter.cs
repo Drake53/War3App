@@ -21,7 +21,7 @@ namespace War3App.MapAdapter.Object
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => true;
-        
+
         public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
         {
             try
@@ -46,11 +46,11 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                MapAbilityObjectData mapAbilityObjectData;
+                AbilityObjectData abilityObjectData;
                 try
                 {
                     using var reader = new BinaryReader(stream);
-                    mapAbilityObjectData = reader.ReadMapAbilityObjectData();
+                    abilityObjectData = reader.ReadAbilityObjectData();
                 }
                 catch (Exception e)
                 {
@@ -61,8 +61,8 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                var shouldDowngrade = mapAbilityObjectData.GetMinimumPatch() > targetPatch.Patch;
-                if (shouldDowngrade && !mapAbilityObjectData.TryDowngrade(targetPatch.Patch))
+                var shouldDowngrade = abilityObjectData.GetMinimumPatch() > targetPatch.Patch;
+                if (shouldDowngrade && !abilityObjectData.TryDowngrade(targetPatch.Patch))
                 {
                     return new AdaptResult
                     {
@@ -79,7 +79,7 @@ namespace War3App.MapAdapter.Object
                 var diagnostics = new List<string>();
 
                 var baseAbilities = new List<LevelObjectModification>();
-                foreach (var ability in mapAbilityObjectData.BaseAbilities)
+                foreach (var ability in abilityObjectData.BaseAbilities)
                 {
                     if (!knownIds.Contains(ability.OldId))
                     {
@@ -97,7 +97,7 @@ namespace War3App.MapAdapter.Object
                 }
 
                 var newAbilities = new List<LevelObjectModification>();
-                foreach (var ability in mapAbilityObjectData.NewAbilities)
+                foreach (var ability in abilityObjectData.NewAbilities)
                 {
                     if (!knownIds.Contains(ability.OldId))
                     {
@@ -124,7 +124,7 @@ namespace War3App.MapAdapter.Object
                 {
                     var memoryStream = new MemoryStream();
                     using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
-                    writer.Write(new MapAbilityObjectData(mapAbilityObjectData.FormatVersion)
+                    writer.Write(new AbilityObjectData(abilityObjectData.FormatVersion)
                     {
                         BaseAbilities = baseAbilities,
                         NewAbilities = newAbilities,

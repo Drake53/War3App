@@ -5,7 +5,7 @@ using War3Net.Build.Common;
 
 namespace War3App.MapAdapter.Script
 {
-    public sealed class MapTriggerStringsAdapter : IMapFileAdapter
+    public sealed class TriggerStringsAdapter : IMapFileAdapter
     {
         public string MapFileDescription => "Trigger Strings";
 

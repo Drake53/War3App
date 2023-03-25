@@ -46,11 +46,11 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                MapDestructableObjectData mapDestructableObjectData;
+                DestructableObjectData destructableObjectData;
                 try
                 {
                     using var reader = new BinaryReader(stream);
-                    mapDestructableObjectData = reader.ReadMapDestructableObjectData();
+                    destructableObjectData = reader.ReadDestructableObjectData();
                 }
                 catch (Exception e)
                 {
@@ -61,8 +61,8 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                var shouldDowngrade = mapDestructableObjectData.GetMinimumPatch() > targetPatch.Patch;
-                if (shouldDowngrade && !mapDestructableObjectData.TryDowngrade(targetPatch.Patch))
+                var shouldDowngrade = destructableObjectData.GetMinimumPatch() > targetPatch.Patch;
+                if (shouldDowngrade && !destructableObjectData.TryDowngrade(targetPatch.Patch))
                 {
                     return new AdaptResult
                     {
@@ -79,7 +79,7 @@ namespace War3App.MapAdapter.Object
                 var diagnostics = new List<string>();
 
                 var baseDestructables = new List<SimpleObjectModification>();
-                foreach (var destructable in mapDestructableObjectData.BaseDestructables)
+                foreach (var destructable in destructableObjectData.BaseDestructables)
                 {
                     if (!knownIds.Contains(destructable.OldId))
                     {
@@ -97,7 +97,7 @@ namespace War3App.MapAdapter.Object
                 }
 
                 var newDestructables = new List<SimpleObjectModification>();
-                foreach (var destructable in mapDestructableObjectData.NewDestructables)
+                foreach (var destructable in destructableObjectData.NewDestructables)
                 {
                     if (!knownIds.Contains(destructable.OldId))
                     {
@@ -124,7 +124,7 @@ namespace War3App.MapAdapter.Object
                 {
                     var memoryStream = new MemoryStream();
                     using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
-                    writer.Write(new MapDestructableObjectData(mapDestructableObjectData.FormatVersion)
+                    writer.Write(new DestructableObjectData(destructableObjectData.FormatVersion)
                     {
                         BaseDestructables = baseDestructables,
                         NewDestructables = newDestructables,

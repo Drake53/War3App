@@ -46,11 +46,11 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                MapDoodadObjectData mapDoodadObjectData;
+                DoodadObjectData doodadObjectData;
                 try
                 {
                     using var reader = new BinaryReader(stream);
-                    mapDoodadObjectData = reader.ReadMapDoodadObjectData();
+                    doodadObjectData = reader.ReadDoodadObjectData();
                 }
                 catch (Exception e)
                 {
@@ -61,8 +61,8 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                var shouldDowngrade = mapDoodadObjectData.GetMinimumPatch() > targetPatch.Patch;
-                if (shouldDowngrade && !mapDoodadObjectData.TryDowngrade(targetPatch.Patch))
+                var shouldDowngrade = doodadObjectData.GetMinimumPatch() > targetPatch.Patch;
+                if (shouldDowngrade && !doodadObjectData.TryDowngrade(targetPatch.Patch))
                 {
                     return new AdaptResult
                     {
@@ -79,7 +79,7 @@ namespace War3App.MapAdapter.Object
                 var diagnostics = new List<string>();
 
                 var baseDoodads = new List<VariationObjectModification>();
-                foreach (var doodad in mapDoodadObjectData.BaseDoodads)
+                foreach (var doodad in doodadObjectData.BaseDoodads)
                 {
                     if (!knownIds.Contains(doodad.OldId))
                     {
@@ -97,7 +97,7 @@ namespace War3App.MapAdapter.Object
                 }
 
                 var newDoodads = new List<VariationObjectModification>();
-                foreach (var doodad in mapDoodadObjectData.NewDoodads)
+                foreach (var doodad in doodadObjectData.NewDoodads)
                 {
                     if (!knownIds.Contains(doodad.OldId))
                     {
@@ -124,7 +124,7 @@ namespace War3App.MapAdapter.Object
                 {
                     var memoryStream = new MemoryStream();
                     using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
-                    writer.Write(new MapDoodadObjectData(mapDoodadObjectData.FormatVersion)
+                    writer.Write(new DoodadObjectData(doodadObjectData.FormatVersion)
                     {
                         BaseDoodads = baseDoodads,
                         NewDoodads = newDoodads,

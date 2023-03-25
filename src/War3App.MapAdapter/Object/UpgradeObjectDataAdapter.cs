@@ -46,11 +46,11 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                MapUpgradeObjectData mapUpgradeObjectData;
+                UpgradeObjectData upgradeObjectData;
                 try
                 {
                     using var reader = new BinaryReader(stream);
-                    mapUpgradeObjectData = reader.ReadMapUpgradeObjectData();
+                    upgradeObjectData = reader.ReadUpgradeObjectData();
                 }
                 catch (Exception e)
                 {
@@ -61,8 +61,8 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                var shouldDowngrade = mapUpgradeObjectData.GetMinimumPatch() > targetPatch.Patch;
-                if (shouldDowngrade && !mapUpgradeObjectData.TryDowngrade(targetPatch.Patch))
+                var shouldDowngrade = upgradeObjectData.GetMinimumPatch() > targetPatch.Patch;
+                if (shouldDowngrade && !upgradeObjectData.TryDowngrade(targetPatch.Patch))
                 {
                     return new AdaptResult
                     {
@@ -79,7 +79,7 @@ namespace War3App.MapAdapter.Object
                 var diagnostics = new List<string>();
 
                 var baseUpgrades = new List<LevelObjectModification>();
-                foreach (var upgrade in mapUpgradeObjectData.BaseUpgrades)
+                foreach (var upgrade in upgradeObjectData.BaseUpgrades)
                 {
                     if (!knownIds.Contains(upgrade.OldId))
                     {
@@ -97,7 +97,7 @@ namespace War3App.MapAdapter.Object
                 }
 
                 var newUpgrades = new List<LevelObjectModification>();
-                foreach (var upgrade in mapUpgradeObjectData.NewUpgrades)
+                foreach (var upgrade in upgradeObjectData.NewUpgrades)
                 {
                     if (!knownIds.Contains(upgrade.OldId))
                     {
@@ -124,7 +124,7 @@ namespace War3App.MapAdapter.Object
                 {
                     var memoryStream = new MemoryStream();
                     using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
-                    writer.Write(new MapUpgradeObjectData(mapUpgradeObjectData.FormatVersion)
+                    writer.Write(new UpgradeObjectData(upgradeObjectData.FormatVersion)
                     {
                         BaseUpgrades = baseUpgrades,
                         NewUpgrades = newUpgrades,
