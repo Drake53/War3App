@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 
 using War3App.MapAdapter.Extensions;
 
@@ -76,14 +77,19 @@ namespace War3App.MapAdapter.Info
         {
             try
             {
-                using var reader = new BinaryReader(stream);
+                using var reader = new BinaryReader(stream, Encoding.UTF8, true);
                 var campaignInfo = reader.ReadCampaignInfo();
 
-                return System.Text.Json.JsonSerializer.Serialize(campaignInfo);
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                };
+
+                return JsonSerializer.Serialize(campaignInfo, options);
             }
-            catch
+            catch (Exception e)
             {
-                return string.Empty;
+                return $"{e.GetType().FullName}{System.Environment.NewLine}{e.Message}";
             }
         }
     }
