@@ -168,7 +168,7 @@ namespace War3App.MapAdapter.Object
             try
             {
                 using var reader = new BinaryReader(stream, Encoding.UTF8, true);
-                var upgradeObjectData = reader.ReadUpgradeObjectData();
+                var upgradeObjectData = reader.ReadMapUpgradeObjectData();
 
                 var options = new JsonSerializerOptions
                 {

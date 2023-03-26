@@ -212,7 +212,7 @@ namespace War3App.MapAdapter.Object
             try
             {
                 using var reader = new BinaryReader(stream, Encoding.UTF8, true);
-                var unitObjectData = reader.ReadUnitObjectData();
+                var unitObjectData = reader.ReadMapUnitObjectData();
 
                 var options = new JsonSerializerOptions
                 {

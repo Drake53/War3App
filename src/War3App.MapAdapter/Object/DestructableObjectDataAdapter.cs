@@ -168,7 +168,7 @@ namespace War3App.MapAdapter.Object
             try
             {
                 using var reader = new BinaryReader(stream, Encoding.UTF8, true);
-                var destructableObjectData = reader.ReadDestructableObjectData();
+                var destructableObjectData = reader.ReadMapDestructableObjectData();
 
                 var options = new JsonSerializerOptions
                 {
