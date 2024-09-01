@@ -1,0 +1,10 @@
+{
+  "solution": {
+    "path": "War3App.sln",
+    "projects": [
+      "src\\War3App.Common.WinForms\\War3App.Common.WinForms.csproj",
+      "src\\War3App.MapAdapter.WinForms\\War3App.MapAdapter.WinForms.csproj",
+      "src\\War3App.MapAdapter\\War3App.MapAdapter.csproj"
+    ]
+  }
+}
