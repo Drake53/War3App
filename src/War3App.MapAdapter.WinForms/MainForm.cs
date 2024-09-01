@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Windows.Forms;
 
 using Microsoft.Extensions.Configuration;
@@ -39,6 +40,7 @@ namespace War3App.MapAdapter.WinForms
         private static ComboBox _targetPatchesComboBox;
         private static GamePatch? _targetPatch;
         private static GamePatch? _originPatch;
+        private static Button _getHelpButton;
 
         private static ListView _fileList;
         private static FileListSorter _fileListSorter;
@@ -163,6 +165,7 @@ namespace War3App.MapAdapter.WinForms
             {
                 _targetPatch = (GamePatch?)_targetPatchesComboBox.SelectedItem;
                 _adaptAllButton.Enabled = _targetPatch.HasValue && _fileList.Items.Count > 0;
+                _getHelpButton.Enabled = _targetPatch.HasValue;
             };
 
             _targetPatchesComboBox.FormattingEnabled = true;
@@ -171,6 +174,22 @@ namespace War3App.MapAdapter.WinForms
                 if (e.ListItem is GamePatch gamePatch)
                 {
                     e.Value = gamePatch.ToString().Replace('_', '.');
+                }
+            };
+
+            _getHelpButton = new Button
+            {
+                Text = "Get help",
+            };
+
+            _getHelpButton.Size = _getHelpButton.PreferredSize;
+            _getHelpButton.Enabled = false;
+
+            _getHelpButton.Click += (s, e) =>
+            {
+                if (_targetPatch.HasValue)
+                {
+                    _ = new GetHelpForm(_archiveInput.Text, GetTargetPatch(_targetPatch.Value)).ShowDialog();
                 }
             };
 
@@ -193,6 +212,9 @@ namespace War3App.MapAdapter.WinForms
                     "Warcraft III archive|*.w3m;*.w3x;*.w3n",
                     "Warcraft III map|*.w3m;*.w3x",
                     "Warcraft III campaign|*.w3n",
+#if USE_KEY_CONTAINER
+                    "Zip archive|*.zip",
+#endif
                     "All files|*.*",
                 });
                 var openFileDialogResult = openFileDialog.ShowDialog();
@@ -363,7 +385,7 @@ namespace War3App.MapAdapter.WinForms
             };
 
             inputArchiveFlowLayout.AddControls(_archiveInput, _archiveInputBrowseButton, _openCloseArchiveButton);
-            buttonsFlowLayout.AddControls(_adaptAllButton, _saveAsButton, targetPatchLabel, _targetPatchesComboBox);
+            buttonsFlowLayout.AddControls(_adaptAllButton, _saveAsButton, targetPatchLabel, _targetPatchesComboBox, _getHelpButton);
             flowLayout.AddControls(inputArchiveFlowLayout, buttonsFlowLayout);
 
             splitContainer.Panel1.AddControls(_diagnosticsDisplay, flowLayout);
@@ -690,7 +712,71 @@ namespace War3App.MapAdapter.WinForms
 
         private static void OpenArchiveBackgroundWork(object? sender, DoWorkEventArgs e)
         {
-            _archive = MpqArchive.Open((string)e.Argument, true);
+            var filePath = (string)e.Argument;
+
+#if USE_KEY_CONTAINER
+            if (string.Equals(Path.GetExtension(filePath), ".zip", StringComparison.OrdinalIgnoreCase))
+            {
+                using var zipFile = Ionic.Zip.ZipFile.Read(filePath);
+
+                var encryptedAesParameters = zipFile.Entries.SingleOrDefault(e => string.Equals(e.FileName, "aes.enc", StringComparison.OrdinalIgnoreCase));
+                if (encryptedAesParameters is null)
+                {
+                    var mapEntry = zipFile.Entries.Single(e => Path.GetExtension(e.FileName).StartsWith(".w3", StringComparison.OrdinalIgnoreCase));
+
+                    var mapStream = new MemoryStream();
+                    mapEntry.Extract(mapStream);
+                    mapStream.Position = 0;
+
+                    _archive = MpqArchive.Open(mapStream, true);
+                }
+                else
+                {
+                    using var encryptedAesStream = new MemoryStream();
+                    encryptedAesParameters.Extract(encryptedAesStream);
+
+                    var cspParameters = new CspParameters
+                    {
+                        KeyContainerName = "War3App.MapAdapter.RsaKeyContainer",
+                    };
+
+                    using var rsaProvider = new RSACryptoServiceProvider(cspParameters)
+                    {
+                        PersistKeyInCsp = true,
+                    };
+
+                    var aesParameters = rsaProvider.Decrypt(encryptedAesStream.ToArray(), RSAEncryptionPadding.Pkcs1);
+                    var aesKey = new byte[32];
+                    var aesIV = new byte[16];
+
+                    Array.Copy(aesParameters, aesKey, aesKey.Length);
+                    Array.Copy(aesParameters, aesKey.Length, aesIV, 0, aesIV.Length);
+
+                    using var aes = Aes.Create();
+                    aes.Padding = PaddingMode.PKCS7;
+
+                    var encryptedMapEntry = zipFile.Entries.Single(e => string.Equals(Path.GetExtension(e.FileName), ".aes", StringComparison.OrdinalIgnoreCase));
+
+                    using var encryptedMapStream = new MemoryStream();
+                    encryptedMapEntry.Extract(encryptedMapStream);
+                    encryptedMapStream.Position = 0;
+
+                    using var aesDecryptor = aes.CreateDecryptor(aesKey, aesIV);
+                    using var cryptoStream = new CryptoStream(encryptedMapStream, aesDecryptor, CryptoStreamMode.Read);
+
+                    var mapStream = new MemoryStream();
+                    cryptoStream.CopyTo(mapStream);
+                    mapStream.Position = 0;
+
+                    _archive = MpqArchive.Open(mapStream, true);
+                }
+            }
+            else
+#endif
+            {
+                _archive = MpqArchive.Open(filePath, true);
+            }
+
             _archive.DiscoverFileNames();
 
             var mapsList = new HashSet<string>();
@@ -804,6 +890,7 @@ namespace War3App.MapAdapter.WinForms
 
                 _targetPatch = (GamePatch?)_targetPatchesComboBox.SelectedItem;
                 _adaptAllButton.Enabled = _targetPatch.HasValue && _fileList.Items.Count > 0;
+                _getHelpButton.Enabled = _targetPatch.HasValue;
 
                 _openCloseArchiveButton.Enabled = true;
                 _saveAsButton.Enabled = true;
@@ -823,6 +910,7 @@ namespace War3App.MapAdapter.WinForms
             _openCloseArchiveButton.Text = "Open archive";
             _adaptAllButton.Enabled = false;
             _saveAsButton.Enabled = false;
+            _getHelpButton.Enabled = false;
 
             _targetPatchesComboBox.Enabled = false;
             _originPatch = null;

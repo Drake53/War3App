@@ -1,4 +1,6 @@
-﻿namespace War3App.MapAdapter
+﻿using System.Collections.Generic;
+
+namespace War3App.MapAdapter
 {
     public static class PathConstants
     {
@@ -40,5 +42,29 @@
         public const string AbilityMetaDataPath = @"units\abilitymetadata.slk";
         public const string BuffMetaDataPath = @"units\abilitybuffmetadata.slk";
         public const string UpgradeMetaDataPath = @"units\upgrademetadata.slk";
+
+        public static IEnumerable<string> GetAllPaths()
+        {
+            yield return TriggerDataPath;
+            yield return CommonJPath;
+            yield return BlizzardJPath;
+            yield return UnitDataPath;
+            yield return UnitAbilityDataPath;
+            yield return UnitBalanceDataPath;
+            yield return UnitUiDataPath;
+            yield return UnitWeaponDataPath;
+            yield return ItemDataPath;
+            yield return DestructableDataPath;
+            yield return DoodadDataPath;
+            yield return AbilityDataPath;
+            yield return BuffDataPath;
+            yield return UpgradeDataPath;
+            yield return UnitMetaDataPath;
+            yield return DestructableMetaDataPath;
+            yield return DoodadMetaDataPath;
+            yield return AbilityMetaDataPath;
+            yield return BuffMetaDataPath;
+            yield return UpgradeMetaDataPath;
+        }
     }
 }
