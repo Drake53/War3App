@@ -597,6 +597,18 @@ namespace War3App.MapAdapter.WinForms
                     return;
                 }
 
+                const int CharacterLimit = 25000;
+
+                if (oldText.Length > CharacterLimit + 100)
+                {
+                    oldText = oldText[..CharacterLimit] + $"{System.Environment.NewLine}{System.Environment.NewLine}FILE TOO LARGE: ONLY SHOWING FIRST {CharacterLimit}/{oldText.Length} CHARACTERS";
+                }
+
+                if (newText.Length > CharacterLimit + 100)
+                {
+                    newText = newText[..CharacterLimit] + $"{System.Environment.NewLine}{System.Environment.NewLine}FILE TOO LARGE: ONLY SHOWING FIRST {CharacterLimit}/{newText.Length} CHARACTERS";
+                }
+
                 var diffForm = new DiffForm(oldText, newText);
                 diffForm.ShowDialog();
             }
