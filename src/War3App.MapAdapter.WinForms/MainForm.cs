@@ -5,6 +5,8 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Windows.Forms;
 
 using Microsoft.Extensions.Configuration;
@@ -64,6 +66,38 @@ namespace War3App.MapAdapter.WinForms
         [STAThread]
         private static void Main(string[] args)
         {
+            if (!File.Exists("appsettings.json"))
+            {
+                var initialSetupDialog = new ConfigureGamePathForm();
+
+                var initialSetupDialogResult = initialSetupDialog.ShowDialog();
+                if (initialSetupDialogResult != DialogResult.OK)
+                {
+                    return;
+                }
+
+                var appSettings = new AppSettings
+                {
+                    TargetPatches = new List<TargetPatch>()
+                    {
+                        new TargetPatch
+                        {
+                            GameDataPath = initialSetupDialog.GameDirectory,
+                            Patch = initialSetupDialog.GamePatch,
+                        },
+                    },
+                };
+
+                var jsonSerializerOptions = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                };
+
+                jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+
+                File.WriteAllText("appsettings.json", JsonSerializer.Serialize(appSettings, jsonSerializerOptions));
+            }
+
             _configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
                 .Build();
