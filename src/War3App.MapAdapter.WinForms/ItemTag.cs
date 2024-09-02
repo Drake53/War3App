@@ -50,21 +50,21 @@ namespace War3App.MapAdapter.WinForms
             OriginPatch = originPatch;
         }
 
-        public MpqEntry MpqEntry { get; private set; }
+        public MpqEntry MpqEntry { get; }
 
-        public string? FileName { get; private set; }
+        public string? FileName { get; }
 
-        public string ArchiveName { get; private set; }
+        public string ArchiveName { get; }
 
-        public IMapFileAdapter? Adapter { get; private set; }
+        public IMapFileAdapter? Adapter { get; }
 
-        public MpqStream OriginalFileStream { get; private set; }
+        public MpqStream OriginalFileStream { get; }
 
         public ItemTag Parent { get; private set; }
 
-        public ItemTag[] Children { get; private set; }
+        public ItemTag[] Children { get; }
 
-        public GamePatch? OriginPatch { get; private set; }
+        public GamePatch? OriginPatch { get; }
 
         public ListViewItem ListViewItem { get; set; }
 
