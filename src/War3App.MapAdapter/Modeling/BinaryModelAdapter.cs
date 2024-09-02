@@ -13,7 +13,7 @@ namespace War3App.MapAdapter.Modeling
 
         public bool IsJsonSerializationSupported => false;
 
-        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
             try
             {
@@ -30,7 +30,7 @@ namespace War3App.MapAdapter.Modeling
                     if (chunkTag == "VERS")
                     {
                         var version = reader.ReadUInt32();
-                        if (version > 800 && targetPatch.Patch < GamePatch.v1_32_0)
+                        if (version > 800 && context.TargetPatch.Patch < GamePatch.v1_32_0)
                         {
                             return new AdaptResult
                             {

@@ -349,8 +349,14 @@ namespace War3App.MapAdapter.WinForms
                     var adapter = tag.Adapter;
                     if (adapter != null && (tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified))
                     {
+                        var context = new AdaptFileContext
+                        {
+                            TargetPatch = GetTargetPatch(_targetPatch.Value),
+                            OriginPatch = tag.GetOriginPatch(_originPatch.Value),
+                        };
+
                         tag.CurrentStream.Position = 0;
-                        var adaptResult = adapter.AdaptFile(tag.CurrentStream, GetTargetPatch(_targetPatch.Value), tag.GetOriginPatch(_originPatch.Value));
+                        var adaptResult = adapter.AdaptFile(tag.CurrentStream, context);
                         tag.UpdateAdaptResult(adaptResult);
 
                         if (tag.Parent != null)
@@ -631,8 +637,14 @@ namespace War3App.MapAdapter.WinForms
                         var adapter = child.Adapter;
                         if (adapter != null && (child.Status == MapFileStatus.Pending || child.Status == MapFileStatus.Modified))
                         {
+                            var context = new AdaptFileContext
+                            {
+                                TargetPatch = GetTargetPatch(_targetPatch.Value),
+                                OriginPatch = child.GetOriginPatch(_originPatch.Value),
+                            };
+
                             tag.CurrentStream.Position = 0;
-                            var adaptResult = adapter.AdaptFile(child.CurrentStream, GetTargetPatch(_targetPatch.Value), child.GetOriginPatch(_originPatch.Value));
+                            var adaptResult = adapter.AdaptFile(child.CurrentStream, context);
                             child.UpdateAdaptResult(adaptResult);
                         }
                     }
@@ -644,8 +656,14 @@ namespace War3App.MapAdapter.WinForms
                     var adapter = tag.Adapter;
                     if (adapter != null && (tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified))
                     {
+                        var context = new AdaptFileContext
+                        {
+                            TargetPatch = GetTargetPatch(_targetPatch.Value),
+                            OriginPatch = tag.GetOriginPatch(_originPatch.Value),
+                        };
+
                         tag.CurrentStream.Position = 0;
-                        var adaptResult = adapter.AdaptFile(tag.CurrentStream, GetTargetPatch(_targetPatch.Value), tag.GetOriginPatch(_originPatch.Value));
+                        var adaptResult = adapter.AdaptFile(tag.CurrentStream, context);
                         tag.UpdateAdaptResult(adaptResult);
 
                         if (tag.Parent != null)

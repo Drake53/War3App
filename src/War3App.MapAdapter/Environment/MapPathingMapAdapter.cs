@@ -16,7 +16,7 @@ namespace War3App.MapAdapter.Environment
 
         public bool IsJsonSerializationSupported => true;
 
-        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
             try
             {

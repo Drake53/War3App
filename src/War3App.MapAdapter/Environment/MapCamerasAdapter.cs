@@ -16,13 +16,13 @@ namespace War3App.MapAdapter.Environment
 
         public bool IsJsonSerializationSupported => true;
 
-        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
             try
             {
                 using var reader = new BinaryReader(stream);
                 var mapCameras = reader.ReadMapCameras();
-                if (mapCameras.GetMinimumPatch() <= targetPatch.Patch)
+                if (mapCameras.GetMinimumPatch() <= context.TargetPatch.Patch)
                 {
                     return new AdaptResult
                     {
@@ -32,7 +32,7 @@ namespace War3App.MapAdapter.Environment
 
                 try
                 {
-                    if (mapCameras.TryDowngrade(targetPatch.Patch))
+                    if (mapCameras.TryDowngrade(context.TargetPatch.Patch))
                     {
                         var newMapCamerasFileStream = new MemoryStream();
                         using var writer = new BinaryWriter(newMapCamerasFileStream, new UTF8Encoding(false, true), true);

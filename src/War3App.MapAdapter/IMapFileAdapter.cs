@@ -12,7 +12,7 @@ namespace War3App.MapAdapter
 
         bool IsJsonSerializationSupported { get; }
 
-        AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch);
+        AdaptResult AdaptFile(Stream stream, AdaptFileContext context);
 
         string SerializeFileToJson(Stream stream, GamePatch gamePatch);
     }

@@ -16,7 +16,7 @@ namespace War3App.MapAdapter.Script
 
         public bool IsJsonSerializationSupported => false;
 
-        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
             try
             {
@@ -33,8 +33,8 @@ namespace War3App.MapAdapter.Script
 
                     // Find incompatible identifiers
                     var incompatibleIdentifiers = new HashSet<string>();
-                    incompatibleIdentifiers.UnionWith(CommonIdentifiersProvider.GetIdentifiers(targetPatch.Patch, originPatch));
-                    incompatibleIdentifiers.UnionWith(BlizzardIdentifiersProvider.GetIdentifiers(targetPatch.Patch, originPatch));
+                    incompatibleIdentifiers.UnionWith(CommonIdentifiersProvider.GetIdentifiers(context.TargetPatch.Patch, context.OriginPatch));
+                    incompatibleIdentifiers.UnionWith(BlizzardIdentifiersProvider.GetIdentifiers(context.TargetPatch.Patch, context.OriginPatch));
 
                     foreach (var incompatibleIdentifier in incompatibleIdentifiers)
                     {
@@ -55,11 +55,11 @@ namespace War3App.MapAdapter.Script
 
                     // Find incompatible audio formats
                     var incompatibleAudioFormats = new HashSet<string>();
-                    if (targetPatch.Patch < GamePatch.v1_32_0)
+                    if (context.TargetPatch.Patch < GamePatch.v1_32_0)
                     {
                         incompatibleAudioFormats.Add("flac");
                     }
-                    if (targetPatch.Patch < GamePatch.v1_30_0 || targetPatch.Patch > GamePatch.v1_30_4)
+                    if (context.TargetPatch.Patch < GamePatch.v1_30_0 || context.TargetPatch.Patch > GamePatch.v1_30_4)
                     {
                         incompatibleAudioFormats.Add("ogg");
                     }
@@ -83,9 +83,9 @@ namespace War3App.MapAdapter.Script
 
                     // Find incompatible frame names
                     var incompatibleFrameNames = new HashSet<string>();
-                    if (targetPatch.Patch >= GamePatch.v1_31_0)
+                    if (context.TargetPatch.Patch >= GamePatch.v1_31_0)
                     {
-                        incompatibleFrameNames.UnionWith(FrameNamesProvider.GetFrameNames(targetPatch.Patch, originPatch).Select(frame => frame.name));
+                        incompatibleFrameNames.UnionWith(FrameNamesProvider.GetFrameNames(context.TargetPatch.Patch, context.OriginPatch).Select(frame => frame.name));
                     }
 
                     foreach (var incompatibleFrameName in incompatibleFrameNames)

@@ -22,11 +22,11 @@ namespace War3App.MapAdapter.Object
 
         public bool IsJsonSerializationSupported => true;
 
-        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
             try
             {
-                var unitAbilityDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.UnitAbilityDataPath);
+                var unitAbilityDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.UnitAbilityDataPath);
                 if (!File.Exists(unitAbilityDataPath))
                 {
                     return new AdaptResult
@@ -36,7 +36,7 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                var unitBalanceDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.UnitBalanceDataPath);
+                var unitBalanceDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.UnitBalanceDataPath);
                 if (!File.Exists(unitBalanceDataPath))
                 {
                     return new AdaptResult
@@ -46,7 +46,7 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                var unitDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.UnitDataPath);
+                var unitDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.UnitDataPath);
                 if (!File.Exists(unitDataPath))
                 {
                     return new AdaptResult
@@ -56,7 +56,7 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                var unitUiDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.UnitUiDataPath);
+                var unitUiDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.UnitUiDataPath);
                 if (!File.Exists(unitUiDataPath))
                 {
                     return new AdaptResult
@@ -66,7 +66,7 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                var unitWeaponDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.UnitWeaponDataPath);
+                var unitWeaponDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.UnitWeaponDataPath);
                 if (!File.Exists(unitWeaponDataPath))
                 {
                     return new AdaptResult
@@ -76,7 +76,7 @@ namespace War3App.MapAdapter.Object
                     };
                 }
                 
-                var unitMetaDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.UnitMetaDataPath);
+                var unitMetaDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.UnitMetaDataPath);
                 if (!File.Exists(unitMetaDataPath))
                 {
                     return new AdaptResult
@@ -101,8 +101,8 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                var shouldDowngrade = unitObjectData.GetMinimumPatch() > targetPatch.Patch;
-                if (shouldDowngrade && !unitObjectData.TryDowngrade(targetPatch.Patch))
+                var shouldDowngrade = unitObjectData.GetMinimumPatch() > context.TargetPatch.Patch;
+                if (shouldDowngrade && !unitObjectData.TryDowngrade(context.TargetPatch.Patch))
                 {
                     return new AdaptResult
                     {

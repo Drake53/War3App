@@ -13,11 +13,13 @@ namespace War3App.MapAdapter.Audio
 
         public bool IsJsonSerializationSupported => false;
 
-        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
             return new AdaptResult
             {
-                Status = targetPatch.Patch >= GamePatch.v1_30_0 && targetPatch.Patch <= GamePatch.v1_30_4 ? MapFileStatus.Compatible : MapFileStatus.Unadaptable,
+                Status = context.TargetPatch.Patch >= GamePatch.v1_30_0 && context.TargetPatch.Patch <= GamePatch.v1_30_4
+                    ? MapFileStatus.Compatible
+                    : MapFileStatus.Unadaptable,
             };
         }
 

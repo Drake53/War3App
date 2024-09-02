@@ -18,14 +18,14 @@ namespace War3App.MapAdapter.Info
 
         public bool IsJsonSerializationSupported => true;
 
-        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
             try
             {
                 using var reader = new BinaryReader(stream);
                 var campaignInfo = reader.ReadCampaignInfo();
 
-                var targetPatchEditorVersion = targetPatch.Patch.GetEditorVersion();
+                var targetPatchEditorVersion = context.TargetPatch.Patch.GetEditorVersion();
                 if (campaignInfo.EditorVersion == targetPatchEditorVersion)
                 {
                     return new AdaptResult

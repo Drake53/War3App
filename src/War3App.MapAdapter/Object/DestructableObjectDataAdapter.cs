@@ -22,11 +22,11 @@ namespace War3App.MapAdapter.Object
 
         public bool IsJsonSerializationSupported => true;
 
-        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
             try
             {
-                var destructableDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.DestructableDataPath);
+                var destructableDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.DestructableDataPath);
                 if (!File.Exists(destructableDataPath))
                 {
                     return new AdaptResult
@@ -36,7 +36,7 @@ namespace War3App.MapAdapter.Object
                     };
                 }
                 
-                var destructableMetaDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.DestructableMetaDataPath);
+                var destructableMetaDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.DestructableMetaDataPath);
                 if (!File.Exists(destructableMetaDataPath))
                 {
                     return new AdaptResult
@@ -61,8 +61,8 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                var shouldDowngrade = destructableObjectData.GetMinimumPatch() > targetPatch.Patch;
-                if (shouldDowngrade && !destructableObjectData.TryDowngrade(targetPatch.Patch))
+                var shouldDowngrade = destructableObjectData.GetMinimumPatch() > context.TargetPatch.Patch;
+                if (shouldDowngrade && !destructableObjectData.TryDowngrade(context.TargetPatch.Patch))
                 {
                     return new AdaptResult
                     {

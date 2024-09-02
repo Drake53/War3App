@@ -19,7 +19,7 @@ namespace War3App.MapAdapter.Info
 
         public bool IsJsonSerializationSupported => true;
 
-        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
             MapInfo mapInfo;
             try
@@ -38,7 +38,7 @@ namespace War3App.MapAdapter.Info
 
             try
             {
-                if (mapInfo.GetMinimumPatch() <= targetPatch.Patch)
+                if (mapInfo.GetMinimumPatch() <= context.TargetPatch.Patch)
                 {
                     return new AdaptResult
                     {
@@ -46,7 +46,7 @@ namespace War3App.MapAdapter.Info
                     };
                 }
 
-                if (mapInfo.TryDowngrade(targetPatch.Patch))
+                if (mapInfo.TryDowngrade(context.TargetPatch.Patch))
                 {
                     var newMapInfoFileStream = new MemoryStream();
                     using var writer = new BinaryWriter(newMapInfoFileStream, new UTF8Encoding(false, true), true);

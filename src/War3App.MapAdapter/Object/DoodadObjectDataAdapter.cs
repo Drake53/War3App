@@ -22,11 +22,11 @@ namespace War3App.MapAdapter.Object
 
         public bool IsJsonSerializationSupported => true;
 
-        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
             try
             {
-                var doodadDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.DoodadDataPath);
+                var doodadDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.DoodadDataPath);
                 if (!File.Exists(doodadDataPath))
                 {
                     return new AdaptResult
@@ -36,7 +36,7 @@ namespace War3App.MapAdapter.Object
                     };
                 }
                 
-                var doodadMetaDataPath = Path.Combine(targetPatch.GameDataPath, PathConstants.DoodadMetaDataPath);
+                var doodadMetaDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.DoodadMetaDataPath);
                 if (!File.Exists(doodadMetaDataPath))
                 {
                     return new AdaptResult
@@ -61,8 +61,8 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
-                var shouldDowngrade = doodadObjectData.GetMinimumPatch() > targetPatch.Patch;
-                if (shouldDowngrade && !doodadObjectData.TryDowngrade(targetPatch.Patch))
+                var shouldDowngrade = doodadObjectData.GetMinimumPatch() > context.TargetPatch.Patch;
+                if (shouldDowngrade && !doodadObjectData.TryDowngrade(context.TargetPatch.Patch))
                 {
                     return new AdaptResult
                     {

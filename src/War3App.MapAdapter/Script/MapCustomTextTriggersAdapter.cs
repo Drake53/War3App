@@ -15,7 +15,7 @@ namespace War3App.MapAdapter.Script
 
         public bool IsJsonSerializationSupported => false;
 
-        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
             var encoding = new UTF8Encoding(false, true);
 
@@ -23,7 +23,7 @@ namespace War3App.MapAdapter.Script
             {
                 using var reader = new BinaryReader(stream);
                 var mapCustomTextTriggers = reader.ReadMapCustomTextTriggers(encoding);
-                if (mapCustomTextTriggers.GetMinimumPatch() <= targetPatch.Patch)
+                if (mapCustomTextTriggers.GetMinimumPatch() <= context.TargetPatch.Patch)
                 {
                     return new AdaptResult
                     {
@@ -33,7 +33,7 @@ namespace War3App.MapAdapter.Script
 
                 try
                 {
-                    if (mapCustomTextTriggers.TryDowngrade(targetPatch.Patch))
+                    if (mapCustomTextTriggers.TryDowngrade(context.TargetPatch.Patch))
                     {
                         var newMapCustomTextTriggersFileStream = new MemoryStream();
                         using var writer = new BinaryWriter(newMapCustomTextTriggersFileStream, encoding, true);

@@ -13,7 +13,7 @@ namespace War3App.MapAdapter.Drawing
 
         public bool IsJsonSerializationSupported => false;
 
-        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
             return new AdaptResult
             {

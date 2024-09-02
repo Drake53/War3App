@@ -19,11 +19,11 @@ namespace War3App.MapAdapter.Script
 
         public bool IsJsonSerializationSupported => false;
 
-        public AdaptResult AdaptFile(Stream stream, TargetPatch targetPatch, GamePatch originPatch)
+        public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
             try
             {
-                var commonJPath = Path.Combine(targetPatch.GameDataPath, PathConstants.CommonJPath);
+                var commonJPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.CommonJPath);
                 if (!File.Exists(commonJPath))
                 {
                     return new AdaptResult
@@ -33,7 +33,7 @@ namespace War3App.MapAdapter.Script
                     };
                 }
 
-                var blizzardJPath = Path.Combine(targetPatch.GameDataPath, PathConstants.BlizzardJPath);
+                var blizzardJPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.BlizzardJPath);
                 if (!File.Exists(blizzardJPath))
                 {
                     return new AdaptResult
@@ -59,29 +59,29 @@ namespace War3App.MapAdapter.Script
 
                 try
                 {
-                    var context = new JassMapScriptAdapterContext();
+                    var scriptAdapterContext = new JassMapScriptAdapterContext();
 
                     foreach (var declaration in commonJCompilationUnit.Declarations)
                     {
-                        RegisterDeclaration(declaration, context);
+                        RegisterDeclaration(declaration, scriptAdapterContext);
                     }
 
                     foreach (var declaration in blizzardJCompilationUnit.Declarations)
                     {
-                        RegisterDeclaration(declaration, context);
+                        RegisterDeclaration(declaration, scriptAdapterContext);
                     }
 
                     // Common.j and Blizzard.j should not cause any diagnostics.
-                    if (context.Diagnostics.Count > 0)
+                    if (scriptAdapterContext.Diagnostics.Count > 0)
                     {
                         return new AdaptResult
                         {
                             Status = MapFileStatus.AdapterError,
-                            Diagnostics = context.Diagnostics.ToArray(),
+                            Diagnostics = scriptAdapterContext.Diagnostics.ToArray(),
                         };
                     }
 
-                    if (TryAdaptCompilationUnit(context, compilationUnit, out var adaptedCompilationUnit))
+                    if (TryAdaptCompilationUnit(scriptAdapterContext, compilationUnit, out var adaptedCompilationUnit))
                     {
                         var memoryStream = new MemoryStream();
                         using var writer = new StreamWriter(memoryStream, new UTF8Encoding(false, true), leaveOpen: true);
@@ -92,12 +92,12 @@ namespace War3App.MapAdapter.Script
                         return new AdaptResult
                         {
                             Status = MapFileStatus.Adapted,
-                            Diagnostics = context.Diagnostics.ToArray(),
+                            Diagnostics = scriptAdapterContext.Diagnostics.ToArray(),
                             AdaptedFileStream = memoryStream,
                         };
                     }
 
-                    if (context.Diagnostics.Count == 0)
+                    if (scriptAdapterContext.Diagnostics.Count == 0)
                     {
                         return new AdaptResult
                         {
@@ -109,7 +109,7 @@ namespace War3App.MapAdapter.Script
                         return new AdaptResult
                         {
                             Status = MapFileStatus.Incompatible,
-                            Diagnostics = context.Diagnostics.ToArray(),
+                            Diagnostics = scriptAdapterContext.Diagnostics.ToArray(),
                         };
                     }
                 }
