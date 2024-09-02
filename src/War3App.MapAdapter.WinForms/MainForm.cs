@@ -351,6 +351,8 @@ namespace War3App.MapAdapter.WinForms
                     {
                         var context = new AdaptFileContext
                         {
+                            FileName = tag.FileName,
+                            Archive = tag.MpqArchive,
                             TargetPatch = GetTargetPatch(_targetPatch.Value),
                             OriginPatch = tag.GetOriginPatch(_originPatch.Value),
                         };
@@ -639,6 +641,8 @@ namespace War3App.MapAdapter.WinForms
                         {
                             var context = new AdaptFileContext
                             {
+                                FileName = child.FileName,
+                                Archive = child.MpqArchive,
                                 TargetPatch = GetTargetPatch(_targetPatch.Value),
                                 OriginPatch = child.GetOriginPatch(_originPatch.Value),
                             };
@@ -658,6 +662,8 @@ namespace War3App.MapAdapter.WinForms
                     {
                         var context = new AdaptFileContext
                         {
+                            FileName = tag.FileName,
+                            Archive = tag.MpqArchive,
                             TargetPatch = GetTargetPatch(_targetPatch.Value),
                             OriginPatch = tag.GetOriginPatch(_originPatch.Value),
                         };

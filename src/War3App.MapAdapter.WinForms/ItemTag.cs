@@ -16,6 +16,7 @@ namespace War3App.MapAdapter.WinForms
 
         public ItemTag(MpqArchive archive, MpqEntry mpqEntry, string archiveName = null)
         {
+            MpqArchive = archive;
             MpqEntry = mpqEntry;
             FileName = mpqEntry.FileName;
             ArchiveName = archiveName ?? string.Empty;
@@ -35,6 +36,7 @@ namespace War3App.MapAdapter.WinForms
 
         public ItemTag(MpqArchive archive, MpqEntry mpqEntry, ListViewItem[] children, GamePatch? originPatch)
         {
+            MpqArchive = archive;
             MpqEntry = mpqEntry;
             FileName = mpqEntry.FileName;
             ArchiveName = string.Empty;
@@ -49,6 +51,8 @@ namespace War3App.MapAdapter.WinForms
 
             OriginPatch = originPatch;
         }
+
+        public MpqArchive MpqArchive { get; }
 
         public MpqEntry MpqEntry { get; }
 
