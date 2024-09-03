@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -26,7 +27,7 @@ namespace War3App.MapAdapter.WinForms
 {
     internal static class MainForm
     {
-        private const string Title = "Map Adapter v1.2.0";
+        private const string Title = "Map Adapter v{0}";
 
         private static readonly GamePatch _latestPatch = Enum.GetValues<GamePatch>().Max();
 
@@ -112,7 +113,7 @@ namespace War3App.MapAdapter.WinForms
             var form = new Form();
             form.Size = new Size(1280, 720);
             form.MinimumSize = new Size(400, 300);
-            form.Text = Title;
+            form.Text = string.Format(Title, FileVersionInfo.GetVersionInfo(typeof(MainForm).Assembly.Location).ProductVersion);
 
             var splitContainer = new SplitContainer
             {

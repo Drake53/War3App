@@ -163,6 +163,7 @@ If the issue can only be reproduced on the unprotected version, you can enable t
                 zipFile.AddFile(_mapFilePath, string.Empty);
             }
 
+            zipFile.AddEntry("adapter.txt", FileVersionInfo.GetVersionInfo(typeof(GetHelpForm).Assembly.Location).ProductVersion);
             zipFile.AddEntry("patch.txt", _targetPatch.Patch.ToString());
 
             foreach (var path in PathConstants.GetAllPaths())
