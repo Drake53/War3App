@@ -25,6 +25,7 @@ namespace War3App.MapAdapter.WinForms
             if (!OriginalFileStream.CanRead)
             {
                 OriginalFileStream.Dispose();
+                OriginalFileStream = null;
                 Status = MapFileStatus.Locked;
             }
             else
@@ -62,7 +63,7 @@ namespace War3App.MapAdapter.WinForms
 
         public IMapFileAdapter? Adapter { get; }
 
-        public MpqStream OriginalFileStream { get; }
+        public MpqStream? OriginalFileStream { get; }
 
         public ItemTag Parent { get; private set; }
 
@@ -80,19 +81,26 @@ namespace War3App.MapAdapter.WinForms
             set => _status = value;
         }
 
-        public Stream CurrentStream => AdaptResult?.AdaptedFileStream ?? OriginalFileStream;
+        public Stream? CurrentStream => AdaptResult?.AdaptedFileStream ?? OriginalFileStream;
 
-        public bool IsModified => AdaptResult?.AdaptedFileStream != null;
+        public bool IsModified => AdaptResult?.AdaptedFileStream is not null;
 
         public void UpdateAdaptResult(AdaptResult adaptResult)
         {
-            if (adaptResult.AdaptedFileStream == null && AdaptResult?.AdaptedFileStream != null)
+            if (AdaptResult?.AdaptedFileStream is not null)
             {
-                adaptResult.AdaptedFileStream = AdaptResult.AdaptedFileStream;
-
-                if (adaptResult.Status == MapFileStatus.Compatible && Status == MapFileStatus.Modified)
+                if (adaptResult.AdaptedFileStream is null)
                 {
-                    adaptResult.Status = MapFileStatus.Adapted;
+                    adaptResult.AdaptedFileStream = AdaptResult.AdaptedFileStream;
+
+                    if (adaptResult.Status == MapFileStatus.Compatible && Status == MapFileStatus.Modified)
+                    {
+                        adaptResult.Status = MapFileStatus.Adapted;
+                    }
+                }
+                else
+                {
+                    AdaptResult.Dispose();
                 }
             }
 
@@ -133,7 +141,7 @@ namespace War3App.MapAdapter.WinForms
 
         public void Dispose()
         {
-            OriginalFileStream.Dispose();
+            OriginalFileStream?.Dispose();
             AdaptResult?.Dispose();
         }
     }

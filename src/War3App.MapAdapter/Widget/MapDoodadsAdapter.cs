@@ -20,7 +20,7 @@ namespace War3App.MapAdapter.Widget
         {
             try
             {
-                using var reader = new BinaryReader(stream);
+                using var reader = new BinaryReader(stream, Encoding.UTF8, true);
                 var mapDoodads = reader.ReadMapDoodads();
                 if (mapDoodads.GetMinimumPatch() <= context.TargetPatch.Patch)
                 {

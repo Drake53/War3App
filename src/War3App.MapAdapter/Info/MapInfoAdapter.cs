@@ -24,7 +24,7 @@ namespace War3App.MapAdapter.Info
             MapInfo mapInfo;
             try
             {
-                using var reader = new BinaryReader(stream);
+                using var reader = new BinaryReader(stream, Encoding.UTF8, true);
                 mapInfo = reader.ReadMapInfo();
             }
             catch (Exception e)

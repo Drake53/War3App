@@ -49,7 +49,7 @@ namespace War3App.MapAdapter.Object
                 BuffObjectData buffObjectData;
                 try
                 {
-                    using var reader = new BinaryReader(stream);
+                    using var reader = new BinaryReader(stream, Encoding.UTF8, true);
                     buffObjectData = reader.ReadBuffObjectData();
                 }
                 catch (Exception e)

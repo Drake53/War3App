@@ -695,7 +695,7 @@ namespace War3App.MapAdapter.WinForms
                     continue;
                 }
 
-                tag.AdaptResult?.AdaptedFileStream?.Dispose();
+                tag.AdaptResult?.Dispose();
                 tag.AdaptResult = new AdaptResult
                 {
                     Status = MapFileStatus.Removed,
@@ -989,9 +989,7 @@ namespace War3App.MapAdapter.WinForms
 
             for (var i = 0; i < _fileList.Items.Count; i++)
             {
-                var item = _fileList.Items[i].GetTag();
-                item.OriginalFileStream?.Dispose();
-                item.AdaptResult?.AdaptedFileStream?.Dispose();
+                _fileList.Items[i].GetTag().Dispose();
             }
 
             _fileList.Items.Clear();

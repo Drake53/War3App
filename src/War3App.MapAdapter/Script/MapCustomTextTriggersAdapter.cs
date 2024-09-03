@@ -21,7 +21,7 @@ namespace War3App.MapAdapter.Script
 
             try
             {
-                using var reader = new BinaryReader(stream);
+                using var reader = new BinaryReader(stream, Encoding.UTF8, true);
                 var mapCustomTextTriggers = reader.ReadMapCustomTextTriggers(encoding);
                 if (mapCustomTextTriggers.GetMinimumPatch() <= context.TargetPatch.Patch)
                 {

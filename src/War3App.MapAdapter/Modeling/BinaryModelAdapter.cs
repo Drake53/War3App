@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 using War3Net.Build.Common;
 
@@ -19,7 +20,7 @@ namespace War3App.MapAdapter.Modeling
             {
                 // TODO: War3Net.Modeling.BinaryModelParser.Parse(stream)
 
-                using var reader = new BinaryReader(stream);
+                using var reader = new BinaryReader(stream, Encoding.UTF8, true);
                 reader.ReadInt32();
 
                 while (stream.Length - stream.Position > 8)

@@ -89,7 +89,7 @@ namespace War3App.MapAdapter.Object
                 UnitObjectData unitObjectData;
                 try
                 {
-                    using var reader = new BinaryReader(stream);
+                    using var reader = new BinaryReader(stream, Encoding.UTF8, true);
                     unitObjectData = reader.ReadUnitObjectData();
                 }
                 catch (Exception e)

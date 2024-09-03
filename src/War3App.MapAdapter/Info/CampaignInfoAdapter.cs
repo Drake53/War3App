@@ -22,7 +22,7 @@ namespace War3App.MapAdapter.Info
         {
             try
             {
-                using var reader = new BinaryReader(stream);
+                using var reader = new BinaryReader(stream, Encoding.UTF8, true);
                 var campaignInfo = reader.ReadCampaignInfo();
 
                 var targetPatchEditorVersion = context.TargetPatch.Patch.GetEditorVersion();

@@ -20,7 +20,7 @@ namespace War3App.MapAdapter.Environment
         {
             try
             {
-                using var reader = new BinaryReader(stream);
+                using var reader = new BinaryReader(stream, Encoding.UTF8, true);
                 var mapRegions = reader.ReadMapRegions();
                 return new AdaptResult
                 {

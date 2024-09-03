@@ -49,7 +49,7 @@ namespace War3App.MapAdapter.Object
                 DoodadObjectData doodadObjectData;
                 try
                 {
-                    using var reader = new BinaryReader(stream);
+                    using var reader = new BinaryReader(stream, Encoding.UTF8, true);
                     doodadObjectData = reader.ReadDoodadObjectData();
                 }
                 catch (Exception e)

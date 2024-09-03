@@ -33,7 +33,7 @@ namespace War3App.MapAdapter.Script
                     };
                 }
 
-                using var reader = new BinaryReader(stream);
+                using var reader = new BinaryReader(stream, Encoding.UTF8, true);
                 var mapTriggers = reader.ReadMapTriggers();
 
                 try

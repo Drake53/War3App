@@ -20,7 +20,7 @@ namespace War3App.MapAdapter.Audio
         {
             try
             {
-                using var reader = new BinaryReader(stream);
+                using var reader = new BinaryReader(stream, Encoding.UTF8, true);
                 var mapSounds = reader.ReadMapSounds();
                 if (mapSounds.GetMinimumPatch() <= context.TargetPatch.Patch)
                 {

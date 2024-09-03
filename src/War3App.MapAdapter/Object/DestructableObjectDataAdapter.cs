@@ -49,7 +49,7 @@ namespace War3App.MapAdapter.Object
                 DestructableObjectData destructableObjectData;
                 try
                 {
-                    using var reader = new BinaryReader(stream);
+                    using var reader = new BinaryReader(stream, Encoding.UTF8, true);
                     destructableObjectData = reader.ReadDestructableObjectData();
                 }
                 catch (Exception e)
