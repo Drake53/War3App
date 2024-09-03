@@ -26,6 +26,26 @@ namespace War3App.MapAdapter.Object
         {
             try
             {
+                if (context.FileName is null)
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.AdapterError,
+                        Diagnostics = new[] { "Invalid context: FileName should be known to run this adapter." },
+                    };
+                }
+
+                var isSkinFile = context.FileName.EndsWith($"Skin{AbilityObjectData.FileExtension}");
+                var isSkinFileSupported = context.TargetPatch.Patch >= GamePatch.v1_33_0;
+
+                if (isSkinFile && !isSkinFileSupported)
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Removed,
+                    };
+                }
+
                 var abilityDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.AbilityDataPath);
                 if (!File.Exists(abilityDataPath))
                 {
@@ -70,13 +90,44 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
+                var diagnostics = new List<string>();
+
+                var mergedWithSkinObjectData = false;
+
+                if (!isSkinFileSupported)
+                {
+                    var expectedSkinFileName = context.FileName.Replace(AbilityObjectData.FileExtension, $"Skin{AbilityObjectData.FileExtension}");
+
+                    if (context.Archive.TryOpenFile(expectedSkinFileName, out var skinStream))
+                    {
+                        AbilityObjectData? abilitySkinObjectData;
+                        try
+                        {
+                            using var reader = new BinaryReader(skinStream, Encoding.UTF8, true);
+                            abilitySkinObjectData = reader.ReadAbilityObjectData();
+                        }
+                        catch (Exception e)
+                        {
+                            diagnostics.Add(e.Message);
+                            abilitySkinObjectData = null;
+                        }
+
+                        if (abilitySkinObjectData is not null &&
+                            (abilitySkinObjectData.BaseAbilities.Count > 0 ||
+                             abilitySkinObjectData.NewAbilities.Count > 0))
+                        {
+                            abilityObjectData.MergeWith(abilitySkinObjectData);
+
+                            mergedWithSkinObjectData = true;
+                        }
+                    }
+                }
+
                 var knownIds = new HashSet<int>();
                 knownIds.AddItemsFromSylkTable(abilityDataPath, DataConstants.AbilityDataKeyColumn);
 
                 var knownProperties = new HashSet<int>();
                 knownProperties.AddItemsFromSylkTable(abilityMetaDataPath, DataConstants.MetaDataIdColumn);
-
-                var diagnostics = new List<string>();
 
                 var baseAbilities = new List<LevelObjectModification>();
                 foreach (var ability in abilityObjectData.BaseAbilities)
@@ -120,7 +171,7 @@ namespace War3App.MapAdapter.Object
                     newAbilities.Add(ability);
                 }
 
-                if (shouldDowngrade || diagnostics.Count > 0)
+                if (shouldDowngrade || mergedWithSkinObjectData || diagnostics.Count > 0)
                 {
                     var memoryStream = new MemoryStream();
                     using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);

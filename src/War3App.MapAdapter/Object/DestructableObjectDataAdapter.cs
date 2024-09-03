@@ -26,6 +26,26 @@ namespace War3App.MapAdapter.Object
         {
             try
             {
+                if (context.FileName is null)
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.AdapterError,
+                        Diagnostics = new[] { "Invalid context: FileName should be known to run this adapter." },
+                    };
+                }
+
+                var isSkinFile = context.FileName.EndsWith($"Skin{DestructableObjectData.FileExtension}");
+                var isSkinFileSupported = context.TargetPatch.Patch >= GamePatch.v1_33_0;
+
+                if (isSkinFile && !isSkinFileSupported)
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Removed,
+                    };
+                }
+
                 var destructableDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.DestructableDataPath);
                 if (!File.Exists(destructableDataPath))
                 {
@@ -70,13 +90,44 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
+                var diagnostics = new List<string>();
+
+                var mergedWithSkinObjectData = false;
+
+                if (!isSkinFileSupported)
+                {
+                    var expectedSkinFileName = context.FileName.Replace(DestructableObjectData.FileExtension, $"Skin{DestructableObjectData.FileExtension}");
+
+                    if (context.Archive.TryOpenFile(expectedSkinFileName, out var skinStream))
+                    {
+                        DestructableObjectData? destructableSkinObjectData;
+                        try
+                        {
+                            using var reader = new BinaryReader(skinStream, Encoding.UTF8, true);
+                            destructableSkinObjectData = reader.ReadDestructableObjectData();
+                        }
+                        catch (Exception e)
+                        {
+                            diagnostics.Add(e.Message);
+                            destructableSkinObjectData = null;
+                        }
+
+                        if (destructableSkinObjectData is not null &&
+                            (destructableSkinObjectData.BaseDestructables.Count > 0 ||
+                             destructableSkinObjectData.NewDestructables.Count > 0))
+                        {
+                            destructableObjectData.MergeWith(destructableSkinObjectData);
+
+                            mergedWithSkinObjectData = true;
+                        }
+                    }
+                }
+
                 var knownIds = new HashSet<int>();
                 knownIds.AddItemsFromSylkTable(destructableDataPath, DataConstants.DestructableDataKeyColumn);
 
                 var knownProperties = new HashSet<int>();
                 knownProperties.AddItemsFromSylkTable(destructableMetaDataPath, DataConstants.MetaDataIdColumn);
-
-                var diagnostics = new List<string>();
 
                 var baseDestructables = new List<SimpleObjectModification>();
                 foreach (var destructable in destructableObjectData.BaseDestructables)
@@ -120,7 +171,7 @@ namespace War3App.MapAdapter.Object
                     newDestructables.Add(destructable);
                 }
 
-                if (shouldDowngrade || diagnostics.Count > 0)
+                if (shouldDowngrade || mergedWithSkinObjectData || diagnostics.Count > 0)
                 {
                     var memoryStream = new MemoryStream();
                     using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);

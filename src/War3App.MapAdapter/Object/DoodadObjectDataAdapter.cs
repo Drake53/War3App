@@ -26,6 +26,26 @@ namespace War3App.MapAdapter.Object
         {
             try
             {
+                if (context.FileName is null)
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.AdapterError,
+                        Diagnostics = new[] { "Invalid context: FileName should be known to run this adapter." },
+                    };
+                }
+
+                var isSkinFile = context.FileName.EndsWith($"Skin{DoodadObjectData.FileExtension}");
+                var isSkinFileSupported = context.TargetPatch.Patch >= GamePatch.v1_33_0;
+
+                if (isSkinFile && !isSkinFileSupported)
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Removed,
+                    };
+                }
+
                 var doodadDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.DoodadDataPath);
                 if (!File.Exists(doodadDataPath))
                 {
@@ -70,13 +90,44 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
+                var diagnostics = new List<string>();
+
+                var mergedWithSkinObjectData = false;
+
+                if (!isSkinFileSupported)
+                {
+                    var expectedSkinFileName = context.FileName.Replace(DoodadObjectData.FileExtension, $"Skin{DoodadObjectData.FileExtension}");
+
+                    if (context.Archive.TryOpenFile(expectedSkinFileName, out var skinStream))
+                    {
+                        DoodadObjectData? doodadSkinObjectData;
+                        try
+                        {
+                            using var reader = new BinaryReader(skinStream, Encoding.UTF8, true);
+                            doodadSkinObjectData = reader.ReadDoodadObjectData();
+                        }
+                        catch (Exception e)
+                        {
+                            diagnostics.Add(e.Message);
+                            doodadSkinObjectData = null;
+                        }
+
+                        if (doodadSkinObjectData is not null &&
+                            (doodadSkinObjectData.BaseDoodads.Count > 0 ||
+                             doodadSkinObjectData.NewDoodads.Count > 0))
+                        {
+                            doodadObjectData.MergeWith(doodadSkinObjectData);
+
+                            mergedWithSkinObjectData = true;
+                        }
+                    }
+                }
+
                 var knownIds = new HashSet<int>();
                 knownIds.AddItemsFromSylkTable(doodadDataPath, DataConstants.DoodadDataKeyColumn);
 
                 var knownProperties = new HashSet<int>();
                 knownProperties.AddItemsFromSylkTable(doodadMetaDataPath, DataConstants.MetaDataIdColumn);
-
-                var diagnostics = new List<string>();
 
                 var baseDoodads = new List<VariationObjectModification>();
                 foreach (var doodad in doodadObjectData.BaseDoodads)
@@ -120,7 +171,7 @@ namespace War3App.MapAdapter.Object
                     newDoodads.Add(doodad);
                 }
 
-                if (shouldDowngrade || diagnostics.Count > 0)
+                if (shouldDowngrade || mergedWithSkinObjectData || diagnostics.Count > 0)
                 {
                     var memoryStream = new MemoryStream();
                     using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);

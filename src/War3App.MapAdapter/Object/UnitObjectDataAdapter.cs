@@ -26,6 +26,26 @@ namespace War3App.MapAdapter.Object
         {
             try
             {
+                if (context.FileName is null)
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.AdapterError,
+                        Diagnostics = new[] { "Invalid context: FileName should be known to run this adapter." },
+                    };
+                }
+
+                var isSkinFile = context.FileName.EndsWith($"Skin{UnitObjectData.FileExtension}");
+                var isSkinFileSupported = context.TargetPatch.Patch >= GamePatch.v1_33_0;
+
+                if (isSkinFile && !isSkinFileSupported)
+                {
+                    return new AdaptResult
+                    {
+                        Status = MapFileStatus.Removed,
+                    };
+                }
+
                 var unitAbilityDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.UnitAbilityDataPath);
                 if (!File.Exists(unitAbilityDataPath))
                 {
@@ -110,6 +130,39 @@ namespace War3App.MapAdapter.Object
                     };
                 }
 
+                var diagnostics = new List<string>();
+
+                var mergedWithSkinObjectData = false;
+
+                if (!isSkinFileSupported)
+                {
+                    var expectedSkinFileName = context.FileName.Replace(UnitObjectData.FileExtension, $"Skin{UnitObjectData.FileExtension}");
+
+                    if (context.Archive.TryOpenFile(expectedSkinFileName, out var skinStream))
+                    {
+                        UnitObjectData? unitSkinObjectData;
+                        try
+                        {
+                            using var reader = new BinaryReader(skinStream, Encoding.UTF8, true);
+                            unitSkinObjectData = reader.ReadUnitObjectData();
+                        }
+                        catch (Exception e)
+                        {
+                            diagnostics.Add(e.Message);
+                            unitSkinObjectData = null;
+                        }
+
+                        if (unitSkinObjectData is not null &&
+                            (unitSkinObjectData.BaseUnits.Count > 0 ||
+                             unitSkinObjectData.NewUnits.Count > 0))
+                        {
+                            unitObjectData.MergeWith(unitSkinObjectData);
+
+                            mergedWithSkinObjectData = true;
+                        }
+                    }
+                }
+
                 var knownIds = new HashSet<int>();
                 knownIds.AddItemsFromSylkTable(unitAbilityDataPath, DataConstants.UnitAbilityDataKeyColumn);
                 knownIds.AddItemsFromSylkTable(unitBalanceDataPath, DataConstants.UnitBalanceDataKeyColumn);
@@ -119,8 +172,6 @@ namespace War3App.MapAdapter.Object
 
                 var knownProperties = new HashSet<int>();
                 knownProperties.AddItemsFromSylkTable(unitMetaDataPath, DataConstants.MetaDataIdColumn);
-
-                var diagnostics = new List<string>();
 
                 var baseUnits = new List<SimpleObjectModification>();
                 foreach (var unit in unitObjectData.BaseUnits)
@@ -164,7 +215,7 @@ namespace War3App.MapAdapter.Object
                     newUnits.Add(unit);
                 }
 
-                if (shouldDowngrade || diagnostics.Count > 0)
+                if (shouldDowngrade || mergedWithSkinObjectData || diagnostics.Count > 0)
                 {
                     var memoryStream = new MemoryStream();
                     using var writer = new BinaryWriter(memoryStream, new UTF8Encoding(false, true), true);
