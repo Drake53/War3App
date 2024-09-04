@@ -168,7 +168,7 @@ namespace War3App.MapAdapter.Object
                 knownIds.AddItemsFromSylkTable(unitBalanceDataPath, DataConstants.UnitBalanceDataKeyColumn);
                 knownIds.AddItemsFromSylkTable(unitDataPath, DataConstants.UnitDataKeyColumn);
                 knownIds.AddItemsFromSylkTable(unitUiDataPath, DataConstants.UnitUiDataKeyColumn);
-                knownIds.AddItemsFromSylkTable(unitWeaponDataPath, DataConstants.UnitWeaponDataKeyColumn);
+                knownIds.AddItemsFromSylkTable(unitWeaponDataPath, DataConstants.UnitWeaponDataKeyColumn, DataConstants.UnitWeaponDataKeyColumnOld);
 
                 var knownProperties = new HashSet<int>();
                 knownProperties.AddItemsFromSylkTable(unitMetaDataPath, DataConstants.MetaDataIdColumn);

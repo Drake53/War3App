@@ -8,6 +8,7 @@
         internal const string UnitBalanceDataKeyColumn = "unitBalanceID";
         internal const string UnitUiDataKeyColumn = "unitUIID";
         internal const string UnitWeaponDataKeyColumn = "unitWeaponID";
+        internal const string UnitWeaponDataKeyColumnOld = "unitWeapID";
 
         // Item
         internal const string ItemDataKeyColumn = "itemID";
