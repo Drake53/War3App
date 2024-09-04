@@ -91,7 +91,7 @@ namespace War3App.MapAdapter.Script
 
                         return new AdaptResult
                         {
-                            Status = MapFileStatus.Adapted,
+                            Status = scriptAdapterContext.Diagnostics.Count == 0 ? MapFileStatus.Adapted : MapFileStatus.Incompatible,
                             Diagnostics = scriptAdapterContext.Diagnostics.ToArray(),
                             AdaptedFileStream = memoryStream,
                         };
