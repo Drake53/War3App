@@ -4,6 +4,7 @@ using System.Text;
 
 using War3Net.Build.Common;
 using War3Net.Build.Extensions;
+using War3Net.Build.Script;
 
 namespace War3App.MapAdapter.Script
 {
@@ -31,9 +32,22 @@ namespace War3App.MapAdapter.Script
                     };
                 }
 
+                MapTriggers? mapTriggers = null;
+                if (context.Archive.TryOpenFile(MapTriggers.FileName, out var mapTriggersStream))
+                {
+                    try
+                    {
+                        using var mapTriggersReader = new BinaryReader(mapTriggersStream, Encoding.UTF8, true);
+                        mapTriggers = mapTriggersReader.ReadMapTriggers();
+                    }
+                    catch
+                    {
+                    }
+                }
+
                 try
                 {
-                    if (mapCustomTextTriggers.TryDowngrade(context.TargetPatch.Patch))
+                    if (mapCustomTextTriggers.TryDowngrade(mapTriggers, context.TargetPatch.Patch))
                     {
                         var newMapCustomTextTriggersFileStream = new MemoryStream();
                         using var writer = new BinaryWriter(newMapCustomTextTriggersFileStream, encoding, true);

@@ -7,13 +7,13 @@ namespace War3App.MapAdapter.Script
 {
     public static class MapCustomTextTriggersExtensions
     {
-        public static bool TryDowngrade(this MapCustomTextTriggers mapCustomTextTriggers, GamePatch targetPatch)
+        public static bool TryDowngrade(this MapCustomTextTriggers mapCustomTextTriggers, MapTriggers? mapTriggers, GamePatch targetPatch)
         {
             try
             {
                 while (mapCustomTextTriggers.GetMinimumPatch() > targetPatch)
                 {
-                    mapCustomTextTriggers.DowngradeOnce();
+                    mapCustomTextTriggers.DowngradeOnce(mapTriggers);
                 }
 
                 return true;
@@ -28,11 +28,31 @@ namespace War3App.MapAdapter.Script
             }
         }
 
-        public static void DowngradeOnce(this MapCustomTextTriggers mapCustomTextTriggers)
+        public static void DowngradeOnce(this MapCustomTextTriggers mapCustomTextTriggers, MapTriggers? mapTriggers)
         {
             if (mapCustomTextTriggers.SubVersion.HasValue)
             {
                 mapCustomTextTriggers.SubVersion = null;
+
+                if (mapTriggers is null)
+                {
+                    return;
+                }
+
+                var index = 0;
+
+                for (var i = 0; i < mapTriggers.TriggerItems.Count; i++)
+                {
+                    if (mapTriggers.TriggerItems[i] is TriggerDefinition triggerDefinition)
+                    {
+                        if (triggerDefinition.Type == TriggerItemType.Comment)
+                        {
+                            mapCustomTextTriggers.CustomTextTriggers.Insert(index, new CustomTextTrigger { Code = string.Empty });
+                        }
+
+                        index++;
+                    }
+                }
             }
             else
             {
