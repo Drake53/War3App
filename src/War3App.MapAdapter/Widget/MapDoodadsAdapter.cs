@@ -39,11 +39,12 @@ namespace War3App.MapAdapter.Widget
 
             try
             {
-                var newMapDoodadsFileStream = new MemoryStream();
-                using var writer = new BinaryWriter(newMapDoodadsFileStream, UTF8EncodingProvider.StrictUTF8, true);
+                var memoryStream = new MemoryStream();
+
+                using var writer = new BinaryWriter(memoryStream, UTF8EncodingProvider.StrictUTF8, true);
                 writer.Write(mapDoodads);
 
-                return newMapDoodadsFileStream;
+                return memoryStream;
             }
             catch (Exception e)
             {

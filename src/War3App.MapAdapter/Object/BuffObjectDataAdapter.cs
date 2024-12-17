@@ -40,6 +40,7 @@ namespace War3App.MapAdapter.Object
             try
             {
                 var memoryStream = new MemoryStream();
+
                 using var writer = new BinaryWriter(memoryStream, UTF8EncodingProvider.StrictUTF8, true);
                 writer.Write(buffObjectData);
 

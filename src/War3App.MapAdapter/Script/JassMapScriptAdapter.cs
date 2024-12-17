@@ -81,8 +81,8 @@ namespace War3App.MapAdapter.Script
             try
             {
                 var memoryStream = new MemoryStream();
-                using var writer = new StreamWriter(memoryStream, UTF8EncodingProvider.StrictUTF8, leaveOpen: true);
 
+                using var writer = new StreamWriter(memoryStream, UTF8EncodingProvider.StrictUTF8, leaveOpen: true);
                 var renderer = new JassRenderer(writer);
                 renderer.Render(adaptedCompilationUnit);
 

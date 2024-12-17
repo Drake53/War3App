@@ -37,11 +37,12 @@ namespace War3App.MapAdapter.Script
 
             try
             {
-                var newMapCustomTextTriggersFileStream = new MemoryStream();
-                using var writer = new BinaryWriter(newMapCustomTextTriggersFileStream, UTF8EncodingProvider.StrictUTF8, true);
+                var memoryStream = new MemoryStream();
+
+                using var writer = new BinaryWriter(memoryStream, UTF8EncodingProvider.StrictUTF8, true);
                 writer.Write(mapCustomTextTriggers, UTF8EncodingProvider.StrictUTF8);
 
-                return newMapCustomTextTriggersFileStream;
+                return memoryStream;
             }
             catch (Exception e)
             {

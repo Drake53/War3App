@@ -39,11 +39,12 @@ namespace War3App.MapAdapter.Audio
 
             try
             {
-                var newMapSoundsFileStream = new MemoryStream();
-                using var writer = new BinaryWriter(newMapSoundsFileStream, UTF8EncodingProvider.StrictUTF8, true);
+                var memoryStream = new MemoryStream();
+
+                using var writer = new BinaryWriter(memoryStream, UTF8EncodingProvider.StrictUTF8, true);
                 writer.Write(mapSounds);
 
-                return newMapSoundsFileStream;
+                return memoryStream;
             }
             catch (Exception e)
             {

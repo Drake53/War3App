@@ -39,11 +39,12 @@ namespace War3App.MapAdapter.Script
 
             try
             {
-                var newMapTriggersFileStream = new MemoryStream();
-                using var writer = new BinaryWriter(newMapTriggersFileStream, UTF8EncodingProvider.StrictUTF8, true);
+                var memoryStream = new MemoryStream();
+
+                using var writer = new BinaryWriter(memoryStream, UTF8EncodingProvider.StrictUTF8, true);
                 writer.Write(mapTriggers);
 
-                return newMapTriggersFileStream;
+                return memoryStream;
             }
             catch (Exception e)
             {

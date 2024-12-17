@@ -39,11 +39,12 @@ namespace War3App.MapAdapter.Environment
 
             try
             {
-                var newMapCamerasFileStream = new MemoryStream();
-                using var writer = new BinaryWriter(newMapCamerasFileStream, UTF8EncodingProvider.StrictUTF8, true);
+                var memoryStream = new MemoryStream();
+
+                using var writer = new BinaryWriter(memoryStream, UTF8EncodingProvider.StrictUTF8, true);
                 writer.Write(mapCameras);
 
-                return newMapCamerasFileStream;
+                return memoryStream;
             }
             catch (Exception e)
             {
