@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -21,6 +22,7 @@ namespace War3App.MapAdapter.WinForms.Extensions
                 tag.ArchiveName,
             });
 
+            item.UseItemStyleForSubItems = false;
             item.Tag = tag;
             tag.ListViewItem = item;
 
@@ -51,6 +53,7 @@ namespace War3App.MapAdapter.WinForms.Extensions
             tag.AdaptResult = adaptResult;
 
             item.SubItems[StatusColumnIndex].Text = tag.Status.ToString();
+            item.SubItems[FileNameColumnIndex].ForeColor = adaptResult.AdaptedFileStream is not null ? Color.Violet : Color.Black;
             item.ImageIndex = (int)tag.Status;
         }
 
