@@ -14,13 +14,14 @@ namespace War3App.MapAdapter.WinForms
     {
         private MapFileStatus _status;
 
-        public ItemTag(MpqArchive archive, MpqEntry mpqEntry, string archiveName = null)
+        public ItemTag(MpqArchive archive, MpqEntry mpqEntry, int originalIndex, string archiveName = null)
         {
             MpqArchive = archive;
             MpqEntry = mpqEntry;
             FileName = mpqEntry.FileName;
             ArchiveName = archiveName ?? string.Empty;
             OriginalFileStream = archive.OpenFile(mpqEntry);
+            OriginalIndex = originalIndex;
 
             if (!OriginalFileStream.CanRead)
             {
@@ -35,7 +36,7 @@ namespace War3App.MapAdapter.WinForms
             }
         }
 
-        public ItemTag(MpqArchive archive, MpqEntry mpqEntry, ListViewItem[] children, GamePatch? originPatch)
+        public ItemTag(MpqArchive archive, MpqEntry mpqEntry, int originalIndex, ListViewItem[] children, GamePatch? originPatch)
         {
             MpqArchive = archive;
             MpqEntry = mpqEntry;
@@ -43,6 +44,7 @@ namespace War3App.MapAdapter.WinForms
             ArchiveName = string.Empty;
             Adapter = null;
             OriginalFileStream = archive.OpenFile(mpqEntry);
+            OriginalIndex = originalIndex;
 
             Children = children.Select(child => child.GetTag()).ToArray();
             foreach (var child in Children)
@@ -64,6 +66,8 @@ namespace War3App.MapAdapter.WinForms
         public IMapFileAdapter? Adapter { get; }
 
         public MpqStream? OriginalFileStream { get; }
+
+        public int OriginalIndex { get; }
 
         public ItemTag Parent { get; private set; }
 

@@ -22,7 +22,7 @@ namespace War3App.MapAdapter.WinForms
         {
             if (e.Column == SortColumn)
             {
-                SortOrder = SortOrder == SortOrder.Ascending ? SortOrder.Descending : SortOrder.Ascending;
+                SortOrder = (SortOrder)(((int)SortOrder + 1) % 3);
             }
             else
             {
@@ -39,7 +39,7 @@ namespace War3App.MapAdapter.WinForms
             {
                 return SortOrder switch
                 {
-                    SortOrder.None => -1,
+                    SortOrder.None => item1.CompareTo(item2, -1),
                     SortOrder.Ascending => item1.CompareTo(item2, SortColumn),
                     SortOrder.Descending => 0 - item1.CompareTo(item2, SortColumn),
                 };

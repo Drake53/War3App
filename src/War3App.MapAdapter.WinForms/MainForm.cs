@@ -904,6 +904,8 @@ namespace War3App.MapAdapter.WinForms
             var progress = new OpenArchiveProgress();
             progress.Maximum = files.Count;
 
+            var index = 0;
+
             foreach (var file in files)
             {
                 if (mapsList.Contains(file.FileName))
@@ -919,9 +921,11 @@ namespace War3App.MapAdapter.WinForms
 
                     progress.Maximum += mapFiles.Count;
 
+                    var parentIndex = index;
+
                     foreach (var mapFile in mapArchive)
                     {
-                        var subItem = ListViewItemExtensions.Create(new ItemTag(mapArchive, mapFile, mapName));
+                        var subItem = ListViewItemExtensions.Create(new ItemTag(mapArchive, mapFile, ++index, mapName));
 
                         subItem.IndentCount = 1;
                         children.Add(subItem);
@@ -934,7 +938,7 @@ namespace War3App.MapAdapter.WinForms
                         using var reader = new BinaryReader(mapInfoFileStream);
                         var mapArchiveOriginPatch = reader.ReadMapInfo().GetOriginGamePatch();
 
-                        var mapArchiveItem = ListViewItemExtensions.Create(new ItemTag(_archive, file, children.ToArray(), mapArchiveOriginPatch));
+                        var mapArchiveItem = ListViewItemExtensions.Create(new ItemTag(_archive, file, parentIndex, children.ToArray(), mapArchiveOriginPatch));
 
                         listViewItems.Add(mapArchiveItem);
 
@@ -953,12 +957,14 @@ namespace War3App.MapAdapter.WinForms
                 }
                 else
                 {
-                    var item = ListViewItemExtensions.Create(new ItemTag(_archive, file));
+                    var item = ListViewItemExtensions.Create(new ItemTag(_archive, file, index));
 
                     listViewItems.Add(item);
 
                     _openArchiveWorker.ReportProgress(0, progress);
                 }
+
+                index++;
             }
 
             if (_originPatch is null)
