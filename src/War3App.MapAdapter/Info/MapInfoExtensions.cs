@@ -8,6 +8,18 @@ namespace War3App.MapAdapter.Info
 {
     public static class MapInfoExtensions
     {
+        public static MapFileStatus Adapt(this MapInfo mapInfo, AdaptFileContext context)
+        {
+            if (mapInfo.GetMinimumPatch() <= context.TargetPatch.Patch)
+            {
+                return MapFileStatus.Compatible;
+            }
+
+            return mapInfo.TryDowngrade(context.TargetPatch.Patch)
+                ? MapFileStatus.Adapted
+                : MapFileStatus.Incompatible;
+        }
+
         public static GamePatch? GetOriginGamePatch(this MapInfo mapInfo)
         {
             var gameBuilds = mapInfo.GameVersion is not null

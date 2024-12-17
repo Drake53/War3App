@@ -7,6 +7,18 @@ namespace War3App.MapAdapter.Widget
 {
     public static class MapDoodadsExtensions
     {
+        public static MapFileStatus Adapt(this MapDoodads mapDoodads, AdaptFileContext context)
+        {
+            if (mapDoodads.GetMinimumPatch() <= context.TargetPatch.Patch)
+            {
+                return MapFileStatus.Compatible;
+            }
+
+            return mapDoodads.TryDowngrade(context.TargetPatch.Patch)
+                ? MapFileStatus.Adapted
+                : MapFileStatus.Incompatible;
+        }
+
         public static bool TryDowngrade(this MapDoodads mapDoodads, GamePatch targetPatch)
         {
             try

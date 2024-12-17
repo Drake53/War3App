@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-
-using War3Net.Build.Common;
+﻿using System.IO;
 
 namespace War3App.MapAdapter.Drawing
 {
@@ -15,35 +12,9 @@ namespace War3App.MapAdapter.Drawing
 
         public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
-            try
-            {
-                // TODO
-                // var blpFile = BlpFile.Parse(stream);
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.Compatible,
-                };
-            }
-            catch (NotSupportedException)
-            {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.Unadaptable,
-                };
-            }
-            catch (Exception e)
-            {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.ParseError,
-                    Diagnostics = new[] { e.Message },
-                };
-            }
-        }
-
-        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
-        {
-            throw new NotSupportedException();
+            // TODO
+            // var blpFile = BlpFile.Parse(stream);
+            return MapFileStatus.Compatible;
         }
     }
 }

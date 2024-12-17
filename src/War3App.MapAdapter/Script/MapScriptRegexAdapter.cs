@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
+using War3App.MapAdapter.Diagnostics;
+
 using War3Net.Build.Common;
 
 namespace War3App.MapAdapter.Script
@@ -18,131 +20,81 @@ namespace War3App.MapAdapter.Script
 
         public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
+            string scriptText;
             try
             {
-                string scriptText;
-                using (var reader = new StreamReader(stream, leaveOpen: true))
-                {
-                    scriptText = reader.ReadToEnd();
-                }
-
-                try
-                {
-                    var diagnostics = new List<string>();
-                    var regexDiagnostics = new List<RegexDiagnostic>();
-
-                    // Find incompatible identifiers
-                    var incompatibleIdentifiers = new HashSet<string>();
-                    incompatibleIdentifiers.UnionWith(CommonIdentifiersProvider.GetIdentifiers(context.TargetPatch.Patch, context.OriginPatch));
-                    incompatibleIdentifiers.UnionWith(BlizzardIdentifiersProvider.GetIdentifiers(context.TargetPatch.Patch, context.OriginPatch));
-
-                    foreach (var incompatibleIdentifier in incompatibleIdentifiers)
-                    {
-                        var regex = new Regex($"\\b{incompatibleIdentifier}\\b");
-                        var matches = regex.Matches(scriptText);
-                        var usageCount = matches.Count;
-                        if (usageCount > 0)
-                        {
-                            diagnostics.Add($"Found incompatible identifier: '{incompatibleIdentifier}' ({usageCount}x)");
-                            regexDiagnostics.Add(new RegexDiagnostic
-                            {
-                                DisplayText = $"Identifier: '{incompatibleIdentifier}'",
-                                Matches = usageCount,
-                                Regex = regex,
-                            });
-                        }
-                    }
-
-                    // Find incompatible audio formats
-                    var incompatibleAudioFormats = new HashSet<string>();
-                    if (context.TargetPatch.Patch < GamePatch.v1_32_0)
-                    {
-                        incompatibleAudioFormats.Add("flac");
-                    }
-                    if (context.TargetPatch.Patch < GamePatch.v1_30_0 || context.TargetPatch.Patch > GamePatch.v1_30_4)
-                    {
-                        incompatibleAudioFormats.Add("ogg");
-                    }
-
-                    foreach (var incompatibleAudioFormat in incompatibleAudioFormats)
-                    {
-                        var regex = new Regex($"\"(\\w|/|\\\\)+.{incompatibleAudioFormat}\"");
-                        var matches = regex.Matches(scriptText);
-                        var usageCount = matches.Count;
-                        if (usageCount > 0)
-                        {
-                            diagnostics.Add($"Found incompatible audio formats: '{incompatibleAudioFormat}' ({usageCount}x)");
-                            regexDiagnostics.Add(new RegexDiagnostic
-                            {
-                                DisplayText = $"Audio file format: '{incompatibleAudioFormat}'",
-                                Matches = usageCount,
-                                Regex = regex,
-                            });
-                        }
-                    }
-
-                    // Find incompatible frame names
-                    var incompatibleFrameNames = new HashSet<string>();
-                    if (context.TargetPatch.Patch >= GamePatch.v1_31_0)
-                    {
-                        incompatibleFrameNames.UnionWith(FrameNamesProvider.GetFrameNames(context.TargetPatch.Patch, context.OriginPatch).Select(frame => frame.name));
-                    }
-
-                    foreach (var incompatibleFrameName in incompatibleFrameNames)
-                    {
-                        var regex = new Regex($"{nameof(War3Api.Common.BlzGetFrameByName)}( |\t)*\\(\"{incompatibleFrameName}\"( |\t)*,( |\t)*");
-                        var matches = regex.Matches(scriptText);
-                        var usageCount = matches.Count;
-                        if (usageCount > 0)
-                        {
-                            diagnostics.Add($"Found incompatible frame names: '{incompatibleFrameName}' ({usageCount}x)");
-                            regexDiagnostics.Add(new RegexDiagnostic
-                            {
-                                DisplayText = $"Frame name: '{incompatibleFrameName}'",
-                                Matches = usageCount,
-                                Regex = regex,
-                            });
-                        }
-                    }
-
-                    if (diagnostics.Count == 0)
-                    {
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Compatible,
-                        };
-                    }
-                    else
-                    {
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Incompatible,
-                            Diagnostics = diagnostics.ToArray(),
-                            RegexDiagnostics = regexDiagnostics.ToArray(),
-                        };
-                    }
-                }
-                catch
-                {
-                    return new AdaptResult
-                    {
-                        Status = MapFileStatus.AdapterError,
-                    };
-                }
+                using var reader = new StreamReader(stream, leaveOpen: true);
+                scriptText = reader.ReadToEnd();
             }
             catch (Exception e)
             {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.ParseError,
-                    Diagnostics = new[] { e.Message },
-                };
+                return context.ReportParseError(e);
             }
-        }
 
-        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
-        {
-            throw new NotSupportedException();
+            var isCompatible = true;
+
+            // Find incompatible identifiers
+            var incompatibleIdentifiers = new HashSet<string>();
+            incompatibleIdentifiers.UnionWith(CommonIdentifiersProvider.GetIdentifiers(context.TargetPatch.Patch, context.OriginPatch));
+            incompatibleIdentifiers.UnionWith(BlizzardIdentifiersProvider.GetIdentifiers(context.TargetPatch.Patch, context.OriginPatch));
+
+            foreach (var incompatibleIdentifier in incompatibleIdentifiers)
+            {
+                var regex = new Regex($"\\b{incompatibleIdentifier}\\b");
+                var matches = regex.Matches(scriptText);
+                var usageCount = matches.Count;
+                if (usageCount > 0)
+                {
+                    context.ReportRegexDiagnostic(DiagnosticRule.MapScript.UnsupportedIdentifier, regex, incompatibleIdentifier, usageCount);
+                    isCompatible = false;
+                }
+            }
+
+            // Find incompatible audio formats
+            var incompatibleAudioFormats = new HashSet<string>();
+            if (context.TargetPatch.Patch < GamePatch.v1_32_0)
+            {
+                incompatibleAudioFormats.Add("flac");
+            }
+            if (context.TargetPatch.Patch < GamePatch.v1_30_0 || context.TargetPatch.Patch > GamePatch.v1_30_4)
+            {
+                incompatibleAudioFormats.Add("ogg");
+            }
+
+            foreach (var incompatibleAudioFormat in incompatibleAudioFormats)
+            {
+                var regex = new Regex($"\"(\\w|/|\\\\)+.{incompatibleAudioFormat}\"");
+                var matches = regex.Matches(scriptText);
+                var usageCount = matches.Count;
+                if (usageCount > 0)
+                {
+                    context.ReportRegexDiagnostic(DiagnosticRule.MapScript.UnsupportedAudioFormat, regex, incompatibleAudioFormat, usageCount);
+                    isCompatible = false;
+                }
+            }
+
+            // Find incompatible frame names
+            var incompatibleFrameNames = new HashSet<string>();
+            if (context.TargetPatch.Patch >= GamePatch.v1_31_0)
+            {
+                incompatibleFrameNames.UnionWith(FrameNamesProvider.GetFrameNames(context.TargetPatch.Patch, context.OriginPatch).Select(frame => frame.name));
+            }
+
+            foreach (var incompatibleFrameName in incompatibleFrameNames)
+            {
+                var regex = new Regex($"{nameof(War3Api.Common.BlzGetFrameByName)}( |\t)*\\(\"{incompatibleFrameName}\"( |\t)*,( |\t)*");
+                var matches = regex.Matches(scriptText);
+                var usageCount = matches.Count;
+                if (usageCount > 0)
+                {
+                    context.ReportRegexDiagnostic(DiagnosticRule.MapScript.UnsupportedFrameName, regex, incompatibleFrameName, usageCount);
+                    isCompatible = false;
+                }
+            }
+
+            return isCompatible
+                ? MapFileStatus.Compatible
+                : MapFileStatus.Incompatible;
         }
     }
 }

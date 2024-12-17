@@ -1,12 +1,40 @@
 ﻿using System;
+using System.IO;
+using System.Text;
 
 using War3Net.Build.Common;
+using War3Net.Build.Extensions;
 using War3Net.Build.Script;
 
 namespace War3App.MapAdapter.Script
 {
     public static class MapCustomTextTriggersExtensions
     {
+        public static MapFileStatus Adapt(this MapCustomTextTriggers mapCustomTextTriggers, AdaptFileContext context)
+        {
+            if (mapCustomTextTriggers.GetMinimumPatch() <= context.TargetPatch.Patch)
+            {
+                return MapFileStatus.Compatible;
+            }
+
+            MapTriggers? mapTriggers = null;
+            if (context.Archive.TryOpenFile(MapTriggers.FileName, out var mapTriggersStream))
+            {
+                try
+                {
+                    using var mapTriggersReader = new BinaryReader(mapTriggersStream, Encoding.UTF8, true);
+                    mapTriggers = mapTriggersReader.ReadMapTriggers();
+                }
+                catch
+                {
+                }
+            }
+
+            return mapCustomTextTriggers.TryDowngrade(mapTriggers, context.TargetPatch.Patch)
+                ? MapFileStatus.Adapted
+                : MapFileStatus.Incompatible;
+        }
+
         public static bool TryDowngrade(this MapCustomTextTriggers mapCustomTextTriggers, MapTriggers? mapTriggers, GamePatch targetPatch)
         {
             try

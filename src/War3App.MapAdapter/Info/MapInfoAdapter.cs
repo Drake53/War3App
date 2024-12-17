@@ -3,11 +3,10 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 
-using War3App.MapAdapter.Extensions;
-
 using War3Net.Build.Common;
 using War3Net.Build.Extensions;
 using War3Net.Build.Info;
+using War3Net.Common.Providers;
 
 namespace War3App.MapAdapter.Info
 {
@@ -29,79 +28,35 @@ namespace War3App.MapAdapter.Info
             }
             catch (Exception e)
             {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.ParseError,
-                    Diagnostics = new[] { e.Message },
-                };
+                return context.ReportParseError(e);
+            }
+
+            var status = mapInfo.Adapt(context);
+            if (status != MapFileStatus.Adapted)
+            {
+                return status;
             }
 
             try
             {
-                if (mapInfo.GetMinimumPatch() <= context.TargetPatch.Patch)
-                {
-                    return new AdaptResult
-                    {
-                        Status = MapFileStatus.Compatible,
-                    };
-                }
+                var newMapInfoFileStream = new MemoryStream();
+                using var writer = new BinaryWriter(newMapInfoFileStream, UTF8EncodingProvider.StrictUTF8, true);
+                writer.Write(mapInfo);
 
-                if (mapInfo.TryDowngrade(context.TargetPatch.Patch))
-                {
-                    var newMapInfoFileStream = new MemoryStream();
-                    using var writer = new BinaryWriter(newMapInfoFileStream, new UTF8Encoding(false, true), true);
-                    writer.Write(mapInfo);
-
-                    return new AdaptResult
-                    {
-                        Status = MapFileStatus.Adapted,
-                        AdaptedFileStream = newMapInfoFileStream,
-                    };
-                }
-                else
-                {
-                    return new AdaptResult
-                    {
-                        Status = MapFileStatus.Unadaptable,
-                    };
-                }
-            }
-            catch (NotSupportedException e)
-            {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.Unadaptable,
-                    Diagnostics = new[] { e.Message },
-                };
+                return newMapInfoFileStream;
             }
             catch (Exception e)
             {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.AdapterError,
-                    Diagnostics = new[] { e.Message },
-                };
+                return context.ReportSerializeError(e);
             }
         }
 
-        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
+        public string SerializeFileToJson(Stream stream, GamePatch gamePatch, JsonSerializerOptions options)
         {
-            try
-            {
-                using var reader = new BinaryReader(stream, Encoding.UTF8, true);
-                var mapInfo = reader.ReadMapInfo();
+            using var reader = new BinaryReader(stream, Encoding.UTF8, true);
+            var mapInfo = reader.ReadMapInfo();
 
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                };
-
-                return JsonSerializer.Serialize(mapInfo, options);
-            }
-            catch (Exception e)
-            {
-                return $"{e.GetType().FullName}{System.Environment.NewLine}{e.Message}";
-            }
+            return JsonSerializer.Serialize(mapInfo, options);
         }
     }
 }

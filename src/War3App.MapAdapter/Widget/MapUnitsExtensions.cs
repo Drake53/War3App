@@ -7,6 +7,18 @@ namespace War3App.MapAdapter.Widget
 {
     public static class MapUnitsExtensions
     {
+        public static MapFileStatus Adapt(this MapUnits mapUnits, AdaptFileContext context)
+        {
+            if (mapUnits.GetMinimumPatch() <= context.TargetPatch.Patch)
+            {
+                return MapFileStatus.Compatible;
+            }
+
+            return mapUnits.TryDowngrade(context.TargetPatch.Patch)
+                ? MapFileStatus.Adapted
+                : MapFileStatus.Incompatible;
+        }
+
         public static bool TryDowngrade(this MapUnits mapUnits, GamePatch targetPatch)
         {
             try

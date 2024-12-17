@@ -61,5 +61,10 @@
         /// An exception occured when adapting the file.
         /// </summary>
         AdapterError,
+
+        /// <summary>
+        /// An exception occured when serializing the adapted file.
+        /// </summary>
+        SerializeError,
     }
 }

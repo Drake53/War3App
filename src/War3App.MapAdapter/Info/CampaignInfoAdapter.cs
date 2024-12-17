@@ -3,10 +3,10 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 
-using War3App.MapAdapter.Extensions;
-
 using War3Net.Build.Common;
 using War3Net.Build.Extensions;
+using War3Net.Build.Info;
+using War3Net.Common.Providers;
 
 namespace War3App.MapAdapter.Info
 {
@@ -20,77 +20,43 @@ namespace War3App.MapAdapter.Info
 
         public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
+            CampaignInfo campaignInfo;
             try
             {
                 using var reader = new BinaryReader(stream, Encoding.UTF8, true);
-                var campaignInfo = reader.ReadCampaignInfo();
-
-                var targetPatchEditorVersion = context.TargetPatch.Patch.GetEditorVersion();
-                if (campaignInfo.EditorVersion == targetPatchEditorVersion)
-                {
-                    return new AdaptResult
-                    {
-                        Status = MapFileStatus.Compatible,
-                    };
-                }
-
-                try
-                {
-                    campaignInfo.EditorVersion = targetPatchEditorVersion;
-
-                    var newCampaignInfoFileStream = new MemoryStream();
-                    using var writer = new BinaryWriter(newCampaignInfoFileStream, new UTF8Encoding(false, true), true);
-                    writer.Write(campaignInfo);
-
-                    return new AdaptResult
-                    {
-                        Status = MapFileStatus.Adapted,
-                        AdaptedFileStream = newCampaignInfoFileStream,
-                    };
-                }
-                catch
-                {
-                    return new AdaptResult
-                    {
-                        Status = MapFileStatus.AdapterError,
-                    };
-                }
-            }
-            catch (NotSupportedException)
-            {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.Unadaptable,
-                };
+                campaignInfo = reader.ReadCampaignInfo();
             }
             catch (Exception e)
             {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.ParseError,
-                    Diagnostics = new[] { e.Message },
-                };
+                return context.ReportParseError(e);
+            }
+
+            var status = campaignInfo.Adapt(context);
+            if (status != MapFileStatus.Adapted)
+            {
+                return status;
+            }
+
+            try
+            {
+                var newCampaignInfoFileStream = new MemoryStream();
+                using var writer = new BinaryWriter(newCampaignInfoFileStream, UTF8EncodingProvider.StrictUTF8, true);
+                writer.Write(campaignInfo);
+
+                return newCampaignInfoFileStream;
+            }
+            catch (Exception e)
+            {
+                return context.ReportSerializeError(e);
             }
         }
 
-        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
+        public string SerializeFileToJson(Stream stream, GamePatch gamePatch, JsonSerializerOptions options)
         {
-            try
-            {
-                using var reader = new BinaryReader(stream, Encoding.UTF8, true);
-                var campaignInfo = reader.ReadCampaignInfo();
+            using var reader = new BinaryReader(stream, Encoding.UTF8, true);
+            var campaignInfo = reader.ReadCampaignInfo();
 
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                };
-
-                return JsonSerializer.Serialize(campaignInfo, options);
-            }
-            catch (Exception e)
-            {
-                return $"{e.GetType().FullName}{System.Environment.NewLine}{e.Message}";
-            }
+            return JsonSerializer.Serialize(campaignInfo, options);
         }
     }
 }

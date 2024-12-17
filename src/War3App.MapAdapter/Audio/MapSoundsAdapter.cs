@@ -3,8 +3,10 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 
+using War3Net.Build.Audio;
 using War3Net.Build.Common;
 using War3Net.Build.Extensions;
+using War3Net.Common.Providers;
 
 namespace War3App.MapAdapter.Audio
 {
@@ -18,83 +20,43 @@ namespace War3App.MapAdapter.Audio
 
         public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
+            MapSounds mapSounds;
             try
             {
                 using var reader = new BinaryReader(stream, Encoding.UTF8, true);
-                var mapSounds = reader.ReadMapSounds();
-                if (mapSounds.GetMinimumPatch() <= context.TargetPatch.Patch)
-                {
-                    return new AdaptResult
-                    {
-                        Status = MapFileStatus.Compatible,
-                    };
-                }
-
-                try
-                {
-                    if (mapSounds.TryDowngrade(context.TargetPatch.Patch))
-                    {
-                        var newMapSoundsFileStream = new MemoryStream();
-                        using var writer = new BinaryWriter(newMapSoundsFileStream, new UTF8Encoding(false, true), true);
-                        writer.Write(mapSounds);
-
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Adapted,
-                            AdaptedFileStream = newMapSoundsFileStream,
-                        };
-                    }
-                    else
-                    {
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Unadaptable,
-                        };
-                    }
-                }
-                catch
-                {
-                    return new AdaptResult
-                    {
-                        Status = MapFileStatus.AdapterError,
-                    };
-                }
-            }
-            catch (NotSupportedException)
-            {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.Unadaptable,
-                };
+                mapSounds = reader.ReadMapSounds();
             }
             catch (Exception e)
             {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.ParseError,
-                    Diagnostics = new[] { e.Message },
-                };
+                return context.ReportParseError(e);
+            }
+
+            var status = mapSounds.Adapt(context);
+            if (status != MapFileStatus.Adapted)
+            {
+                return status;
+            }
+
+            try
+            {
+                var newMapSoundsFileStream = new MemoryStream();
+                using var writer = new BinaryWriter(newMapSoundsFileStream, UTF8EncodingProvider.StrictUTF8, true);
+                writer.Write(mapSounds);
+
+                return newMapSoundsFileStream;
+            }
+            catch (Exception e)
+            {
+                return context.ReportSerializeError(e);
             }
         }
 
-        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
+        public string SerializeFileToJson(Stream stream, GamePatch gamePatch, JsonSerializerOptions options)
         {
-            try
-            {
-                using var reader = new BinaryReader(stream, Encoding.UTF8, true);
-                var mapSounds = reader.ReadMapSounds();
+            using var reader = new BinaryReader(stream, Encoding.UTF8, true);
+            var mapSounds = reader.ReadMapSounds();
 
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                };
-
-                return JsonSerializer.Serialize(mapSounds, options);
-            }
-            catch (Exception e)
-            {
-                return $"{e.GetType().FullName}{System.Environment.NewLine}{e.Message}";
-            }
+            return JsonSerializer.Serialize(mapSounds, options);
         }
     }
 }

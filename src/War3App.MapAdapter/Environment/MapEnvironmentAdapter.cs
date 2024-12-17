@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 
 using War3Net.Build.Common;
+using War3Net.Build.Environment;
 using War3Net.Build.Extensions;
 
 namespace War3App.MapAdapter.Environment
@@ -18,50 +19,26 @@ namespace War3App.MapAdapter.Environment
 
         public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
+            MapEnvironment mapEnvironment;
             try
             {
                 using var reader = new BinaryReader(stream, Encoding.UTF8, true);
-                var mapEnvironment = reader.ReadMapEnvironment();
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.Compatible,
-                };
-            }
-            catch (NotSupportedException)
-            {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.Unadaptable,
-                };
+                mapEnvironment = reader.ReadMapEnvironment();
             }
             catch (Exception e)
             {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.ParseError,
-                    Diagnostics = new[] { e.Message },
-                };
+                return context.ReportParseError(e);
             }
+
+            return MapFileStatus.Compatible;
         }
 
-        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
+        public string SerializeFileToJson(Stream stream, GamePatch gamePatch, JsonSerializerOptions options)
         {
-            try
-            {
-                using var reader = new BinaryReader(stream, Encoding.UTF8, true);
-                var mapEnvironment = reader.ReadMapEnvironment();
+            using var reader = new BinaryReader(stream, Encoding.UTF8, true);
+            var mapEnvironment = reader.ReadMapEnvironment();
 
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                };
-
-                return JsonSerializer.Serialize(mapEnvironment, options);
-            }
-            catch (Exception e)
-            {
-                return $"{e.GetType().FullName}{System.Environment.NewLine}{e.Message}";
-            }
+            return JsonSerializer.Serialize(mapEnvironment, options);
         }
     }
 }

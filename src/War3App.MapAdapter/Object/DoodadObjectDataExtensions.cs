@@ -1,12 +1,179 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+
+using War3App.MapAdapter.Diagnostics;
+using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Common;
+using War3Net.Build.Extensions;
 using War3Net.Build.Object;
+using War3Net.Common.Extensions;
 
 namespace War3App.MapAdapter.Object
 {
     public static class DoodadObjectDataExtensions
     {
+        public static MapFileStatus Adapt(this DoodadObjectData doodadObjectData, AdaptFileContext context)
+        {
+            var isSkinFileSupported = context.TargetPatch.Patch >= GamePatch.v1_33_0;
+            if (!isSkinFileSupported)
+            {
+                if (context.FileName is null)
+                {
+                    context.ReportDiagnostic(DiagnosticRule.ObjectData.MissingFileName, DoodadObjectData.MapFileName, DoodadObjectData.MapSkinFileName);
+                }
+                else
+                {
+                    var isSkinFile = context.FileName.EndsWith($"Skin{DoodadObjectData.FileExtension}");
+                    if (isSkinFile)
+                    {
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.RemovedSkinData, context.FileName.Replace($"Skin{DoodadObjectData.FileExtension}", DoodadObjectData.FileExtension));
+                        return MapFileStatus.Removed;
+                    }
+                }
+            }
+
+            var missingDataFiles = false;
+
+            var doodadDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.DoodadDataPath);
+            if (!File.Exists(doodadDataPath))
+            {
+                context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.DoodadDataPath);
+                missingDataFiles = true;
+            }
+
+            var doodadMetaDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.DoodadMetaDataPath);
+            if (!File.Exists(doodadMetaDataPath))
+            {
+                context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.DoodadMetaDataPath);
+                missingDataFiles = true;
+            }
+
+            if (missingDataFiles)
+            {
+                return MapFileStatus.ConfigError;
+            }
+
+            var isAdapted = false;
+
+            if (doodadObjectData.GetMinimumPatch() > context.TargetPatch.Patch)
+            {
+                if (!doodadObjectData.TryDowngrade(context.TargetPatch.Patch))
+                {
+                    return MapFileStatus.Incompatible;
+                }
+
+                isAdapted = true;
+            }
+
+            if (!isSkinFileSupported && context.FileName is not null)
+            {
+                var expectedSkinFileName = context.FileName.Replace(DoodadObjectData.FileExtension, $"Skin{DoodadObjectData.FileExtension}");
+
+                if (context.Archive.TryOpenFile(expectedSkinFileName, out var skinStream))
+                {
+                    DoodadObjectData? doodadSkinObjectData;
+                    try
+                    {
+                        using var reader = new BinaryReader(skinStream, Encoding.UTF8, true);
+                        doodadSkinObjectData = reader.ReadDoodadObjectData();
+                    }
+                    catch (Exception e)
+                    {
+                        _ = context.ReportParseError(e);
+                        doodadSkinObjectData = null;
+                    }
+
+                    if (doodadSkinObjectData is not null &&
+                        (doodadSkinObjectData.BaseDoodads.Count > 0 ||
+                         doodadSkinObjectData.NewDoodads.Count > 0))
+                    {
+                        doodadObjectData.MergeWith(doodadSkinObjectData);
+
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.MergedSkinData, expectedSkinFileName);
+                        isAdapted = true;
+                    }
+                }
+            }
+
+            var knownIds = new HashSet<int>();
+            knownIds.AddItemsFromSylkTable(doodadDataPath, DataConstants.DoodadDataKeyColumn);
+
+            var knownProperties = new HashSet<int>();
+            knownProperties.AddItemsFromSylkTable(doodadMetaDataPath, DataConstants.MetaDataIdColumn);
+
+            var baseDoodads = new List<VariationObjectModification>();
+            foreach (var doodad in doodadObjectData.BaseDoodads)
+            {
+                if (!knownIds.Contains(doodad.OldId))
+                {
+                    context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "doodad", doodad.OldId.ToRawcode());
+                    isAdapted = true;
+                    continue;
+                }
+
+                for (var i = 0; i < doodad.Modifications.Count; i++)
+                {
+                    var property = doodad.Modifications[i];
+                    if (!knownProperties.Contains(property.Id))
+                    {
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
+                        isAdapted = true;
+                        doodad.Modifications.RemoveAt(i--);
+                    }
+                }
+
+                baseDoodads.Add(doodad);
+            }
+
+            var newDoodads = new List<VariationObjectModification>();
+            foreach (var doodad in doodadObjectData.NewDoodads)
+            {
+                if (!knownIds.Contains(doodad.OldId))
+                {
+                    context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "doodad", doodad.NewId.ToRawcode(), doodad.OldId.ToRawcode());
+                    isAdapted = true;
+                    continue;
+                }
+
+                if (knownIds.Contains(doodad.NewId))
+                {
+                    context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "doodad", doodad.NewId.ToRawcode());
+                    isAdapted = true;
+                    continue;
+                }
+
+                for (var i = 0; i < doodad.Modifications.Count; i++)
+                {
+                    var property = doodad.Modifications[i];
+                    if (!knownProperties.Contains(property.Id))
+                    {
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
+                        isAdapted = true;
+                        doodad.Modifications.RemoveAt(i--);
+                    }
+                }
+
+                newDoodads.Add(doodad);
+            }
+
+            if (!isAdapted)
+            {
+                return MapFileStatus.Compatible;
+            }
+
+            doodadObjectData.BaseDoodads.Clear();
+            doodadObjectData.NewDoodads.Clear();
+
+            doodadObjectData.BaseDoodads.AddRange(baseDoodads);
+            doodadObjectData.NewDoodads.AddRange(newDoodads);
+
+            return MapFileStatus.Adapted;
+        }
+
         public static bool TryDowngrade(this DoodadObjectData doodadObjectData, GamePatch targetPatch)
         {
             try

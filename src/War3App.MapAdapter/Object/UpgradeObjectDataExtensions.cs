@@ -1,12 +1,179 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+
+using War3App.MapAdapter.Diagnostics;
+using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Common;
+using War3Net.Build.Extensions;
 using War3Net.Build.Object;
+using War3Net.Common.Extensions;
 
 namespace War3App.MapAdapter.Object
 {
     public static class UpgradeObjectDataExtensions
     {
+        public static MapFileStatus Adapt(this UpgradeObjectData upgradeObjectData, AdaptFileContext context)
+        {
+            var isSkinFileSupported = context.TargetPatch.Patch >= GamePatch.v1_33_0;
+            if (!isSkinFileSupported)
+            {
+                if (context.FileName is null)
+                {
+                    context.ReportDiagnostic(DiagnosticRule.ObjectData.MissingFileName, UpgradeObjectData.MapFileName, UpgradeObjectData.MapSkinFileName);
+                }
+                else
+                {
+                    var isSkinFile = context.FileName.EndsWith($"Skin{UpgradeObjectData.FileExtension}");
+                    if (isSkinFile)
+                    {
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.RemovedSkinData, context.FileName.Replace($"Skin{UpgradeObjectData.FileExtension}", UpgradeObjectData.FileExtension));
+                        return MapFileStatus.Removed;
+                    }
+                }
+            }
+
+            var missingDataFiles = false;
+
+            var upgradeDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.UpgradeDataPath);
+            if (!File.Exists(upgradeDataPath))
+            {
+                context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.UpgradeDataPath);
+                missingDataFiles = true;
+            }
+
+            var upgradeMetaDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.UpgradeMetaDataPath);
+            if (!File.Exists(upgradeMetaDataPath))
+            {
+                context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.UpgradeMetaDataPath);
+                missingDataFiles = true;
+            }
+
+            if (missingDataFiles)
+            {
+                return MapFileStatus.ConfigError;
+            }
+
+            var isAdapted = false;
+
+            if (upgradeObjectData.GetMinimumPatch() > context.TargetPatch.Patch)
+            {
+                if (!upgradeObjectData.TryDowngrade(context.TargetPatch.Patch))
+                {
+                    return MapFileStatus.Incompatible;
+                }
+
+                isAdapted = true;
+            }
+
+            if (!isSkinFileSupported && context.FileName is not null)
+            {
+                var expectedSkinFileName = context.FileName.Replace(UpgradeObjectData.FileExtension, $"Skin{UpgradeObjectData.FileExtension}");
+
+                if (context.Archive.TryOpenFile(expectedSkinFileName, out var skinStream))
+                {
+                    UpgradeObjectData? upgradeSkinObjectData;
+                    try
+                    {
+                        using var reader = new BinaryReader(skinStream, Encoding.UTF8, true);
+                        upgradeSkinObjectData = reader.ReadUpgradeObjectData();
+                    }
+                    catch (Exception e)
+                    {
+                        _ = context.ReportParseError(e);
+                        upgradeSkinObjectData = null;
+                    }
+
+                    if (upgradeSkinObjectData is not null &&
+                        (upgradeSkinObjectData.BaseUpgrades.Count > 0 ||
+                         upgradeSkinObjectData.NewUpgrades.Count > 0))
+                    {
+                        upgradeObjectData.MergeWith(upgradeSkinObjectData);
+
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.MergedSkinData, expectedSkinFileName);
+                        isAdapted = true;
+                    }
+                }
+            }
+
+            var knownIds = new HashSet<int>();
+            knownIds.AddItemsFromSylkTable(upgradeDataPath, DataConstants.UpgradeDataKeyColumn);
+
+            var knownProperties = new HashSet<int>();
+            knownProperties.AddItemsFromSylkTable(upgradeMetaDataPath, DataConstants.MetaDataIdColumn);
+
+            var baseUpgrades = new List<LevelObjectModification>();
+            foreach (var upgrade in upgradeObjectData.BaseUpgrades)
+            {
+                if (!knownIds.Contains(upgrade.OldId))
+                {
+                    context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "upgrade", upgrade.OldId.ToRawcode());
+                    isAdapted = true;
+                    continue;
+                }
+
+                for (var i = 0; i < upgrade.Modifications.Count; i++)
+                {
+                    var property = upgrade.Modifications[i];
+                    if (!knownProperties.Contains(property.Id))
+                    {
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
+                        isAdapted = true;
+                        upgrade.Modifications.RemoveAt(i--);
+                    }
+                }
+
+                baseUpgrades.Add(upgrade);
+            }
+
+            var newUpgrades = new List<LevelObjectModification>();
+            foreach (var upgrade in upgradeObjectData.NewUpgrades)
+            {
+                if (!knownIds.Contains(upgrade.OldId))
+                {
+                    context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "upgrade", upgrade.NewId.ToRawcode(), upgrade.OldId.ToRawcode());
+                    isAdapted = true;
+                    continue;
+                }
+
+                if (knownIds.Contains(upgrade.NewId))
+                {
+                    context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "upgrade", upgrade.NewId.ToRawcode());
+                    isAdapted = true;
+                    continue;
+                }
+
+                for (var i = 0; i < upgrade.Modifications.Count; i++)
+                {
+                    var property = upgrade.Modifications[i];
+                    if (!knownProperties.Contains(property.Id))
+                    {
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
+                        isAdapted = true;
+                        upgrade.Modifications.RemoveAt(i--);
+                    }
+                }
+
+                newUpgrades.Add(upgrade);
+            }
+
+            if (!isAdapted)
+            {
+                return MapFileStatus.Compatible;
+            }
+
+            upgradeObjectData.BaseUpgrades.Clear();
+            upgradeObjectData.NewUpgrades.Clear();
+
+            upgradeObjectData.BaseUpgrades.AddRange(baseUpgrades);
+            upgradeObjectData.NewUpgrades.AddRange(newUpgrades);
+
+            return MapFileStatus.Adapted;
+        }
+
         public static bool TryDowngrade(this UpgradeObjectData upgradeObjectData, GamePatch targetPatch)
         {
             try

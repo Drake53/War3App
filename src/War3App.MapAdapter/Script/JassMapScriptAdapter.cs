@@ -1,13 +1,12 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Text;
 
-using War3App.MapAdapter.Extensions;
+using War3App.MapAdapter.Diagnostics;
 
-using War3Net.Build.Common;
 using War3Net.CodeAnalysis.Jass;
 using War3Net.CodeAnalysis.Jass.Syntax;
+using War3Net.Common.Providers;
 
 namespace War3App.MapAdapter.Script
 {
@@ -21,119 +20,78 @@ namespace War3App.MapAdapter.Script
 
         public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
+            var commonJPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.CommonJPath);
+            if (!File.Exists(commonJPath))
+            {
+                context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.CommonJPath);
+
+                return MapFileStatus.ConfigError;
+            }
+
+            var blizzardJPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.BlizzardJPath);
+            if (!File.Exists(blizzardJPath))
+            {
+                context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.BlizzardJPath);
+
+                return MapFileStatus.ConfigError;
+            }
+
+            var commonJText = File.ReadAllText(commonJPath);
+            var commonJCompilationUnit = JassSyntaxFactory.ParseCompilationUnit(commonJText);
+
+            var blizzardJText = File.ReadAllText(blizzardJPath);
+            var blizzardJCompilationUnit = JassSyntaxFactory.ParseCompilationUnit(blizzardJText);
+
+            JassCompilationUnitSyntax compilationUnit;
             try
             {
-                var commonJPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.CommonJPath);
-                if (!File.Exists(commonJPath))
-                {
-                    return new AdaptResult
-                    {
-                        Status = MapFileStatus.ConfigError,
-                        Diagnostics = commonJPath.GetFileNotFoundDiagnostics(),
-                    };
-                }
-
-                var blizzardJPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.BlizzardJPath);
-                if (!File.Exists(blizzardJPath))
-                {
-                    return new AdaptResult
-                    {
-                        Status = MapFileStatus.ConfigError,
-                        Diagnostics = blizzardJPath.GetFileNotFoundDiagnostics(),
-                    };
-                }
-
-                var commonJText = File.ReadAllText(commonJPath);
-                var commonJCompilationUnit = JassSyntaxFactory.ParseCompilationUnit(commonJText);
-
-                var blizzardJText = File.ReadAllText(blizzardJPath);
-                var blizzardJCompilationUnit = JassSyntaxFactory.ParseCompilationUnit(blizzardJText);
-
-                string scriptText;
-                using (var reader = new StreamReader(stream, leaveOpen: true))
-                {
-                    scriptText = reader.ReadToEnd();
-                }
-
-                var compilationUnit = JassSyntaxFactory.ParseCompilationUnit(scriptText);
-
-                try
-                {
-                    var scriptAdapterContext = new JassMapScriptAdapterContext();
-
-                    foreach (var declaration in commonJCompilationUnit.Declarations)
-                    {
-                        RegisterDeclaration(declaration, scriptAdapterContext);
-                    }
-
-                    foreach (var declaration in blizzardJCompilationUnit.Declarations)
-                    {
-                        RegisterDeclaration(declaration, scriptAdapterContext);
-                    }
-
-                    // Common.j and Blizzard.j should not cause any diagnostics.
-                    if (scriptAdapterContext.Diagnostics.Count > 0)
-                    {
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.AdapterError,
-                            Diagnostics = scriptAdapterContext.Diagnostics.ToArray(),
-                        };
-                    }
-
-                    if (TryAdaptCompilationUnit(scriptAdapterContext, compilationUnit, out var adaptedCompilationUnit))
-                    {
-                        var memoryStream = new MemoryStream();
-                        using var writer = new StreamWriter(memoryStream, new UTF8Encoding(false, true), leaveOpen: true);
-
-                        var renderer = new JassRenderer(writer);
-                        renderer.Render(adaptedCompilationUnit);
-
-                        return new AdaptResult
-                        {
-                            Status = scriptAdapterContext.Diagnostics.Count == 0 ? MapFileStatus.Adapted : MapFileStatus.Incompatible,
-                            Diagnostics = scriptAdapterContext.Diagnostics.ToArray(),
-                            AdaptedFileStream = memoryStream,
-                        };
-                    }
-
-                    if (scriptAdapterContext.Diagnostics.Count == 0)
-                    {
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Compatible,
-                        };
-                    }
-                    else
-                    {
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Incompatible,
-                            Diagnostics = scriptAdapterContext.Diagnostics.ToArray(),
-                        };
-                    }
-                }
-                catch
-                {
-                    return new AdaptResult
-                    {
-                        Status = MapFileStatus.AdapterError,
-                    };
-                }
+                using var reader = new StreamReader(stream, leaveOpen: true);
+                compilationUnit = JassSyntaxFactory.ParseCompilationUnit(reader.ReadToEnd());
             }
             catch (Exception e)
             {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.ParseError,
-                    Diagnostics = new[] { e.Message },
-                };
+                return context.ReportParseError(e);
             }
-        }
 
-        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
-        {
-            throw new NotSupportedException();
+            var scriptAdapterContext = new JassMapScriptAdapterContext();
+
+            foreach (var declaration in commonJCompilationUnit.Declarations)
+            {
+                RegisterDeclaration(declaration, scriptAdapterContext);
+            }
+
+            foreach (var declaration in blizzardJCompilationUnit.Declarations)
+            {
+                RegisterDeclaration(declaration, scriptAdapterContext);
+            }
+
+            // Common.j and Blizzard.j should not cause any diagnostics.
+            if (scriptAdapterContext.Diagnostics.Count > 0)
+            {
+                return MapFileStatus.AdapterError;
+            }
+
+            if (!TryAdaptCompilationUnit(scriptAdapterContext, compilationUnit, out var adaptedCompilationUnit))
+            {
+                return scriptAdapterContext.Diagnostics.Count == 0
+                    ? MapFileStatus.Compatible
+                    : MapFileStatus.Incompatible;
+            }
+
+            try
+            {
+                var memoryStream = new MemoryStream();
+                using var writer = new StreamWriter(memoryStream, UTF8EncodingProvider.StrictUTF8, leaveOpen: true);
+
+                var renderer = new JassRenderer(writer);
+                renderer.Render(adaptedCompilationUnit);
+
+                return memoryStream;
+            }
+            catch (Exception e)
+            {
+                return context.ReportSerializeError(e);
+            }
         }
 
         private static void RegisterDeclaration(ITopLevelDeclarationSyntax declaration, JassMapScriptAdapterContext context)

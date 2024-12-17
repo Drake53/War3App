@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Text.Json;
 
 using War3Net.Build.Common;
 
@@ -14,6 +16,8 @@ namespace War3App.MapAdapter
 
         AdaptResult AdaptFile(Stream stream, AdaptFileContext context);
 
-        string SerializeFileToJson(Stream stream, GamePatch gamePatch);
+        string SerializeFileToJson(Stream stream, GamePatch gamePatch, JsonSerializerOptions options) => IsJsonSerializationSupported
+            ? throw new NotImplementedException()
+            : throw new NotSupportedException();
     }
 }

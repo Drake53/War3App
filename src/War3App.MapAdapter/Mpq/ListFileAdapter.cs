@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-
-using War3Net.Build.Common;
+﻿using System.IO;
 
 namespace War3App.MapAdapter.Mpq
 {
@@ -15,15 +12,7 @@ namespace War3App.MapAdapter.Mpq
 
         public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
-            return new AdaptResult
-            {
-                Status = MapFileStatus.Compatible,
-            };
-        }
-
-        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
-        {
-            throw new NotSupportedException();
+            return MapFileStatus.Compatible;
         }
     }
 }

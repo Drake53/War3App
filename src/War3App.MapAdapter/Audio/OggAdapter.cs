@@ -1,5 +1,6 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
+
+using War3App.MapAdapter.Diagnostics;
 
 using War3Net.Build.Common;
 
@@ -15,17 +16,14 @@ namespace War3App.MapAdapter.Audio
 
         public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
-            return new AdaptResult
+            if (context.TargetPatch.Patch < GamePatch.v1_30_0 || context.TargetPatch.Patch > GamePatch.v1_30_4)
             {
-                Status = context.TargetPatch.Patch >= GamePatch.v1_30_0 && context.TargetPatch.Patch <= GamePatch.v1_30_4
-                    ? MapFileStatus.Compatible
-                    : MapFileStatus.Unadaptable,
-            };
-        }
+                context.ReportDiagnostic(DiagnosticRule.Ogg.NotSupported);
 
-        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
-        {
-            throw new NotSupportedException();
+                return MapFileStatus.Incompatible;
+            }
+
+            return MapFileStatus.Compatible;
         }
     }
 }

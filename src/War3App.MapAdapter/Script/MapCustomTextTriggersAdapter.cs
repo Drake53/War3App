@@ -2,9 +2,9 @@
 using System.IO;
 using System.Text;
 
-using War3Net.Build.Common;
 using War3Net.Build.Extensions;
 using War3Net.Build.Script;
+using War3Net.Common.Providers;
 
 namespace War3App.MapAdapter.Script
 {
@@ -18,76 +18,35 @@ namespace War3App.MapAdapter.Script
 
         public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
-            var encoding = new UTF8Encoding(false, true);
-
+            MapCustomTextTriggers mapCustomTextTriggers;
             try
             {
                 using var reader = new BinaryReader(stream, Encoding.UTF8, true);
-                var mapCustomTextTriggers = reader.ReadMapCustomTextTriggers(encoding);
-                if (mapCustomTextTriggers.GetMinimumPatch() <= context.TargetPatch.Patch)
-                {
-                    return new AdaptResult
-                    {
-                        Status = MapFileStatus.Compatible,
-                    };
-                }
-
-                MapTriggers? mapTriggers = null;
-                if (context.Archive.TryOpenFile(MapTriggers.FileName, out var mapTriggersStream))
-                {
-                    try
-                    {
-                        using var mapTriggersReader = new BinaryReader(mapTriggersStream, Encoding.UTF8, true);
-                        mapTriggers = mapTriggersReader.ReadMapTriggers();
-                    }
-                    catch
-                    {
-                    }
-                }
-
-                try
-                {
-                    if (mapCustomTextTriggers.TryDowngrade(mapTriggers, context.TargetPatch.Patch))
-                    {
-                        var newMapCustomTextTriggersFileStream = new MemoryStream();
-                        using var writer = new BinaryWriter(newMapCustomTextTriggersFileStream, encoding, true);
-                        writer.Write(mapCustomTextTriggers, encoding);
-
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Adapted,
-                            AdaptedFileStream = newMapCustomTextTriggersFileStream,
-                        };
-                    }
-                    else
-                    {
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Unadaptable,
-                        };
-                    }
-                }
-                catch
-                {
-                    return new AdaptResult
-                    {
-                        Status = MapFileStatus.AdapterError,
-                    };
-                }
+                mapCustomTextTriggers = reader.ReadMapCustomTextTriggers(UTF8EncodingProvider.StrictUTF8);
             }
             catch (Exception e)
             {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.ParseError,
-                    Diagnostics = new[] { e.Message },
-                };
+                return context.ReportParseError(e);
             }
-        }
 
-        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
-        {
-            throw new NotSupportedException();
+            var status = mapCustomTextTriggers.Adapt(context);
+            if (status != MapFileStatus.Adapted)
+            {
+                return status;
+            }
+
+            try
+            {
+                var newMapCustomTextTriggersFileStream = new MemoryStream();
+                using var writer = new BinaryWriter(newMapCustomTextTriggersFileStream, UTF8EncodingProvider.StrictUTF8, true);
+                writer.Write(mapCustomTextTriggers, UTF8EncodingProvider.StrictUTF8);
+
+                return newMapCustomTextTriggersFileStream;
+            }
+            catch (Exception e)
+            {
+                return context.ReportSerializeError(e);
+            }
         }
     }
 }

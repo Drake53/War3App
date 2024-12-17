@@ -5,6 +5,8 @@ using System.Text.Json;
 
 using War3Net.Build.Common;
 using War3Net.Build.Extensions;
+using War3Net.Build.Widget;
+using War3Net.Common.Providers;
 
 namespace War3App.MapAdapter.Widget
 {
@@ -18,83 +20,43 @@ namespace War3App.MapAdapter.Widget
 
         public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
+            MapDoodads mapDoodads;
             try
             {
                 using var reader = new BinaryReader(stream, Encoding.UTF8, true);
-                var mapDoodads = reader.ReadMapDoodads();
-                if (mapDoodads.GetMinimumPatch() <= context.TargetPatch.Patch)
-                {
-                    return new AdaptResult
-                    {
-                        Status = MapFileStatus.Compatible,
-                    };
-                }
-
-                try
-                {
-                    if (mapDoodads.TryDowngrade(context.TargetPatch.Patch))
-                    {
-                        var newMapDoodadsFileStream = new MemoryStream();
-                        using var writer = new BinaryWriter(newMapDoodadsFileStream, new UTF8Encoding(false, true), true);
-                        writer.Write(mapDoodads);
-
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Adapted,
-                            AdaptedFileStream = newMapDoodadsFileStream,
-                        };
-                    }
-                    else
-                    {
-                        return new AdaptResult
-                        {
-                            Status = MapFileStatus.Unadaptable,
-                        };
-                    }
-                }
-                catch
-                {
-                    return new AdaptResult
-                    {
-                        Status = MapFileStatus.AdapterError,
-                    };
-                }
-            }
-            catch (NotSupportedException)
-            {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.Unadaptable,
-                };
+                mapDoodads = reader.ReadMapDoodads();
             }
             catch (Exception e)
             {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.ParseError,
-                    Diagnostics = new[] { e.Message },
-                };
+                return context.ReportParseError(e);
+            }
+
+            var status = mapDoodads.Adapt(context);
+            if (status != MapFileStatus.Adapted)
+            {
+                return status;
+            }
+
+            try
+            {
+                var newMapDoodadsFileStream = new MemoryStream();
+                using var writer = new BinaryWriter(newMapDoodadsFileStream, UTF8EncodingProvider.StrictUTF8, true);
+                writer.Write(mapDoodads);
+
+                return newMapDoodadsFileStream;
+            }
+            catch (Exception e)
+            {
+                return context.ReportSerializeError(e);
             }
         }
 
-        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
+        public string SerializeFileToJson(Stream stream, GamePatch gamePatch, JsonSerializerOptions options)
         {
-            try
-            {
-                using var reader = new BinaryReader(stream, Encoding.UTF8, true);
-                var mapDoodads = reader.ReadMapDoodads();
+            using var reader = new BinaryReader(stream, Encoding.UTF8, true);
+            var mapDoodads = reader.ReadMapDoodads();
 
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                };
-
-                return JsonSerializer.Serialize(mapDoodads, options);
-            }
-            catch (Exception e)
-            {
-                return $"{e.GetType().FullName}{System.Environment.NewLine}{e.Message}";
-            }
+            return JsonSerializer.Serialize(mapDoodads, options);
         }
     }
 }

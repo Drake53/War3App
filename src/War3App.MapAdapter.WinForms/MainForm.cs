@@ -14,6 +14,8 @@ using Microsoft.Extensions.Configuration;
 
 using War3App.Common.WinForms;
 using War3App.Common.WinForms.Extensions;
+using War3App.MapAdapter.Diagnostics;
+using War3App.MapAdapter.Extensions;
 using War3App.MapAdapter.Info;
 using War3App.MapAdapter.WinForms.Extensions;
 using War3App.MapAdapter.WinForms.Forms;
@@ -55,7 +57,7 @@ namespace War3App.MapAdapter.WinForms
         private static ToolStripButton _adaptContextButton;
         private static ToolStripButton _removeContextButton;
 
-        private static TextBox _diagnosticsDisplay;
+        private static RichTextBox _diagnosticsDisplay;
 
         private static TextProgressBar _progressBar;
         private static BackgroundWorker _openArchiveWorker;
@@ -131,12 +133,13 @@ namespace War3App.MapAdapter.WinForms
                 Enabled = false,
             };
 
-            _diagnosticsDisplay = new TextBox
+            _diagnosticsDisplay = new RichTextBox
             {
                 Multiline = true,
                 ReadOnly = true,
                 Dock = DockStyle.Fill,
-                ScrollBars = ScrollBars.Vertical,
+                ScrollBars = RichTextBoxScrollBars.Both,
+                WordWrap = false,
             };
 
             _progressBar = new TextProgressBar
@@ -208,7 +211,7 @@ namespace War3App.MapAdapter.WinForms
             {
                 if (e.ListItem is GamePatch gamePatch)
                 {
-                    e.Value = gamePatch.ToString().Replace('_', '.');
+                    e.Value = gamePatch.PrettyPrint();
                 }
             };
 
@@ -296,6 +299,7 @@ namespace War3App.MapAdapter.WinForms
                 { MapFileStatus.ParseError, Color.Maroon },
                 { MapFileStatus.Pending, Color.LightSkyBlue },
                 { MapFileStatus.Removed, Color.DarkSlateGray },
+                { MapFileStatus.SerializeError, Color.DarkRed },
                 { MapFileStatus.Unadaptable, Color.IndianRed },
                 { MapFileStatus.Unknown, Color.DarkViolet },
             };
@@ -359,7 +363,8 @@ namespace War3App.MapAdapter.WinForms
                         };
 
                         tag.CurrentStream.Position = 0;
-                        var adaptResult = adapter.AdaptFile(tag.CurrentStream, context);
+                        var adaptResult = adapter.Run(tag.CurrentStream, context);
+                        adaptResult.Diagnostics = context.GetDiagnostics();
                         tag.UpdateAdaptResult(adaptResult);
 
                         if (tag.Parent != null)
@@ -508,6 +513,8 @@ namespace War3App.MapAdapter.WinForms
 
         private static void OnFileSelectionEventTimerTick(object sender, EventArgs e)
         {
+            _fileSelectionChangedEventTimer.Enabled = false;
+
             if (_fileList.TryGetSelectedItemTag(out var tag))
             {
                 _editContextButton.Enabled = tag.Adapter?.IsTextFile ?? false;
@@ -538,7 +545,7 @@ namespace War3App.MapAdapter.WinForms
 
             if (_fileList.TryGetSelectedItemTag(out var tag))
             {
-                var scriptEditForm = new ScriptEditForm(tag.AdaptResult?.RegexDiagnostics ?? Array.Empty<RegexDiagnostic>());
+                var scriptEditForm = new ScriptEditForm(tag.AdaptResult?.Diagnostics ?? Array.Empty<Diagnostic>());
 
                 tag.CurrentStream.Position = 0;
                 using (var reader = new StreamReader(tag.CurrentStream, leaveOpen: true))
@@ -555,12 +562,7 @@ namespace War3App.MapAdapter.WinForms
                     }
 
                     memoryStream.Position = 0;
-                    tag.ListViewItem.Update(new AdaptResult
-                    {
-                        AdaptedFileStream = memoryStream,
-                        Status = MapFileStatus.Modified,
-                        Diagnostics = null,
-                    });
+                    tag.ListViewItem.Update(memoryStream);
 
                     _diagnosticsDisplay.Text = string.Empty;
                 }
@@ -598,8 +600,8 @@ namespace War3App.MapAdapter.WinForms
                     tag.OriginalFileStream.Position = 0;
                     tag.AdaptResult.AdaptedFileStream.Position = 0;
 
-                    oldText = tag.Adapter.SerializeFileToJson(tag.OriginalFileStream, tag.GetOriginPatch(_originPatch.Value));
-                    newText = tag.Adapter.SerializeFileToJson(tag.AdaptResult.AdaptedFileStream, _targetPatch.Value);
+                    oldText = tag.Adapter.GetJson(tag.OriginalFileStream, tag.GetOriginPatch(_originPatch.Value));
+                    newText = tag.Adapter.GetJson(tag.AdaptResult.AdaptedFileStream, _targetPatch.Value);
                 }
                 else
                 {
@@ -649,7 +651,8 @@ namespace War3App.MapAdapter.WinForms
                             };
 
                             tag.CurrentStream.Position = 0;
-                            var adaptResult = adapter.AdaptFile(child.CurrentStream, context);
+                            var adaptResult = adapter.Run(child.CurrentStream, context);
+                            adaptResult.Diagnostics = context.GetDiagnostics();
                             child.UpdateAdaptResult(adaptResult);
                         }
                     }
@@ -670,7 +673,8 @@ namespace War3App.MapAdapter.WinForms
                         };
 
                         tag.CurrentStream.Position = 0;
-                        var adaptResult = adapter.AdaptFile(tag.CurrentStream, context);
+                        var adaptResult = adapter.Run(tag.CurrentStream, context);
+                        adaptResult.Diagnostics = context.GetDiagnostics();
                         tag.UpdateAdaptResult(adaptResult);
 
                         if (tag.Parent != null)
@@ -697,10 +701,7 @@ namespace War3App.MapAdapter.WinForms
                 }
 
                 tag.AdaptResult?.Dispose();
-                tag.AdaptResult = new AdaptResult
-                {
-                    Status = MapFileStatus.Removed,
-                };
+                tag.AdaptResult = MapFileStatus.Removed;
 
                 item.Update();
             }
@@ -749,7 +750,38 @@ namespace War3App.MapAdapter.WinForms
             {
                 if (tag.AdaptResult?.Diagnostics != null)
                 {
-                    _diagnosticsDisplay.Lines = tag.AdaptResult.Diagnostics;
+                    var anyDiagnosticWritten = false;
+                    var originalColor = _diagnosticsDisplay.SelectionColor;
+
+                    void WriteDiagnostics(DiagnosticSeverity severity, Color color, string prefix)
+                    {
+                        foreach (var grouping in tag.AdaptResult.Diagnostics.Where(d => d.Descriptor.Severity == severity).Select(d => d.Message).GroupBy(m => m, StringComparer.Ordinal))
+                        {
+                            if (anyDiagnosticWritten)
+                            {
+                                _diagnosticsDisplay.AppendText(System.Environment.NewLine);
+                            }
+                            else
+                            {
+                                anyDiagnosticWritten = true;
+                            }
+
+                            _diagnosticsDisplay.SelectionStart = _diagnosticsDisplay.TextLength;
+                            _diagnosticsDisplay.SelectionLength = 0;
+                            _diagnosticsDisplay.SelectionColor = color;
+                            _diagnosticsDisplay.AppendText(prefix);
+                            _diagnosticsDisplay.SelectionColor = originalColor;
+
+                            var count = grouping.Count();
+                            _diagnosticsDisplay.AppendText(count > 1 ? $"{grouping.Key} ({count})" : grouping.Key);
+                        }
+                    }
+
+                    _diagnosticsDisplay.Text = string.Empty;
+
+                    WriteDiagnostics(DiagnosticSeverity.Error, Color.Red, "[ERR] ");
+                    WriteDiagnostics(DiagnosticSeverity.Warning, Color.Orange, "[WRN] ");
+                    WriteDiagnostics(DiagnosticSeverity.Info, Color.Blue, "[INF] ");
                 }
                 else
                 {

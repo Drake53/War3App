@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-
-using War3Net.Build.Common;
+﻿using System.IO;
 
 namespace War3App.MapAdapter.Modeling
 {
@@ -16,15 +13,7 @@ namespace War3App.MapAdapter.Modeling
         public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
             // TODO
-            return new AdaptResult
-            {
-                Status = MapFileStatus.Unknown,
-            };
-        }
-
-        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
-        {
-            throw new NotSupportedException();
+            return MapFileStatus.Unknown;
         }
     }
 }

@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 using War3App.Common.WinForms.Extensions;
+using War3App.MapAdapter.Diagnostics;
 
 namespace War3App.MapAdapter.WinForms
 {
@@ -13,9 +15,9 @@ namespace War3App.MapAdapter.WinForms
         private readonly Form _window;
         private readonly RichTextBox _script;
         private readonly ListView _diagnosticsView;
-        private readonly Regex[] _regices;
+        private readonly List<Regex> _regices;
 
-        public ScriptEditForm(RegexDiagnostic[] diagnostics)
+        public ScriptEditForm(Diagnostic[] diagnostics)
         {
             _window = new Form();
             _window.WindowState = FormWindowState.Maximized;
@@ -52,14 +54,25 @@ namespace War3App.MapAdapter.WinForms
             {
                 if (_diagnosticsView.SelectedIndices.Count == 1)
                 {
-                    GoToNextRegexMatch(_regices[_diagnosticsView.SelectedIndices[0]]);
+                    var selectedIndex = _diagnosticsView.SelectedIndices[0];
+
+                    GoToNextRegexMatch(selectedIndex);
                 }
             };
 
-            _regices = diagnostics.Select(diagnostic => diagnostic.Regex).ToArray();
+            _regices = new List<Regex>();
+
             foreach (var diagnostic in diagnostics)
             {
-                _diagnosticsView.Items.Add(new ListViewItem(new[] { diagnostic.DisplayText, diagnostic.Matches.ToString() }));
+                if (diagnostic.Regex is not null)
+                {
+                    var split = diagnostic.Message.Split('(', 2, StringSplitOptions.TrimEntries);
+                    var message = split[0];
+                    var occurences = split.Length == 2 ? split[1][..split[1].IndexOf('x')] : "1";
+
+                    _diagnosticsView.Items.Add(new ListViewItem(new[] { message, occurences }));
+                    _regices.Add(diagnostic.Regex);
+                }
             }
 
             _window.Load += (s, e) =>
@@ -135,7 +148,15 @@ namespace War3App.MapAdapter.WinForms
             return _window.ShowDialog();
         }
 
-        private void GoToNextRegexMatch(Regex regex)
+        private void GoToNextRegexMatch(int selectedIndex)
+        {
+            var regex = _regices[selectedIndex];
+            var matchCount = GoToNextRegexMatch(regex);
+
+            _diagnosticsView.Items[selectedIndex].SubItems[1].Text = matchCount.ToString();
+        }
+
+        private int GoToNextRegexMatch(Regex regex)
         {
             var matches = regex.Matches(_script.Text);
             if (matches.Count > 0)
@@ -145,6 +166,8 @@ namespace War3App.MapAdapter.WinForms
                 _script.ScrollToCaret();
                 _script.Focus();
             }
+
+            return matches.Count;
         }
     }
 }

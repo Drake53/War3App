@@ -138,5 +138,10 @@ namespace War3App.MapAdapter.Extensions
                 default: throw new NotSupportedException();
             };
         }
+
+        public static string PrettyPrint(this GamePatch gamePatch)
+        {
+            return gamePatch.ToString().Replace('_', '.');
+        }
     }
 }

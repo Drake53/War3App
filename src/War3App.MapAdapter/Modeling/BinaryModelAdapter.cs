@@ -2,6 +2,9 @@
 using System.IO;
 using System.Text;
 
+using War3App.MapAdapter.Diagnostics;
+using War3App.MapAdapter.Extensions;
+
 using War3Net.Build.Common;
 
 namespace War3App.MapAdapter.Modeling
@@ -33,18 +36,13 @@ namespace War3App.MapAdapter.Modeling
                         var version = reader.ReadUInt32();
                         if (version > 800 && context.TargetPatch.Patch < GamePatch.v1_32_0)
                         {
-                            return new AdaptResult
-                            {
-                                Status = MapFileStatus.Unadaptable,
-                                Diagnostics = new[] { $"Model version not supported: v{version}" },
-                            };
+                            context.ReportDiagnostic(DiagnosticRule.BinaryModel.NotSupported, version, GamePatch.v1_32_0.PrettyPrint());
+
+                            return MapFileStatus.Incompatible;
                         }
                         else
                         {
-                            return new AdaptResult
-                            {
-                                Status = MapFileStatus.Compatible,
-                            };
+                            return MapFileStatus.Compatible;
                         }
                     }
                     else
@@ -54,25 +52,12 @@ namespace War3App.MapAdapter.Modeling
                 }
 
                 // Unable to find VERS chunk.
-                return new AdaptResult
-                {
-                    // Status = MapFileStatus.ParseError,
-                    Status = MapFileStatus.Unknown,
-                };
+                return MapFileStatus.ParseError;
             }
             catch (Exception e)
             {
-                return new AdaptResult
-                {
-                    Status = MapFileStatus.ParseError,
-                    Diagnostics = new[] { e.Message },
-                };
+                return context.ReportParseError(e);
             }
-        }
-
-        public string SerializeFileToJson(Stream stream, GamePatch gamePatch)
-        {
-            throw new NotSupportedException();
         }
     }
 }

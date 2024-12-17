@@ -1,14 +1,132 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
+using War3App.MapAdapter.Diagnostics;
+
 using War3Net.Build.Common;
+using War3Net.Build.Extensions;
 using War3Net.Build.Script;
 
 namespace War3App.MapAdapter.Script
 {
     public static class MapTriggersExtensions
     {
+        public static MapFileStatus Adapt(this MapTriggers mapTriggers, AdaptFileContext context)
+        {
+            var triggerDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.TriggerDataPath);
+            if (!File.Exists(triggerDataPath))
+            {
+                context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.TriggerDataPath);
+                return MapFileStatus.ConfigError;
+            }
+
+            var triggerDataText = File.ReadAllText(triggerDataPath);
+            var triggerDataReader = new StringReader(triggerDataText);
+            var triggerData = triggerDataReader.ReadTriggerData();
+
+            IEnumerable<TriggerFunction> GetUnknownFunctions(TriggerFunction function)
+            {
+                var isKnownFunction = function.Type switch
+                {
+                    TriggerFunctionType.Event => triggerData.TriggerEvents.ContainsKey(function.Name),
+                    TriggerFunctionType.Condition => triggerData.TriggerConditions.ContainsKey(function.Name),
+                    TriggerFunctionType.Action => triggerData.TriggerActions.ContainsKey(function.Name),
+                    TriggerFunctionType.Call => triggerData.TriggerCalls.ContainsKey(function.Name),
+
+                    _ => false,
+                };
+
+                if (!isKnownFunction)
+                {
+                    yield return function;
+                }
+
+                foreach (var childFunction in function.ChildFunctions)
+                {
+                    foreach (var unknownFunction in GetUnknownFunctions(childFunction))
+                    {
+                        yield return unknownFunction;
+                    }
+                }
+            }
+
+            var isIncompatible = false;
+
+            foreach (var triggerItem in mapTriggers.TriggerItems)
+            {
+                if (triggerItem is TriggerDefinition triggerDefinition)
+                {
+                    foreach (var function in triggerDefinition.Functions)
+                    {
+                        foreach (var unknownFunction in GetUnknownFunctions(function))
+                        {
+                            context.ReportDiagnostic(DiagnosticRule.MapTriggers.UnsupportedTriggerFunction, unknownFunction.Type, unknownFunction.Name);
+                            isIncompatible = true;
+                        }
+                    }
+                }
+            }
+
+            if (isIncompatible)
+            {
+                return MapFileStatus.Incompatible;
+            }
+
+            var supportedVariableTypes = triggerData.TriggerTypes.Values
+                .Where(triggerType => triggerType.UsableAsGlobalVariable)
+                .Select(triggerType => triggerType.TypeName)
+                .ToHashSet(StringComparer.Ordinal);
+
+            var unsupportedVariableBaseTypes = TriggerData.Default.TriggerTypes.Values
+                .Where(triggerType => !supportedVariableTypes.Contains(triggerType.TypeName))
+                .Where(triggerType => !string.IsNullOrEmpty(triggerType.BaseType))
+                .ToDictionary(
+                    triggerType => triggerType.TypeName,
+                    triggerType => triggerType.BaseType!,
+                    StringComparer.Ordinal);
+
+            var isAdapted = false;
+
+            foreach (var variableDefinition in mapTriggers.Variables)
+            {
+                if (!supportedVariableTypes.Contains(variableDefinition.Type))
+                {
+                    if (unsupportedVariableBaseTypes.TryGetValue(variableDefinition.Type, out var baseType) &&
+                        supportedVariableTypes.Contains(baseType))
+                    {
+                        context.ReportDiagnostic(DiagnosticRule.MapTriggers.VariableTypeChanged, variableDefinition.Name, variableDefinition.Type, baseType);
+                        variableDefinition.Type = baseType;
+                        isAdapted = true;
+                    }
+                    else
+                    {
+                        context.ReportDiagnostic(DiagnosticRule.MapTriggers.UnsupportedVariableType, variableDefinition.Name, variableDefinition.Type);
+                        isIncompatible = true;
+                    }
+                }
+            }
+
+            if (isIncompatible)
+            {
+                return MapFileStatus.Incompatible;
+            }
+
+            var mustDowngrade = mapTriggers.GetMinimumPatch() > context.TargetPatch.Patch;
+            if (!mustDowngrade && !isAdapted)
+            {
+                return MapFileStatus.Compatible;
+            }
+
+            if (mustDowngrade && !mapTriggers.TryDowngrade(context.TargetPatch.Patch))
+            {
+                return MapFileStatus.Incompatible;
+            }
+
+            return MapFileStatus.Adapted;
+        }
+
         public static bool TryDowngrade(this MapTriggers mapTriggers, GamePatch targetPatch)
         {
             try
