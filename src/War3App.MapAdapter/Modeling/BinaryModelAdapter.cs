@@ -13,6 +13,8 @@ namespace War3App.MapAdapter.Modeling
     {
         public string MapFileDescription => "Binary Model";
 
+        public string DefaultFileName => "file.mdx";
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => false;

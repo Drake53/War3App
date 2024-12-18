@@ -13,6 +13,8 @@ namespace War3App.MapAdapter.Environment
     {
         public string MapFileDescription => "Regions";
 
+        public string DefaultFileName => MapRegions.FileName;
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => true;

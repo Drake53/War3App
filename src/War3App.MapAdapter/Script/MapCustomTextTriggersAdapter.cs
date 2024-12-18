@@ -12,6 +12,8 @@ namespace War3App.MapAdapter.Script
     {
         public string MapFileDescription => "Custom Text Triggers";
 
+        public string DefaultFileName => MapCustomTextTriggers.FileName;
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => false;

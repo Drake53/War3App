@@ -13,6 +13,8 @@ namespace War3App.MapAdapter.Environment
     {
         public string MapFileDescription => "Map Preview Icons";
 
+        public string DefaultFileName => MapPreviewIcons.FileName;
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => true;

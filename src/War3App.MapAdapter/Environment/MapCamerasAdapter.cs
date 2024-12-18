@@ -14,6 +14,8 @@ namespace War3App.MapAdapter.Environment
     {
         public string MapFileDescription => "Cameras";
 
+        public string DefaultFileName => MapCameras.FileName;
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => true;

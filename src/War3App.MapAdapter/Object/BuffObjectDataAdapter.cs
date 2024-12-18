@@ -14,6 +14,8 @@ namespace War3App.MapAdapter.Object
     {
         public string MapFileDescription => "Object Data (Buff)";
 
+        public string DefaultFileName => BuffObjectData.MapFileName;
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => true;

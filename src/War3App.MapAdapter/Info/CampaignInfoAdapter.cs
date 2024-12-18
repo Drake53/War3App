@@ -14,6 +14,8 @@ namespace War3App.MapAdapter.Info
     {
         public string MapFileDescription => "Campaign Info";
 
+        public string DefaultFileName => CampaignInfo.FileName;
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => true;

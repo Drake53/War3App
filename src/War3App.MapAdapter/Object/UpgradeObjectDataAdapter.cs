@@ -14,6 +14,8 @@ namespace War3App.MapAdapter.Object
     {
         public string MapFileDescription => "Object Data (Upgrade)";
 
+        public string DefaultFileName => UpgradeObjectData.MapFileName;
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => true;

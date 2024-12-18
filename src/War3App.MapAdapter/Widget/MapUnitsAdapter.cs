@@ -14,6 +14,8 @@ namespace War3App.MapAdapter.Widget
     {
         public string MapFileDescription => "Units";
 
+        public string DefaultFileName => MapUnits.FileName;
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => true;

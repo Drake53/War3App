@@ -10,6 +10,8 @@ namespace War3App.MapAdapter.Audio
     {
         public string MapFileDescription => "Audio File (FLAC)";
 
+        public string DefaultFileName => "file.flac";
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => false;

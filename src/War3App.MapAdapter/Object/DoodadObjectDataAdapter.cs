@@ -14,6 +14,8 @@ namespace War3App.MapAdapter.Object
     {
         public string MapFileDescription => "Object Data (Doodad)";
 
+        public string DefaultFileName => DoodadObjectData.MapFileName;
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => true;

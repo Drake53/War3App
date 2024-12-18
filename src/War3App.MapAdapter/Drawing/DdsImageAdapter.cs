@@ -10,6 +10,8 @@ namespace War3App.MapAdapter.Drawing
     {
         public string MapFileDescription => "Image File (DDS)";
 
+        public string DefaultFileName => "file.dds";
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => false;

@@ -6,6 +6,8 @@ namespace War3App.MapAdapter.Modeling
     {
         public string MapFileDescription => "Text Model";
 
+        public string DefaultFileName => "file.mdl";
+
         public bool IsTextFile => true;
 
         public bool IsJsonSerializationSupported => false;

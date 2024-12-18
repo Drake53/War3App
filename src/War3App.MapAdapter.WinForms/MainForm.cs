@@ -242,16 +242,9 @@ namespace War3App.MapAdapter.WinForms
                 {
                     CheckFileExists = false,
                 };
-                openFileDialog.Filter = string.Join('|', new[]
-                {
-                    "Warcraft III archive|*.w3m;*.w3x;*.w3n",
-                    "Warcraft III map|*.w3m;*.w3x",
-                    "Warcraft III campaign|*.w3n",
-#if USE_KEY_CONTAINER
-                    "Zip archive|*.zip",
-#endif
-                    "All files|*.*",
-                });
+
+                openFileDialog.Filter = GetMpqArchiveFileTypeFilter(true);
+
                 var openFileDialogResult = openFileDialog.ShowDialog();
                 if (openFileDialogResult == DialogResult.OK)
                 {
@@ -267,7 +260,7 @@ namespace War3App.MapAdapter.WinForms
 
             fileListContextMenu.Adapt += OnClickAdaptSelected;
             fileListContextMenu.Edit += OnClickEditSelected;
-            //fileListContextMenu.Save += OnClickSaveSelected;
+            fileListContextMenu.Save += OnClickSaveSelected;
             fileListContextMenu.Diff += OnClickDiffSelected;
             fileListContextMenu.Undo += OnClickUndoChangesSelected;
             fileListContextMenu.Remove += OnClickRemoveSelected;
@@ -335,7 +328,10 @@ namespace War3App.MapAdapter.WinForms
                 {
                     OverwritePrompt = true,
                     CreatePrompt = false,
+                    FileName = $"{Path.GetFileNameWithoutExtension(_archiveInput.Text)} (adapted){Path.GetExtension(_archiveInput.Text)}",
                 };
+
+                saveFileDialog.Filter = GetMpqArchiveFileTypeFilter(false);
 
                 var saveFileDialogResult = saveFileDialog.ShowDialog();
                 if (saveFileDialogResult == DialogResult.OK)
@@ -415,6 +411,27 @@ namespace War3App.MapAdapter.WinForms
             };
         }
 
+        private static string GetMpqArchiveFileTypeFilter(bool isOpenFileDialog)
+        {
+            var filters = new List<string>
+            {
+                "Warcraft III archive|*.w3m;*.w3x;*.w3n",
+                "Warcraft III map|*.w3m;*.w3x",
+                "Warcraft III campaign|*.w3n",
+            };
+
+#if USE_KEY_CONTAINER
+            if (isOpenFileDialog)
+            {
+                filters.Add("Zip archive|*.zip");
+            }
+#endif
+
+            filters.Add("All files|*.*");
+
+            return string.Join('|', filters);
+        }
+
         private static void OnClickOpenCloseMap(object? sender, EventArgs e)
         {
             if (_archive is null)
@@ -477,6 +494,45 @@ namespace War3App.MapAdapter.WinForms
                     tag.ListViewItem.Update(AdaptResult.ModifiedByUser(memoryStream));
 
                     _diagnosticsDisplay.Text = string.Empty;
+                }
+            }
+        }
+
+        private static void OnClickSaveSelected(object? sender, EventArgs e)
+        {
+            if (_fileList.TryGetSelectedItemTag(out var tag))
+            {
+                if (tag.CurrentStream is null || tag.Children is not null)
+                {
+                    return;
+                }
+
+                var saveFileDialog = new SaveFileDialog
+                {
+                    OverwritePrompt = true,
+                    CreatePrompt = false,
+                    FileName = Path.GetFileName(tag.FileName) ?? tag.Adapter?.DefaultFileName,
+                };
+
+                var extension = Path.GetExtension(saveFileDialog.FileName);
+                if (string.IsNullOrEmpty(extension))
+                {
+                    saveFileDialog.Filter = "All files|*.*";
+                }
+                else
+                {
+                    var fileTypeDescription = tag.Adapter?.MapFileDescription ?? $"{extension.TrimStart('.').ToUpperInvariant()} file";
+
+                    saveFileDialog.Filter = $"{fileTypeDescription}|*{extension}|All files|*.*";
+                }
+
+                var saveFileDialogResult = saveFileDialog.ShowDialog();
+                if (saveFileDialogResult == DialogResult.OK)
+                {
+                    using var fileStream = File.Create(saveFileDialog.FileName);
+
+                    tag.CurrentStream.Position = 0;
+                    tag.CurrentStream.CopyTo(fileStream);
                 }
             }
         }

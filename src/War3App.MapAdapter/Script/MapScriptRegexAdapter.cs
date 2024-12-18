@@ -7,12 +7,15 @@ using System.Text.RegularExpressions;
 using War3App.MapAdapter.Diagnostics;
 
 using War3Net.Build.Common;
+using War3Net.Build.Script;
 
 namespace War3App.MapAdapter.Script
 {
     public sealed class MapScriptRegexAdapter : IMapFileAdapter
     {
         public string MapFileDescription => "Map Script";
+
+        public string DefaultFileName => LuaMapScript.FileName;
 
         public bool IsTextFile => true;
 

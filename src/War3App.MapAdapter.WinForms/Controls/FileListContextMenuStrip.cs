@@ -105,7 +105,7 @@ namespace War3App.MapAdapter.WinForms.Controls
             {
                 _adaptContextButton.Enabled = MainForm.TargetPatchSelected && tag.Status == MapFileStatus.Pending;
                 _editContextButton.Enabled = tag.Adapter?.IsTextFile ?? false;
-                _saveContextButton.Enabled = tag.Children is null;
+                _saveContextButton.Enabled = tag.CurrentStream is not null && tag.Children is null;
                 _diffContextButton.Enabled = tag.Adapter is not null && tag.AdaptResult?.AdaptedFileStream is not null && (tag.Adapter.IsTextFile || tag.Adapter.IsJsonSerializationSupported);
                 _undoContextButton.Enabled = tag.Status == MapFileStatus.Removed || tag.AdaptResult?.AdaptedFileStream is not null;
                 _removeContextButton.Enabled = tag.Status != MapFileStatus.Removed;

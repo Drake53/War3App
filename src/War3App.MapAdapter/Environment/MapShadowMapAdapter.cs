@@ -13,6 +13,8 @@ namespace War3App.MapAdapter.Environment
     {
         public string MapFileDescription => "Shadow Map";
 
+        public string DefaultFileName => MapShadowMap.FileName;
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => true;

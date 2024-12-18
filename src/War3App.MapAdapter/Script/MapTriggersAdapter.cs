@@ -14,6 +14,8 @@ namespace War3App.MapAdapter.Script
     {
         public string MapFileDescription => "Triggers";
 
+        public string DefaultFileName => MapTriggers.FileName;
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => true;

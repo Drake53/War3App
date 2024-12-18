@@ -4,6 +4,7 @@ using System.Linq;
 
 using War3App.MapAdapter.Diagnostics;
 
+using War3Net.Build.Script;
 using War3Net.CodeAnalysis.Jass;
 using War3Net.CodeAnalysis.Jass.Syntax;
 using War3Net.Common.Providers;
@@ -13,6 +14,8 @@ namespace War3App.MapAdapter.Script
     public sealed partial class JassMapScriptAdapter : IMapFileAdapter
     {
         public string MapFileDescription => "Map Script (JASS)";
+
+        public string DefaultFileName => JassMapScript.FileName;
 
         public bool IsTextFile => true;
 

@@ -14,6 +14,8 @@ namespace War3App.MapAdapter.Audio
     {
         public string MapFileDescription => "Sounds";
 
+        public string DefaultFileName => MapSounds.FileName;
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => true;

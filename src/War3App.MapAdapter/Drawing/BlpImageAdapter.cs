@@ -6,6 +6,8 @@ namespace War3App.MapAdapter.Drawing
     {
         public string MapFileDescription => "Image File (BLP)";
 
+        public string DefaultFileName => "file.blp";
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => false;

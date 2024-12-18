@@ -14,6 +14,8 @@ namespace War3App.MapAdapter.Widget
     {
         public string MapFileDescription => "Doodads";
 
+        public string DefaultFileName => MapDoodads.FileName;
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => true;

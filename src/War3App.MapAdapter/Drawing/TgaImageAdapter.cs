@@ -6,6 +6,8 @@ namespace War3App.MapAdapter.Drawing
     {
         public string MapFileDescription => "Image File (TGA)";
 
+        public string DefaultFileName => "file.tga";
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => false;

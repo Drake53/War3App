@@ -10,6 +10,8 @@ namespace War3App.MapAdapter.Audio
     {
         public string MapFileDescription => "Audio File (OGG)";
 
+        public string DefaultFileName => "file.ogg";
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => false;

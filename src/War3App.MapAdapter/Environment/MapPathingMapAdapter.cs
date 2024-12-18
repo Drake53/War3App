@@ -13,6 +13,8 @@ namespace War3App.MapAdapter.Environment
     {
         public string MapFileDescription => "Pathing Map";
 
+        public string DefaultFileName => MapPathingMap.FileName;
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => true;

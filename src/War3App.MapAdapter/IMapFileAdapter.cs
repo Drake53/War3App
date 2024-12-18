@@ -10,6 +10,8 @@ namespace War3App.MapAdapter
     {
         string MapFileDescription { get; }
 
+        string DefaultFileName { get; }
+
         bool IsTextFile { get; }
 
         bool IsJsonSerializationSupported { get; }

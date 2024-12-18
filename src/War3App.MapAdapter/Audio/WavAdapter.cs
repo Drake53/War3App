@@ -6,6 +6,8 @@ namespace War3App.MapAdapter.Audio
     {
         public string MapFileDescription => "Audio File (WAV)";
 
+        public string DefaultFileName => "file.wav";
+
         public bool IsTextFile => false;
 
         public bool IsJsonSerializationSupported => false;
