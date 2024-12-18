@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -14,7 +15,7 @@ namespace War3App.MapAdapter.WinForms
     {
         private MapFileStatus _status;
 
-        public ItemTag(MpqArchive archive, MpqEntry mpqEntry, int originalIndex, string archiveName = null)
+        public ItemTag(MpqArchive archive, MpqEntry mpqEntry, int originalIndex, string? archiveName = null)
         {
             MpqArchive = archive;
             MpqEntry = mpqEntry;
@@ -69,9 +70,9 @@ namespace War3App.MapAdapter.WinForms
 
         public int OriginalIndex { get; }
 
-        public ItemTag Parent { get; private set; }
+        public ItemTag? Parent { get; private set; }
 
-        public ItemTag[] Children { get; }
+        public ItemTag[]? Children { get; }
 
         public GamePatch? OriginPatch { get; }
 
@@ -87,6 +88,7 @@ namespace War3App.MapAdapter.WinForms
 
         public Stream? CurrentStream => AdaptResult?.AdaptedFileStream ?? OriginalFileStream;
 
+        [MemberNotNullWhen(true, nameof(AdaptResult))]
         public bool IsModified => AdaptResult?.AdaptedFileStream is not null;
 
         public void UpdateAdaptResult(AdaptResult adaptResult)
@@ -111,7 +113,7 @@ namespace War3App.MapAdapter.WinForms
             ListViewItem.Update(adaptResult);
         }
 
-        public bool TryGetModifiedMpqFile(out MpqFile mpqFile)
+        public bool TryGetModifiedMpqFile([NotNullWhen(true)] out MpqFile? mpqFile)
         {
             if (IsModified)
             {
