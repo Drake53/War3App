@@ -31,8 +31,7 @@ namespace War3App.MapAdapter.Script
                 return context.ReportParseError(e);
             }
 
-            var status = mapCustomTextTriggers.Adapt(context);
-            if (status != MapFileStatus.Adapted)
+            if (!mapCustomTextTriggers.Adapt(context, out var status))
             {
                 return status;
             }
@@ -44,7 +43,7 @@ namespace War3App.MapAdapter.Script
                 using var writer = new BinaryWriter(memoryStream, UTF8EncodingProvider.StrictUTF8, true);
                 writer.Write(mapCustomTextTriggers, UTF8EncodingProvider.StrictUTF8);
 
-                return memoryStream;
+                return AdaptResult.Create(memoryStream, status);
             }
             catch (Exception e)
             {

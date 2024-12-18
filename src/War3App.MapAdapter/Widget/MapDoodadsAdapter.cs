@@ -33,8 +33,7 @@ namespace War3App.MapAdapter.Widget
                 return context.ReportParseError(e);
             }
 
-            var status = mapDoodads.Adapt(context);
-            if (status != MapFileStatus.Adapted)
+            if (!mapDoodads.Adapt(context, out var status))
             {
                 return status;
             }
@@ -46,7 +45,7 @@ namespace War3App.MapAdapter.Widget
                 using var writer = new BinaryWriter(memoryStream, UTF8EncodingProvider.StrictUTF8, true);
                 writer.Write(mapDoodads);
 
-                return memoryStream;
+                return AdaptResult.Create(memoryStream, status);
             }
             catch (Exception e)
             {

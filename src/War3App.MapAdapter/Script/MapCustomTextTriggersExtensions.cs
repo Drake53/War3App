@@ -10,11 +10,12 @@ namespace War3App.MapAdapter.Script
 {
     public static class MapCustomTextTriggersExtensions
     {
-        public static MapFileStatus Adapt(this MapCustomTextTriggers mapCustomTextTriggers, AdaptFileContext context)
+        public static bool Adapt(this MapCustomTextTriggers mapCustomTextTriggers, AdaptFileContext context, out MapFileStatus status)
         {
             if (mapCustomTextTriggers.GetMinimumPatch() <= context.TargetPatch.Patch)
             {
-                return MapFileStatus.Compatible;
+                status = MapFileStatus.Compatible;
+                return false;
             }
 
             MapTriggers? mapTriggers = null;
@@ -30,9 +31,11 @@ namespace War3App.MapAdapter.Script
                 }
             }
 
-            return mapCustomTextTriggers.TryDowngrade(mapTriggers, context.TargetPatch.Patch)
-                ? MapFileStatus.Adapted
+            status = mapCustomTextTriggers.TryDowngrade(mapTriggers, context.TargetPatch.Patch)
+                ? MapFileStatus.Compatible
                 : MapFileStatus.Incompatible;
+
+            return status == MapFileStatus.Compatible;
         }
 
         public static bool TryDowngrade(this MapCustomTextTriggers mapCustomTextTriggers, MapTriggers? mapTriggers, GamePatch targetPatch)

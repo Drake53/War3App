@@ -7,16 +7,19 @@ namespace War3App.MapAdapter.Environment
 {
     public static class MapCamerasExtensions
     {
-        public static MapFileStatus Adapt(this MapCameras mapCameras, AdaptFileContext context)
+        public static bool Adapt(this MapCameras mapCameras, AdaptFileContext context, out MapFileStatus status)
         {
             if (mapCameras.GetMinimumPatch() <= context.TargetPatch.Patch)
             {
-                return MapFileStatus.Compatible;
+                status = MapFileStatus.Compatible;
+                return false;
             }
 
-            return mapCameras.TryDowngrade(context.TargetPatch.Patch)
-                ? MapFileStatus.Adapted
+            status = mapCameras.TryDowngrade(context.TargetPatch.Patch)
+                ? MapFileStatus.Compatible
                 : MapFileStatus.Incompatible;
+
+            return status == MapFileStatus.Compatible;
         }
 
         public static bool TryDowngrade(this MapCameras mapCameras, GamePatch targetPatch)

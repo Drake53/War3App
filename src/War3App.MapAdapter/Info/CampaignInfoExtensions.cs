@@ -6,17 +6,18 @@ namespace War3App.MapAdapter.Info
 {
     public static class CampaignInfoExtensions
     {
-        public static MapFileStatus Adapt(this CampaignInfo campaignInfo, AdaptFileContext context)
+        public static bool Adapt(this CampaignInfo campaignInfo, AdaptFileContext context, out MapFileStatus status)
         {
+            status = MapFileStatus.Compatible;
+
             var targetPatchEditorVersion = context.TargetPatch.Patch.GetEditorVersion();
             if (campaignInfo.EditorVersion == targetPatchEditorVersion)
             {
-                return MapFileStatus.Compatible;
+                return false;
             }
 
             campaignInfo.EditorVersion = targetPatchEditorVersion;
-
-            return MapFileStatus.Adapted;
+            return true;
         }
     }
 }

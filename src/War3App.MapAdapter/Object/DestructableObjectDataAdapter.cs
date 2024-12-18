@@ -33,8 +33,7 @@ namespace War3App.MapAdapter.Object
                 return context.ReportParseError(e);
             }
 
-            var status = destructableObjectData.Adapt(context);
-            if (status != MapFileStatus.Adapted)
+            if (!destructableObjectData.Adapt(context, out var status))
             {
                 return status;
             }
@@ -46,7 +45,7 @@ namespace War3App.MapAdapter.Object
                 using var writer = new BinaryWriter(memoryStream, UTF8EncodingProvider.StrictUTF8, true);
                 writer.Write(destructableObjectData);
 
-                return memoryStream;
+                return AdaptResult.Create(memoryStream, status);
             }
             catch (Exception e)
             {

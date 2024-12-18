@@ -62,11 +62,10 @@ namespace War3App.MapAdapter.WinForms.Controls
                 MapFileStatus.Removed => _trashImageIndex,
                 MapFileStatus.Unknown => _questionImageIndex,
                 MapFileStatus.Compatible => _okImageIndex,
-                MapFileStatus.Adapted => _okImageIndex,
+                MapFileStatus.Inconclusive => _warningImageIndex,
                 MapFileStatus.Pending => _bubbleImageIndex,
                 MapFileStatus.Incompatible => _warningImageIndex,
                 MapFileStatus.Locked => _lockImageIndex,
-                MapFileStatus.ConfigError => _errorImageIndex,
                 MapFileStatus.Error => _errorImageIndex,
             };
         }

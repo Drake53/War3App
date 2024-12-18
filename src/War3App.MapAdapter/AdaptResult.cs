@@ -13,7 +13,7 @@ namespace War3App.MapAdapter
             AdaptedFileStream = null;
         }
 
-        private AdaptResult(Stream stream, MapFileStatus status = MapFileStatus.Adapted)
+        private AdaptResult(Stream stream, MapFileStatus status)
         {
             if (stream is null)
             {
@@ -32,7 +32,17 @@ namespace War3App.MapAdapter
 
         public static implicit operator AdaptResult(MapFileStatus status) => new(status);
 
-        public static implicit operator AdaptResult(Stream stream) => new(stream);
+        public static AdaptResult Create(Stream stream, MapFileStatus status)
+        {
+            if (status != MapFileStatus.Compatible &&
+                status != MapFileStatus.Inconclusive &&
+                status != MapFileStatus.Incompatible)
+            {
+                throw new ArgumentException($"Invalid result status: '{status}'.", nameof(status));
+            }
+
+            return new AdaptResult(stream, status);
+        }
 
         public static AdaptResult ModifiedByUser(Stream stream) => new(stream, MapFileStatus.Pending);
 

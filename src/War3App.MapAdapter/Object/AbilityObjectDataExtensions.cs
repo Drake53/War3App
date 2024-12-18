@@ -16,7 +16,7 @@ namespace War3App.MapAdapter.Object
 {
     public static class AbilityObjectDataExtensions
     {
-        public static MapFileStatus Adapt(this AbilityObjectData abilityObjectData, AdaptFileContext context)
+        public static bool Adapt(this AbilityObjectData abilityObjectData, AdaptFileContext context, out MapFileStatus status)
         {
             var isSkinFileSupported = context.TargetPatch.Patch >= GamePatch.v1_33_0;
             if (!isSkinFileSupported)
@@ -31,7 +31,8 @@ namespace War3App.MapAdapter.Object
                     if (isSkinFile)
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.RemovedSkinData, context.FileName.Replace($"Skin{AbilityObjectData.FileExtension}", AbilityObjectData.FileExtension));
-                        return MapFileStatus.Removed;
+                        status = MapFileStatus.Removed;
+                        return false;
                     }
                 }
             }
@@ -54,7 +55,8 @@ namespace War3App.MapAdapter.Object
 
             if (missingDataFiles)
             {
-                return MapFileStatus.ConfigError;
+                status = MapFileStatus.Inconclusive;
+                return false;
             }
 
             var isAdapted = false;
@@ -63,7 +65,8 @@ namespace War3App.MapAdapter.Object
             {
                 if (!abilityObjectData.TryDowngrade(context.TargetPatch.Patch))
                 {
-                    return MapFileStatus.Incompatible;
+                    status = MapFileStatus.Incompatible;
+                    return false;
                 }
 
                 isAdapted = true;
@@ -160,9 +163,11 @@ namespace War3App.MapAdapter.Object
                 newAbilities.Add(ability);
             }
 
+            status = MapFileStatus.Compatible;
+
             if (!isAdapted)
             {
-                return MapFileStatus.Compatible;
+                return false;
             }
 
             abilityObjectData.BaseAbilities.Clear();
@@ -171,7 +176,7 @@ namespace War3App.MapAdapter.Object
             abilityObjectData.BaseAbilities.AddRange(baseAbilities);
             abilityObjectData.NewAbilities.AddRange(newAbilities);
 
-            return MapFileStatus.Adapted;
+            return true;
         }
 
         public static bool TryDowngrade(this AbilityObjectData abilityObjectData, GamePatch targetPatch)

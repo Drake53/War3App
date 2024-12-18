@@ -16,7 +16,7 @@ namespace War3App.MapAdapter.Object
 {
     public static class UnitObjectDataExtensions
     {
-        public static MapFileStatus Adapt(this UnitObjectData unitObjectData, AdaptFileContext context)
+        public static bool Adapt(this UnitObjectData unitObjectData, AdaptFileContext context, out MapFileStatus status)
         {
             var isSkinFileSupported = context.TargetPatch.Patch >= GamePatch.v1_33_0;
             if (!isSkinFileSupported)
@@ -31,7 +31,8 @@ namespace War3App.MapAdapter.Object
                     if (isSkinFile)
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.RemovedSkinData, context.FileName.Replace($"Skin{UnitObjectData.FileExtension}", UnitObjectData.FileExtension));
-                        return MapFileStatus.Removed;
+                        status = MapFileStatus.Removed;
+                        return false;
                     }
                 }
             }
@@ -82,7 +83,8 @@ namespace War3App.MapAdapter.Object
 
             if (missingDataFiles)
             {
-                return MapFileStatus.ConfigError;
+                status = MapFileStatus.Inconclusive;
+                return false;
             }
 
             var isAdapted = false;
@@ -91,7 +93,8 @@ namespace War3App.MapAdapter.Object
             {
                 if (!unitObjectData.TryDowngrade(context.TargetPatch.Patch))
                 {
-                    return MapFileStatus.Incompatible;
+                    status = MapFileStatus.Incompatible;
+                    return false;
                 }
 
                 isAdapted = true;
@@ -192,9 +195,11 @@ namespace War3App.MapAdapter.Object
                 newUnits.Add(unit);
             }
 
+            status = MapFileStatus.Compatible;
+
             if (!isAdapted)
             {
-                return MapFileStatus.Compatible;
+                return false;
             }
 
             unitObjectData.BaseUnits.Clear();
@@ -203,7 +208,7 @@ namespace War3App.MapAdapter.Object
             unitObjectData.BaseUnits.AddRange(baseUnits);
             unitObjectData.NewUnits.AddRange(newUnits);
 
-            return MapFileStatus.Adapted;
+            return true;
         }
 
         public static bool TryDowngrade(this UnitObjectData unitObjectData, GamePatch targetPatch)

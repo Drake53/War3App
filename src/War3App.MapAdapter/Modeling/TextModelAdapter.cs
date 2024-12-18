@@ -15,7 +15,7 @@ namespace War3App.MapAdapter.Modeling
         public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
             // TODO
-            return MapFileStatus.Unknown;
+            return MapFileStatus.Inconclusive;
         }
     }
 }

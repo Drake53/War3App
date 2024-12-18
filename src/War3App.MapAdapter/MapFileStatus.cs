@@ -13,14 +13,14 @@
         Unknown,
 
         /// <summary>
-        /// The file is compatible without requiring changes.
+        /// The file is compatible with the target patch.
         /// </summary>
         Compatible,
 
         /// <summary>
-        /// The file has been made compatible with an adapter and/or manual user input.
+        /// The adapter is unable to verify if the file is compatible.
         /// </summary>
-        Adapted,
+        Inconclusive,
 
         /// <summary>
         /// An adapter exists for the file, but it has not been run yet.
@@ -36,11 +36,6 @@
         /// The mpq file can not be read.
         /// </summary>
         Locked,
-
-        /// <summary>
-        /// The file's adapter cannot run, because the appsettings.json configuration file is invalid.
-        /// </summary>
-        ConfigError,
 
         /// <summary>
         /// An exception occured when adapting the file.

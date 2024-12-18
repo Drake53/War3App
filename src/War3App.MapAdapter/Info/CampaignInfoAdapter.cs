@@ -33,8 +33,7 @@ namespace War3App.MapAdapter.Info
                 return context.ReportParseError(e);
             }
 
-            var status = campaignInfo.Adapt(context);
-            if (status != MapFileStatus.Adapted)
+            if (!campaignInfo.Adapt(context, out var status))
             {
                 return status;
             }
@@ -46,7 +45,7 @@ namespace War3App.MapAdapter.Info
                 using var writer = new BinaryWriter(memoryStream, UTF8EncodingProvider.StrictUTF8, true);
                 writer.Write(campaignInfo);
 
-                return memoryStream;
+                return AdaptResult.Create(memoryStream, status);
             }
             catch (Exception e)
             {

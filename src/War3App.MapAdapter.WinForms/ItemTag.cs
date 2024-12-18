@@ -98,11 +98,6 @@ namespace War3App.MapAdapter.WinForms
                 if (adaptResult.AdaptedFileStream is null)
                 {
                     adaptResult.AdaptedFileStream = AdaptResult.AdaptedFileStream;
-
-                    if (adaptResult.Status == MapFileStatus.Compatible && Status == MapFileStatus.Pending)
-                    {
-                        adaptResult.Status = MapFileStatus.Adapted;
-                    }
                 }
                 else
                 {

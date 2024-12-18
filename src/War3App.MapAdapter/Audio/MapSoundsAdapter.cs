@@ -33,8 +33,7 @@ namespace War3App.MapAdapter.Audio
                 return context.ReportParseError(e);
             }
 
-            var status = mapSounds.Adapt(context);
-            if (status != MapFileStatus.Adapted)
+            if (!mapSounds.Adapt(context, out var status))
             {
                 return status;
             }
@@ -46,7 +45,7 @@ namespace War3App.MapAdapter.Audio
                 using var writer = new BinaryWriter(memoryStream, UTF8EncodingProvider.StrictUTF8, true);
                 writer.Write(mapSounds);
 
-                return memoryStream;
+                return AdaptResult.Create(memoryStream, status);
             }
             catch (Exception e)
             {

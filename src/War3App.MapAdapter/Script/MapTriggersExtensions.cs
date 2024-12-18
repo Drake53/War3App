@@ -13,13 +13,14 @@ namespace War3App.MapAdapter.Script
 {
     public static class MapTriggersExtensions
     {
-        public static MapFileStatus Adapt(this MapTriggers mapTriggers, AdaptFileContext context)
+        public static bool Adapt(this MapTriggers mapTriggers, AdaptFileContext context, out MapFileStatus status)
         {
             var triggerDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.TriggerDataPath);
             if (!File.Exists(triggerDataPath))
             {
                 context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.TriggerDataPath);
-                return MapFileStatus.ConfigError;
+                status = MapFileStatus.Inconclusive;
+                return false;
             }
 
             var triggerDataText = File.ReadAllText(triggerDataPath);
@@ -71,7 +72,8 @@ namespace War3App.MapAdapter.Script
 
             if (isIncompatible)
             {
-                return MapFileStatus.Incompatible;
+                status = MapFileStatus.Incompatible;
+                return false;
             }
 
             var supportedVariableTypes = triggerData.TriggerTypes.Values
@@ -110,21 +112,25 @@ namespace War3App.MapAdapter.Script
 
             if (isIncompatible)
             {
-                return MapFileStatus.Incompatible;
+                status = MapFileStatus.Incompatible;
+                return false;
             }
 
             var mustDowngrade = mapTriggers.GetMinimumPatch() > context.TargetPatch.Patch;
             if (!mustDowngrade && !isAdapted)
             {
-                return MapFileStatus.Compatible;
+                status = MapFileStatus.Compatible;
+                return false;
             }
 
             if (mustDowngrade && !mapTriggers.TryDowngrade(context.TargetPatch.Patch))
             {
-                return MapFileStatus.Incompatible;
+                status = MapFileStatus.Incompatible;
+                return false;
             }
 
-            return MapFileStatus.Adapted;
+            status = MapFileStatus.Compatible;
+            return true;
         }
 
         public static bool TryDowngrade(this MapTriggers mapTriggers, GamePatch targetPatch)

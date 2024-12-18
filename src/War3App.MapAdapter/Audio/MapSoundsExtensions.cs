@@ -7,16 +7,19 @@ namespace War3App.MapAdapter.Audio
 {
     public static class MapSoundsExtensions
     {
-        public static MapFileStatus Adapt(this MapSounds mapSounds, AdaptFileContext context)
+        public static bool Adapt(this MapSounds mapSounds, AdaptFileContext context, out MapFileStatus status)
         {
             if (mapSounds.GetMinimumPatch() <= context.TargetPatch.Patch)
             {
-                return MapFileStatus.Compatible;
+                status = MapFileStatus.Compatible;
+                return false;
             }
 
-            return mapSounds.TryDowngrade(context.TargetPatch.Patch)
-                ? MapFileStatus.Adapted
+            status = mapSounds.TryDowngrade(context.TargetPatch.Patch)
+                ? MapFileStatus.Compatible
                 : MapFileStatus.Incompatible;
+
+            return status == MapFileStatus.Compatible;
         }
 
         public static bool TryDowngrade(this MapSounds mapSounds, GamePatch targetPatch)

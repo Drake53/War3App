@@ -16,7 +16,7 @@ namespace War3App.MapAdapter.Object
 {
     public static class UpgradeObjectDataExtensions
     {
-        public static MapFileStatus Adapt(this UpgradeObjectData upgradeObjectData, AdaptFileContext context)
+        public static bool Adapt(this UpgradeObjectData upgradeObjectData, AdaptFileContext context, out MapFileStatus status)
         {
             var isSkinFileSupported = context.TargetPatch.Patch >= GamePatch.v1_33_0;
             if (!isSkinFileSupported)
@@ -31,7 +31,8 @@ namespace War3App.MapAdapter.Object
                     if (isSkinFile)
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.RemovedSkinData, context.FileName.Replace($"Skin{UpgradeObjectData.FileExtension}", UpgradeObjectData.FileExtension));
-                        return MapFileStatus.Removed;
+                        status = MapFileStatus.Removed;
+                        return false;
                     }
                 }
             }
@@ -54,7 +55,8 @@ namespace War3App.MapAdapter.Object
 
             if (missingDataFiles)
             {
-                return MapFileStatus.ConfigError;
+                status = MapFileStatus.Inconclusive;
+                return false;
             }
 
             var isAdapted = false;
@@ -63,7 +65,8 @@ namespace War3App.MapAdapter.Object
             {
                 if (!upgradeObjectData.TryDowngrade(context.TargetPatch.Patch))
                 {
-                    return MapFileStatus.Incompatible;
+                    status = MapFileStatus.Incompatible;
+                    return false;
                 }
 
                 isAdapted = true;
@@ -160,9 +163,11 @@ namespace War3App.MapAdapter.Object
                 newUpgrades.Add(upgrade);
             }
 
+            status = MapFileStatus.Compatible;
+
             if (!isAdapted)
             {
-                return MapFileStatus.Compatible;
+                return false;
             }
 
             upgradeObjectData.BaseUpgrades.Clear();
@@ -171,7 +176,7 @@ namespace War3App.MapAdapter.Object
             upgradeObjectData.BaseUpgrades.AddRange(baseUpgrades);
             upgradeObjectData.NewUpgrades.AddRange(newUpgrades);
 
-            return MapFileStatus.Adapted;
+            return true;
         }
 
         public static bool TryDowngrade(this UpgradeObjectData upgradeObjectData, GamePatch targetPatch)

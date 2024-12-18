@@ -28,7 +28,7 @@ namespace War3App.MapAdapter.Script
             {
                 context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.CommonJPath);
 
-                return MapFileStatus.ConfigError;
+                return MapFileStatus.Inconclusive;
             }
 
             var blizzardJPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.BlizzardJPath);
@@ -36,7 +36,7 @@ namespace War3App.MapAdapter.Script
             {
                 context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.BlizzardJPath);
 
-                return MapFileStatus.ConfigError;
+                return MapFileStatus.Inconclusive;
             }
 
             var commonJText = File.ReadAllText(commonJPath);
@@ -74,11 +74,15 @@ namespace War3App.MapAdapter.Script
                 return MapFileStatus.Error;
             }
 
-            if (!TryAdaptCompilationUnit(scriptAdapterContext, compilationUnit, out var adaptedCompilationUnit))
+            var adapted = TryAdaptCompilationUnit(scriptAdapterContext, compilationUnit, out var adaptedCompilationUnit);
+
+            var status = scriptAdapterContext.Diagnostics.Count == 0
+                ? MapFileStatus.Compatible
+                : MapFileStatus.Incompatible;
+
+            if (!adapted)
             {
-                return scriptAdapterContext.Diagnostics.Count == 0
-                    ? MapFileStatus.Compatible
-                    : MapFileStatus.Incompatible;
+                return status;
             }
 
             try
@@ -89,7 +93,7 @@ namespace War3App.MapAdapter.Script
                 var renderer = new JassRenderer(writer);
                 renderer.Render(adaptedCompilationUnit);
 
-                return memoryStream;
+                return AdaptResult.Create(memoryStream, status);
             }
             catch (Exception e)
             {

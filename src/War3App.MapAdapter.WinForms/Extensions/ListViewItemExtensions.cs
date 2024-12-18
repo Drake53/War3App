@@ -65,12 +65,29 @@ namespace War3App.MapAdapter.WinForms.Extensions
             {
                 -1 => item.GetTag().OriginalIndex.CompareTo(other.GetTag().OriginalIndex),
 
-                StatusColumnIndex => 0 - item.GetTag().Status.CompareTo(other.GetTag().Status),
+                StatusColumnIndex => other.CompareStatus(item),
 
                 _ => string.IsNullOrWhiteSpace(item.SubItems[column].Text) == string.IsNullOrWhiteSpace(other.SubItems[column].Text)
                     ? string.Compare(item.SubItems[column].Text, other.SubItems[column].Text, StringComparison.InvariantCulture)
                     : string.IsNullOrWhiteSpace(item.SubItems[column].Text) ? 1 : -1,
             };
+        }
+
+        private static int CompareStatus(this ListViewItem item, ListViewItem other)
+        {
+            var tag1 = item.GetTag();
+            var tag2 = other.GetTag();
+
+            var result = tag1.Status.CompareTo(tag2.Status);
+            if (result != 0)
+            {
+                return result;
+            }
+
+            var modified1 = tag1.AdaptResult?.AdaptedFileStream is not null;
+            var modified2 = tag2.AdaptResult?.AdaptedFileStream is not null;
+
+            return modified1.CompareTo(modified2);
         }
 
         private static void SetImageIndex(this ListViewItem item, ItemTag tag, AdaptResult? adaptResult)
