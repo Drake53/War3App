@@ -3,6 +3,9 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
+using War3App.MapAdapter.Diagnostics;
+using War3App.MapAdapter.WinForms.Controls;
+
 namespace War3App.MapAdapter.WinForms.Extensions
 {
     public static class ListViewItemExtensions
@@ -26,7 +29,6 @@ namespace War3App.MapAdapter.WinForms.Extensions
             item.Tag = tag;
             tag.ListViewItem = item;
 
-            item.Update();
             return item;
         }
 
@@ -44,7 +46,7 @@ namespace War3App.MapAdapter.WinForms.Extensions
             }
 
             item.SubItems[StatusColumnIndex].Text = tag.Status.ToString();
-            item.ImageIndex = (int)tag.Status;
+            item.SetImageIndex(tag, null);
         }
 
         public static void Update(this ListViewItem item, AdaptResult adaptResult)
@@ -54,7 +56,7 @@ namespace War3App.MapAdapter.WinForms.Extensions
 
             item.SubItems[StatusColumnIndex].Text = tag.Status.ToString();
             item.SubItems[FileNameColumnIndex].ForeColor = adaptResult.AdaptedFileStream is not null ? Color.Violet : Color.Black;
-            item.ImageIndex = (int)tag.Status;
+            item.SetImageIndex(tag, adaptResult);
         }
 
         public static int CompareTo(this ListViewItem item, ListViewItem other, int column)
@@ -69,6 +71,29 @@ namespace War3App.MapAdapter.WinForms.Extensions
                     ? string.Compare(item.SubItems[column].Text, other.SubItems[column].Text, StringComparison.InvariantCulture)
                     : string.IsNullOrWhiteSpace(item.SubItems[column].Text) ? 1 : -1,
             };
+        }
+
+        private static void SetImageIndex(this ListViewItem item, ItemTag tag, AdaptResult? adaptResult)
+        {
+            if (item.ListView is FileListView fileListView)
+            {
+                var severity = adaptResult?.Diagnostics is null
+                    ? DiagnosticSeverity.Info
+                    : adaptResult.Diagnostics.Select(d => d.Descriptor.Severity).Append(DiagnosticSeverity.Info).Max();
+
+                if (severity == DiagnosticSeverity.Error)
+                {
+                    item.ImageIndex = fileListView.ErrorImageIndex;
+                }
+                else if (severity == DiagnosticSeverity.Warning)
+                {
+                    item.ImageIndex = fileListView.WarningImageIndex;
+                }
+                else
+                {
+                    item.ImageIndex = fileListView.GetImageIndexForStatus(tag.Status);
+                }
+            }
         }
     }
 }

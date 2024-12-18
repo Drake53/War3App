@@ -7,20 +7,20 @@ namespace War3App.MapAdapter
 {
     public sealed class AdaptResult : IDisposable
     {
-        public AdaptResult(MapFileStatus status)
+        private AdaptResult(MapFileStatus status)
         {
             Status = status;
             AdaptedFileStream = null;
         }
 
-        public AdaptResult(Stream stream)
+        private AdaptResult(Stream stream, MapFileStatus status = MapFileStatus.Adapted)
         {
             if (stream is null)
             {
                 throw new ArgumentNullException(nameof(stream));
             }
 
-            Status = MapFileStatus.Adapted;
+            Status = status;
             AdaptedFileStream = stream;
         }
 
@@ -33,6 +33,8 @@ namespace War3App.MapAdapter
         public static implicit operator AdaptResult(MapFileStatus status) => new(status);
 
         public static implicit operator AdaptResult(Stream stream) => new(stream);
+
+        public static AdaptResult ModifiedByUser(Stream stream) => new(stream, MapFileStatus.Pending);
 
         public void Dispose()
         {

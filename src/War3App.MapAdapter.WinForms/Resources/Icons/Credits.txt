@@ -1,0 +1,10 @@
+Icons by http://www.aha-soft.com
+- Bubble.png
+- OK.png
+- Question.png
+
+Icons by https://www.axialis.com
+- Error.png
+- Lock.png
+- Trash.png
+- Warning.png

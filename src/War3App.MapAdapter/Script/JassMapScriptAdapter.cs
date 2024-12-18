@@ -68,7 +68,7 @@ namespace War3App.MapAdapter.Script
             // Common.j and Blizzard.j should not cause any diagnostics.
             if (scriptAdapterContext.Diagnostics.Count > 0)
             {
-                return MapFileStatus.AdapterError;
+                return MapFileStatus.Error;
             }
 
             if (!TryAdaptCompilationUnit(scriptAdapterContext, compilationUnit, out var adaptedCompilationUnit))

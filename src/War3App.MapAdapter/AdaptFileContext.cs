@@ -47,21 +47,21 @@ namespace War3App.MapAdapter
         {
             ReportDiagnostic(DiagnosticRule.General.ParseError, e.GetTypeAndMessage());
 
-            return MapFileStatus.ParseError;
+            return MapFileStatus.Error;
         }
 
         public MapFileStatus ReportAdapterError(Exception e)
         {
             ReportDiagnostic(DiagnosticRule.General.AdapterError, e.GetTypeAndMessage());
 
-            return MapFileStatus.AdapterError;
+            return MapFileStatus.Error;
         }
 
         public MapFileStatus ReportSerializeError(Exception e)
         {
             ReportDiagnostic(DiagnosticRule.General.SerializerError, e.GetTypeAndMessage());
 
-            return MapFileStatus.SerializeError;
+            return MapFileStatus.Error;
         }
 
         public Diagnostic[] GetDiagnostics()

@@ -97,7 +97,7 @@ namespace War3App.MapAdapter.WinForms
                 {
                     adaptResult.AdaptedFileStream = AdaptResult.AdaptedFileStream;
 
-                    if (adaptResult.Status == MapFileStatus.Compatible && Status == MapFileStatus.Modified)
+                    if (adaptResult.Status == MapFileStatus.Compatible && Status == MapFileStatus.Pending)
                     {
                         adaptResult.Status = MapFileStatus.Adapted;
                     }

@@ -52,7 +52,7 @@ namespace War3App.MapAdapter.Modeling
                 }
 
                 // Unable to find VERS chunk.
-                return MapFileStatus.ParseError;
+                return MapFileStatus.Error;
             }
             catch (Exception e)
             {

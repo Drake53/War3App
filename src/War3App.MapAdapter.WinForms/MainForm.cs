@@ -17,6 +17,7 @@ using War3App.Common.WinForms.Extensions;
 using War3App.MapAdapter.Diagnostics;
 using War3App.MapAdapter.Extensions;
 using War3App.MapAdapter.Info;
+using War3App.MapAdapter.WinForms.Controls;
 using War3App.MapAdapter.WinForms.Extensions;
 using War3App.MapAdapter.WinForms.Forms;
 
@@ -47,8 +48,7 @@ namespace War3App.MapAdapter.WinForms
         private static GamePatch? _originPatch;
         private static Button _getHelpButton;
 
-        private static ListView _fileList;
-        private static FileListSorter _fileListSorter;
+        private static FileListView _fileList;
 
         private static Timer? _fileSelectionChangedEventTimer;
 
@@ -262,52 +262,7 @@ namespace War3App.MapAdapter.WinForms
                 }
             };
 
-            _fileList = new ListView
-            {
-                Dock = DockStyle.Fill,
-            };
-
-            _fileListSorter = new FileListSorter(_fileList);
-
-            _fileList.ListViewItemSorter = _fileListSorter;
-            _fileList.ColumnClick += _fileListSorter.Sort;
-
-            _fileList.View = View.Details;
-            _fileList.Columns.AddRange(new[]
-            {
-                new ColumnHeader { Text = "Status", Width = 102 },
-                new ColumnHeader { Text = "FileName", Width = 300 },
-                new ColumnHeader { Text = "FileType", Width = 130 },
-                new ColumnHeader { Text = "Archive", Width = 87 },
-            });
-
-            _fileList.FullRowSelect = true;
-            _fileList.MultiSelect = true;
-
-            _fileList.HeaderStyle = ColumnHeaderStyle.Clickable;
-
-            _fileList.SmallImageList = new ImageList();
-            var statusColors = new Dictionary<MapFileStatus, Color>
-            {
-                { MapFileStatus.Adapted, Color.LimeGreen },
-                { MapFileStatus.AdapterError, Color.Red },
-                { MapFileStatus.Compatible, Color.ForestGreen },
-                { MapFileStatus.ConfigError, Color.DarkSlateBlue },
-                { MapFileStatus.Incompatible, Color.Yellow },
-                { MapFileStatus.Locked, Color.OrangeRed },
-                { MapFileStatus.Modified, Color.Blue },
-                { MapFileStatus.ParseError, Color.Maroon },
-                { MapFileStatus.Pending, Color.LightSkyBlue },
-                { MapFileStatus.Removed, Color.DarkSlateGray },
-                { MapFileStatus.SerializeError, Color.DarkRed },
-                { MapFileStatus.Unadaptable, Color.IndianRed },
-                { MapFileStatus.Unknown, Color.DarkViolet },
-            };
-
-            foreach (var status in Enum.GetValues(typeof(MapFileStatus)))
-            {
-                _fileList.SmallImageList.Images.Add(new Bitmap(16, 16).WithSolidColor(statusColors[(MapFileStatus)status]));
-            }
+            _fileList = new FileListView();
 
             var fileListContextMenu = new ContextMenuStrip
             {
@@ -352,7 +307,7 @@ namespace War3App.MapAdapter.WinForms
                     var tag = item.GetTag();
 
                     var adapter = tag.Adapter;
-                    if (adapter != null && (tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified))
+                    if (adapter != null && tag.Status == MapFileStatus.Pending)
                     {
                         var context = new AdaptFileContext
                         {
@@ -519,7 +474,7 @@ namespace War3App.MapAdapter.WinForms
             {
                 _editContextButton.Enabled = tag.Adapter?.IsTextFile ?? false;
                 _diffContextButton.Enabled = tag.Adapter is not null && tag.AdaptResult?.AdaptedFileStream is not null && (tag.Adapter.IsTextFile || tag.Adapter.IsJsonSerializationSupported);
-                _adaptContextButton.Enabled = _targetPatch.HasValue && (tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified);
+                _adaptContextButton.Enabled = _targetPatch.HasValue && tag.Status == MapFileStatus.Pending;
                 _removeContextButton.Enabled = tag.Status != MapFileStatus.Removed;
             }
             else
@@ -528,7 +483,7 @@ namespace War3App.MapAdapter.WinForms
 
                 _editContextButton.Enabled = false;
                 _diffContextButton.Enabled = false;
-                _adaptContextButton.Enabled = _targetPatch.HasValue && tags.Any(tag => tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified);
+                _adaptContextButton.Enabled = _targetPatch.HasValue && tags.Any(tag => tag.Status == MapFileStatus.Pending);
                 _removeContextButton.Enabled = tags.Any(tag => tag.Status != MapFileStatus.Removed);
             }
 
@@ -562,7 +517,7 @@ namespace War3App.MapAdapter.WinForms
                     }
 
                     memoryStream.Position = 0;
-                    tag.ListViewItem.Update(memoryStream);
+                    tag.ListViewItem.Update(AdaptResult.ModifiedByUser(memoryStream));
 
                     _diagnosticsDisplay.Text = string.Empty;
                 }
@@ -640,7 +595,7 @@ namespace War3App.MapAdapter.WinForms
                     foreach (var child in tag.Children)
                     {
                         var adapter = child.Adapter;
-                        if (adapter != null && (child.Status == MapFileStatus.Pending || child.Status == MapFileStatus.Modified))
+                        if (adapter != null && child.Status == MapFileStatus.Pending)
                         {
                             var context = new AdaptFileContext
                             {
@@ -662,7 +617,7 @@ namespace War3App.MapAdapter.WinForms
                 else
                 {
                     var adapter = tag.Adapter;
-                    if (adapter != null && (tag.Status == MapFileStatus.Pending || tag.Status == MapFileStatus.Modified))
+                    if (adapter != null && tag.Status == MapFileStatus.Pending)
                     {
                         var context = new AdaptFileContext
                         {
@@ -748,6 +703,8 @@ namespace War3App.MapAdapter.WinForms
         {
             if (_fileList.TryGetSelectedItemTag(out var tag))
             {
+                _diagnosticsDisplay.Text = string.Empty;
+
                 if (tag.AdaptResult?.Diagnostics != null)
                 {
                     var anyDiagnosticWritten = false;
@@ -777,15 +734,9 @@ namespace War3App.MapAdapter.WinForms
                         }
                     }
 
-                    _diagnosticsDisplay.Text = string.Empty;
-
                     WriteDiagnostics(DiagnosticSeverity.Error, Color.Red, "[ERR] ");
                     WriteDiagnostics(DiagnosticSeverity.Warning, Color.Orange, "[WRN] ");
                     WriteDiagnostics(DiagnosticSeverity.Info, Color.Blue, "[INF] ");
-                }
-                else
-                {
-                    _diagnosticsDisplay.Text = string.Empty;
                 }
             }
             else
@@ -991,9 +942,17 @@ namespace War3App.MapAdapter.WinForms
             {
                 throw new ApplicationException("Background task 'open archive' did not complete succesfully.", e.Error);
             }
-            else
+            else if (e.Result is List<ListViewItem> listViewItems)
             {
-                _fileList.Items.AddRange(((List<ListViewItem>)e.Result).ToArray());
+                _fileList.BeginUpdate();
+                _fileList.Items.AddRange(listViewItems.ToArray());
+
+                foreach (ListViewItem item in _fileList.Items)
+                {
+                    item.Update();
+                }
+
+                _fileList.EndUpdate();
 
                 _targetPatchesComboBox.Enabled = _targetPatchesComboBox.Items.Count > 1;
 
@@ -1024,14 +983,7 @@ namespace War3App.MapAdapter.WinForms
             _targetPatchesComboBox.Enabled = false;
             _originPatch = null;
 
-            _fileListSorter.Reset();
-
-            for (var i = 0; i < _fileList.Items.Count; i++)
-            {
-                _fileList.Items[i].GetTag().Dispose();
-            }
-
-            _fileList.Items.Clear();
+            _fileList.Reset();
 
             _diagnosticsDisplay.Text = string.Empty;
 
