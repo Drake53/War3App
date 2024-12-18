@@ -52,11 +52,6 @@ namespace War3App.MapAdapter.WinForms
 
         private static Timer? _fileSelectionChangedEventTimer;
 
-        private static ToolStripButton _editContextButton;
-        private static ToolStripButton _diffContextButton;
-        private static ToolStripButton _adaptContextButton;
-        private static ToolStripButton _removeContextButton;
-
         private static RichTextBox _diagnosticsDisplay;
 
         private static TextProgressBar _progressBar;
@@ -65,6 +60,8 @@ namespace War3App.MapAdapter.WinForms
 
         private static IConfiguration _configuration;
         private static AppSettings _appSettings;
+
+        internal static bool TargetPatchSelected => _targetPatch.HasValue;
 
         [STAThread]
         private static void Main(string[] args)
@@ -264,35 +261,18 @@ namespace War3App.MapAdapter.WinForms
 
             _fileList = new FileListView();
 
-            var fileListContextMenu = new ContextMenuStrip
-            {
-            };
-
-            _editContextButton = new ToolStripButton("Edit");
-            _editContextButton.Enabled = false;
-            _editContextButton.Click += OnClickEditSelected;
-
-            _diffContextButton = new ToolStripButton("Diff");
-            _diffContextButton.Enabled = false;
-            _diffContextButton.Click += OnClickDiffSelected;
-
-            _adaptContextButton = new ToolStripButton("Adapt");
-            _adaptContextButton.Enabled = false;
-            _adaptContextButton.Click += OnClickAdaptSelected;
-
-            _removeContextButton = new ToolStripButton("Remove");
-            _removeContextButton.Enabled = false;
-            _removeContextButton.Click += OnClickRemoveSelected;
-
-            fileListContextMenu.Items.AddRange(new[]
-            {
-                _adaptContextButton,
-                _editContextButton,
-                _diffContextButton,
-                _removeContextButton,
-            });
+            var fileListContextMenu = new FileListContextMenuStrip(_fileList);
 
             _fileList.ContextMenuStrip = fileListContextMenu;
+
+            fileListContextMenu.Adapt += OnClickAdaptSelected;
+            fileListContextMenu.Edit += OnClickEditSelected;
+            //fileListContextMenu.Save += OnClickSaveSelected;
+            fileListContextMenu.Diff += OnClickDiffSelected;
+            fileListContextMenu.Undo += OnClickUndoChangesSelected;
+            fileListContextMenu.Remove += OnClickRemoveSelected;
+
+            fileListContextMenu.EnableClickEvents();
 
             _openCloseArchiveButton.Size = _openCloseArchiveButton.PreferredSize;
             _openCloseArchiveButton.Click += OnClickOpenCloseMap;
@@ -454,11 +434,6 @@ namespace War3App.MapAdapter.WinForms
                 _fileSelectionChangedEventTimer = new Timer();
                 _fileSelectionChangedEventTimer.Tick += OnFileSelectionEventTimerTick;
                 _fileSelectionChangedEventTimer.Interval = 50;
-
-                _editContextButton.Enabled = false;
-                _diffContextButton.Enabled = false;
-                _adaptContextButton.Enabled = false;
-                _removeContextButton.Enabled = false;
             }
 
             // Start/reset the timer
@@ -470,36 +445,18 @@ namespace War3App.MapAdapter.WinForms
         {
             _fileSelectionChangedEventTimer.Enabled = false;
 
-            if (_fileList.TryGetSelectedItemTag(out var tag))
-            {
-                _editContextButton.Enabled = tag.Adapter?.IsTextFile ?? false;
-                _diffContextButton.Enabled = tag.Adapter is not null && tag.AdaptResult?.AdaptedFileStream is not null && (tag.Adapter.IsTextFile || tag.Adapter.IsJsonSerializationSupported);
-                _adaptContextButton.Enabled = _targetPatch.HasValue && tag.Status == MapFileStatus.Pending;
-                _removeContextButton.Enabled = tag.Status != MapFileStatus.Removed;
-            }
-            else
-            {
-                var tags = _fileList.GetSelectedItemTags();
-
-                _editContextButton.Enabled = false;
-                _diffContextButton.Enabled = false;
-                _adaptContextButton.Enabled = _targetPatch.HasValue && tags.Any(tag => tag.Status == MapFileStatus.Pending);
-                _removeContextButton.Enabled = tags.Any(tag => tag.Status != MapFileStatus.Removed);
-            }
-
             UpdateDiagnosticsDisplay();
         }
 
         private static void OnClickEditSelected(object? sender, EventArgs e)
         {
-            if (!_editContextButton.Enabled)
-            {
-                // Check since this method can also be invoked by ItemActivate event.
-                return;
-            }
-
             if (_fileList.TryGetSelectedItemTag(out var tag))
             {
+                if (tag.Adapter is null || !tag.Adapter.IsTextFile)
+                {
+                    return;
+                }
+
                 var scriptEditForm = new ScriptEditForm(tag.AdaptResult?.Diagnostics ?? Array.Empty<Diagnostic>());
 
                 tag.CurrentStream.Position = 0;
@@ -526,11 +483,6 @@ namespace War3App.MapAdapter.WinForms
 
         private static void OnClickDiffSelected(object? sender, EventArgs e)
         {
-            if (!_diffContextButton.Enabled)
-            {
-                return;
-            }
-
             if (_fileList.TryGetSelectedItemTag(out var tag))
             {
                 if (tag.Adapter is null || tag.AdaptResult?.AdaptedFileStream is null)
@@ -582,7 +534,6 @@ namespace War3App.MapAdapter.WinForms
 
         private static void OnClickAdaptSelected(object? sender, EventArgs e)
         {
-            _adaptContextButton.Enabled = false;
             _targetPatchesComboBox.Enabled = false;
             for (var i = 0; i < _fileList.SelectedIndices.Count; i++)
             {
@@ -643,6 +594,26 @@ namespace War3App.MapAdapter.WinForms
             UpdateDiagnosticsDisplay();
         }
 
+        private static void OnClickUndoChangesSelected(object? sender, EventArgs e)
+        {
+            for (var i = 0; i < _fileList.SelectedItems.Count; i++)
+            {
+                var item = _fileList.SelectedItems[i];
+                var tag = item.GetTag();
+
+                if (tag.AdaptResult?.AdaptedFileStream is not null)
+                {
+                    tag.AdaptResult.Dispose();
+                }
+                else if (tag.Status != MapFileStatus.Removed)
+                {
+                    continue;
+                }
+
+                item.Update(null);
+            }
+        }
+
         private static void OnClickRemoveSelected(object? sender, EventArgs e)
         {
             for (var i = 0; i < _fileList.SelectedItems.Count; i++)
@@ -656,12 +627,9 @@ namespace War3App.MapAdapter.WinForms
                 }
 
                 tag.AdaptResult?.Dispose();
-                tag.AdaptResult = MapFileStatus.Removed;
 
-                item.Update();
+                item.Update(MapFileStatus.Removed);
             }
-
-            _removeContextButton.Enabled = false;
         }
 
         private static void OnArchiveInputTextChanged(object? sender, EventArgs e)

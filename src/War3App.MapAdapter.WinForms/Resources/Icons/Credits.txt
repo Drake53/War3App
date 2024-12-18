@@ -1,7 +1,13 @@
 Icons by http://www.aha-soft.com
 - Bubble.png
+- Copy.png
+- Delete.png
+- Download.png
+- Lightning.png
+- Modify.png
 - OK.png
 - Question.png
+- Undo.png
 
 Icons by https://www.axialis.com
 - Error.png
