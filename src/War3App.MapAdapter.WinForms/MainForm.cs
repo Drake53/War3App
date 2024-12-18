@@ -435,7 +435,7 @@ namespace War3App.MapAdapter.WinForms
             };
         }
 
-        private static void OnClickOpenCloseMap(object sender, EventArgs e)
+        private static void OnClickOpenCloseMap(object? sender, EventArgs e)
         {
             if (_archive is null)
             {
@@ -447,7 +447,7 @@ namespace War3App.MapAdapter.WinForms
             }
         }
 
-        private static void OnFileSelectionChanged(object sender, EventArgs e)
+        private static void OnFileSelectionChanged(object? sender, EventArgs e)
         {
             if (_fileSelectionChangedEventTimer is null)
             {
@@ -466,7 +466,7 @@ namespace War3App.MapAdapter.WinForms
             _fileSelectionChangedEventTimer.Enabled = true;
         }
 
-        private static void OnFileSelectionEventTimerTick(object sender, EventArgs e)
+        private static void OnFileSelectionEventTimerTick(object? sender, EventArgs e)
         {
             _fileSelectionChangedEventTimer.Enabled = false;
 
@@ -490,7 +490,7 @@ namespace War3App.MapAdapter.WinForms
             UpdateDiagnosticsDisplay();
         }
 
-        private static void OnClickEditSelected(object sender, EventArgs e)
+        private static void OnClickEditSelected(object? sender, EventArgs e)
         {
             if (!_editContextButton.Enabled)
             {
@@ -524,7 +524,7 @@ namespace War3App.MapAdapter.WinForms
             }
         }
 
-        private static void OnClickDiffSelected(object sender, EventArgs e)
+        private static void OnClickDiffSelected(object? sender, EventArgs e)
         {
             if (!_diffContextButton.Enabled)
             {
@@ -580,7 +580,7 @@ namespace War3App.MapAdapter.WinForms
             }
         }
 
-        private static void OnClickAdaptSelected(object sender, EventArgs e)
+        private static void OnClickAdaptSelected(object? sender, EventArgs e)
         {
             _adaptContextButton.Enabled = false;
             _targetPatchesComboBox.Enabled = false;
@@ -643,7 +643,7 @@ namespace War3App.MapAdapter.WinForms
             UpdateDiagnosticsDisplay();
         }
 
-        private static void OnClickRemoveSelected(object sender, EventArgs e)
+        private static void OnClickRemoveSelected(object? sender, EventArgs e)
         {
             for (var i = 0; i < _fileList.SelectedItems.Count; i++)
             {
@@ -664,7 +664,7 @@ namespace War3App.MapAdapter.WinForms
             _removeContextButton.Enabled = false;
         }
 
-        private static void OnArchiveInputTextChanged(object sender, EventArgs e)
+        private static void OnArchiveInputTextChanged(object? sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(_archiveInput.Text))
             {
@@ -682,7 +682,7 @@ namespace War3App.MapAdapter.WinForms
             }
         }
 
-        private static void OnWatchedFileEvent(object sender, EventArgs e)
+        private static void OnWatchedFileEvent(object? sender, EventArgs e)
         {
             SetOpenArchiveButtonEnabled(File.Exists(_archiveInput.Text));
         }

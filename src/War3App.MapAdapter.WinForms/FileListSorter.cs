@@ -18,7 +18,7 @@ namespace War3App.MapAdapter.WinForms
 
         public int SortColumn { get; set; }
 
-        public void Sort(object sender, ColumnClickEventArgs e)
+        public void Sort(object? sender, ColumnClickEventArgs e)
         {
             if (e.Column == SortColumn)
             {
@@ -33,7 +33,7 @@ namespace War3App.MapAdapter.WinForms
             _fileList.Sort();
         }
 
-        public int Compare(object x, object y)
+        public int Compare(object? x, object? y)
         {
             if (x is ListViewItem item1 && y is ListViewItem item2)
             {

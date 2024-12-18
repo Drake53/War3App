@@ -49,13 +49,13 @@ namespace War3App.MapAdapter.WinForms.Extensions
             item.SetImageIndex(tag, null);
         }
 
-        public static void Update(this ListViewItem item, AdaptResult adaptResult)
+        public static void Update(this ListViewItem item, AdaptResult? adaptResult)
         {
             var tag = item.GetTag();
             tag.AdaptResult = adaptResult;
 
             item.SubItems[StatusColumnIndex].Text = tag.Status.ToString();
-            item.SubItems[FileNameColumnIndex].ForeColor = adaptResult.AdaptedFileStream is not null ? Color.Violet : Color.Black;
+            item.SubItems[FileNameColumnIndex].ForeColor = adaptResult?.AdaptedFileStream is not null ? Color.Violet : Color.Black;
             item.SetImageIndex(tag, adaptResult);
         }
 
