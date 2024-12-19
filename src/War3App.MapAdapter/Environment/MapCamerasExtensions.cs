@@ -57,7 +57,7 @@ namespace War3App.MapAdapter.Environment
 
         public static GamePatch GetMinimumPatch(this MapCameras mapCameras)
         {
-            return mapCameras.UseNewFormat ? GamePatch.v1_31_0 : GamePatch.v1_00;
+            return mapCameras.UseNewFormat && mapCameras.Cameras.Count > 0 ? GamePatch.v1_31_0 : GamePatch.v1_00;
         }
     }
 }
