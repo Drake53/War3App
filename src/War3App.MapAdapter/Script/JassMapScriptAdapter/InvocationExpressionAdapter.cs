@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
+using War3App.MapAdapter.Diagnostics;
+
 using War3Net.CodeAnalysis.Jass;
 using War3Net.CodeAnalysis.Jass.Syntax;
 
@@ -13,7 +15,7 @@ namespace War3App.MapAdapter.Script
             {
                 if (string.IsNullOrEmpty(adaptedInvocationName))
                 {
-                    context.Diagnostics.Add($"Invocation expression of function '{invocationExpression.IdentifierName}' should be removed.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationExpressionShouldBeRemoved, invocationExpression.IdentifierName);
                     adaptedInvocationExpression = invocationExpression;
                 }
                 else if (TryAdaptArgumentList(context, adaptedInvocationArguments, out var adaptedArguments))

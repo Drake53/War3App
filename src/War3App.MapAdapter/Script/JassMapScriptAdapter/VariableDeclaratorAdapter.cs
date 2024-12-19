@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
+using War3App.MapAdapter.Diagnostics;
+
 using War3Net.CodeAnalysis.Jass.Syntax;
 
 namespace War3App.MapAdapter.Script
@@ -10,21 +12,21 @@ namespace War3App.MapAdapter.Script
         {
             if (!context.KnownTypes.ContainsKey(declarator.Type.TypeName.Name))
             {
-                context.Diagnostics.Add($"Unknown variable type '{declarator.Type}'.");
+                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationUnknownType, declarator.Type, declarator.IdentifierName);
             }
 
             if (isGlobalVariable)
             {
                 if (!context.KnownGlobalVariables.TryAdd(declarator.IdentifierName.Name, declarator.Type.TypeName.Name))
                 {
-                    context.Diagnostics.Add($"Duplicate global variable '{declarator.IdentifierName}'.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationConflictingVariableName, declarator.IdentifierName, "global");
                 }
             }
             else
             {
                 if (!context.KnownLocalVariables.TryAdd(declarator.IdentifierName.Name, declarator.Type.TypeName.Name))
                 {
-                    context.Diagnostics.Add($"Duplicate local variable '{declarator.IdentifierName}'.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationConflictingVariableName, declarator.IdentifierName, "local");
                 }
             }
 

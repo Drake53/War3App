@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
+using War3App.MapAdapter.Diagnostics;
+
 using War3Net.CodeAnalysis.Jass.Syntax;
 
 namespace War3App.MapAdapter.Script
@@ -12,12 +14,12 @@ namespace War3App.MapAdapter.Script
             {
                 if (knownFunctionParameters.Length != 0)
                 {
-                    context.Diagnostics.Add($"Invalid function reference: '{functionReferenceExpression.IdentifierName}' should not have any parameters.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.FunctionReferenceHasParameters, functionReferenceExpression.IdentifierName, knownFunctionParameters.Length);
                 }
             }
             else
             {
-                context.Diagnostics.Add($"Unknown function '{functionReferenceExpression.IdentifierName}'.");
+                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.FunctionReferenceUnknownIdentifier, functionReferenceExpression.IdentifierName);
             }
 
             adaptedFunctionReferenceExpression = null;

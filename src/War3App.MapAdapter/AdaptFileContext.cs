@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 using War3App.MapAdapter.Diagnostics;
@@ -21,6 +22,10 @@ namespace War3App.MapAdapter
         public TargetPatch TargetPatch { get; set; }
 
         public GamePatch OriginPatch { get; set; }
+
+        public bool HasDiagnostics => _diagnostics.Count > 0;
+
+        public bool HasErrorDiagnostics => _diagnostics.Any(d => d.Descriptor.Severity == DiagnosticSeverity.Error);
 
         public void ReportDiagnostic(DiagnosticDescriptor diagnostic, params object?[] arguments)
         {

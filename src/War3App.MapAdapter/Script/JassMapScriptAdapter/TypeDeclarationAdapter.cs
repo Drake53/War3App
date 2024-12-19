@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
+using War3App.MapAdapter.Diagnostics;
+
 using War3Net.CodeAnalysis.Jass.Syntax;
 
 namespace War3App.MapAdapter.Script
@@ -10,7 +12,7 @@ namespace War3App.MapAdapter.Script
         {
             if (!context.KnownTypes.ContainsKey(typeDeclaration.BaseType.TypeName.Name))
             {
-                context.Diagnostics.Add($"Unknown base type '{typeDeclaration.BaseType}'.");
+                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.TypeDeclarationUnknownBaseType, typeDeclaration.BaseType, typeDeclaration.IdentifierName);
             }
 
             context.KnownTypes.Add(typeDeclaration.IdentifierName.Name, typeDeclaration.BaseType.TypeName.Name);

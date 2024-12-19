@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
+using War3App.MapAdapter.Diagnostics;
+
 using War3Net.CodeAnalysis.Jass.Syntax;
 
 namespace War3App.MapAdapter.Script
@@ -11,7 +13,7 @@ namespace War3App.MapAdapter.Script
             if (!context.KnownLocalVariables.ContainsKey(setStatement.IdentifierName.Name) &&
                 !context.KnownGlobalVariables.ContainsKey(setStatement.IdentifierName.Name))
             {
-                context.Diagnostics.Add($"Unknown variable '{setStatement.IdentifierName}'.");
+                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.SetStatementUnknownVariableIdentifier, setStatement.IdentifierName);
             }
 
             if (TryAdaptExpression(context, setStatement.Indexer, out var adaptedIndexer) |

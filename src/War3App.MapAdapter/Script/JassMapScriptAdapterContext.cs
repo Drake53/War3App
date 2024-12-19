@@ -7,9 +7,9 @@ namespace War3App.MapAdapter.Script
 {
     public class JassMapScriptAdapterContext
     {
-        public JassMapScriptAdapterContext()
+        public JassMapScriptAdapterContext(AdaptFileContext adaptFileContext)
         {
-            Diagnostics = new();
+            AdaptFileContext = adaptFileContext;
             KnownTypes = new(StringComparer.Ordinal);
             KnownFunctions = new(StringComparer.Ordinal);
             KnownGlobalVariables = new(StringComparer.Ordinal);
@@ -25,18 +25,18 @@ namespace War3App.MapAdapter.Script
             KnownTypes.Add(JassKeyword.Code, null);
         }
 
-        public List<string> Diagnostics { get; set; }
+        public AdaptFileContext AdaptFileContext { get; }
 
-        public Dictionary<string, string?> KnownTypes { get; set; }
+        public Dictionary<string, string?> KnownTypes { get; }
 
-        public Dictionary<string, string[]> KnownFunctions { get; set; }
+        public Dictionary<string, string[]> KnownFunctions { get; }
 
-        public Dictionary<string, string> KnownGlobalVariables { get; set; }
+        public Dictionary<string, string> KnownGlobalVariables { get; }
 
-        public Dictionary<string, string> KnownLocalVariables { get; set; }
+        public Dictionary<string, string> KnownLocalVariables { get; }
 
-        public Dictionary<string, string> DialogueTitles { get; set; }
+        public Dictionary<string, string> DialogueTitles { get; }
 
-        public Dictionary<string, string> DialogueTexts { get; set; }
+        public Dictionary<string, string> DialogueTexts { get; }
     }
 }

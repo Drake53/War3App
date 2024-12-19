@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 
+using War3App.MapAdapter.Diagnostics;
+
 using War3Net.CodeAnalysis.Jass;
 using War3Net.CodeAnalysis.Jass.Extensions;
 using War3Net.CodeAnalysis.Jass.Syntax;
-using War3Net.Common.Extensions;
 
 namespace War3App.MapAdapter.Script
 {
@@ -17,7 +18,7 @@ namespace War3App.MapAdapter.Script
             {
                 if (knownFunctionParameters.Length != invocation.Arguments.Arguments.Length)
                 {
-                    context.Diagnostics.Add($"Invalid function invocation: '{invocation.IdentifierName}' expected {knownFunctionParameters.Length} parameters but got {invocation.Arguments.Arguments.Length}.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationParameterCountMismatch, invocation.IdentifierName, knownFunctionParameters.Length, invocation.Arguments.Arguments.Length);
                 }
             }
             else
@@ -72,7 +73,7 @@ namespace War3App.MapAdapter.Script
                     {
                         if (!context.DialogueTitles.TryAdd(variableReferenceExpression.IdentifierName.Name, stringLiteralExpression.Value))
                         {
-                            context.Diagnostics.Add($"Duplicate dialogue title for sound '{variableReferenceExpression.IdentifierName}'.");
+                            context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationConflictingDialogueTitle, stringLiteralExpression.Value, variableReferenceExpression.IdentifierName);
                         }
                     }
 
@@ -88,7 +89,7 @@ namespace War3App.MapAdapter.Script
                     {
                         if (!context.DialogueTexts.TryAdd(variableReferenceExpression.IdentifierName.Name, stringLiteralExpression.Value))
                         {
-                            context.Diagnostics.Add($"Duplicate dialogue text for sound '{variableReferenceExpression.IdentifierName}'.");
+                            context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationConflictingDialogueText, stringLiteralExpression.Value, variableReferenceExpression.IdentifierName);
                         }
                     }
 
@@ -154,7 +155,7 @@ namespace War3App.MapAdapter.Script
                 }
                 else
                 {
-                    context.Diagnostics.Add($"Unknown function '{invocation.IdentifierName}'.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationUnknownFunctionIdentifier, invocation.IdentifierName, invocation is JassCallStatementSyntax ? "call statement" : "invocation expression");
 
                     adaptedInvocationName = null;
                     adaptedInvocationArguments = null;
@@ -178,40 +179,43 @@ namespace War3App.MapAdapter.Script
             int skinIdArgumentIndex)
             where TInvocation : IInvocationSyntax
         {
-            if (invocation.Arguments.Arguments.Length == expectedArgumentCount &&
-                invocation.Arguments.Arguments[typeIdArgumentIndex].TryGetIntegerExpressionValue(out var typeId) &&
-                invocation.Arguments.Arguments[skinIdArgumentIndex].TryGetIntegerExpressionValue(out var skinId))
+            if (invocation.Arguments.Arguments.Length == expectedArgumentCount)
             {
-                if (typeId == skinId)
+                var typeId = invocation.Arguments.Arguments[typeIdArgumentIndex];
+                var skinId = invocation.Arguments.Arguments[skinIdArgumentIndex];
+
+                if (typeId.NullableEquals(skinId))
                 {
-                    var arguments = new IExpressionSyntax[expectedArgumentCount - 1];
-                    for (var i = 0; i < expectedArgumentCount; i++)
-                    {
-                        if (i == skinIdArgumentIndex)
-                        {
-                            continue;
-                        }
-
-                        arguments[i > skinIdArgumentIndex ? i - 1 : i] = invocation.Arguments.Arguments[i];
-                    }
-
-                    adaptedInvocationName = replacementFunctionName;
-                    adaptedInvocationArguments = JassSyntaxFactory.ArgumentList(arguments);
-                    return true;
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationBlzCreateWithSkinIdRemoved, invocation.IdentifierName, replacementFunctionName);
                 }
                 else
                 {
-                    context.Diagnostics.Add($"Unable to adapt '{invocation.IdentifierName}' to '{replacementFunctionName}', because the skin '{skinId.ToRawcode()}' is not the same as the type '{typeId.ToRawcode()}'.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationBlzCreateWithSkinIdDeleted, invocation.IdentifierName, replacementFunctionName, skinId, typeId);
                 }
+
+                var arguments = new IExpressionSyntax[expectedArgumentCount - 1];
+                for (var i = 0; i < expectedArgumentCount; i++)
+                {
+                    if (i == skinIdArgumentIndex)
+                    {
+                        continue;
+                    }
+
+                    arguments[i > skinIdArgumentIndex ? i - 1 : i] = invocation.Arguments.Arguments[i];
+                }
+
+                adaptedInvocationName = replacementFunctionName;
+                adaptedInvocationArguments = JassSyntaxFactory.ArgumentList(arguments);
+                return true;
             }
             else
             {
-                context.Diagnostics.Add($"Unable to adapt '{invocation.IdentifierName}' to '{replacementFunctionName}', because the type '{invocation.Arguments.Arguments[typeIdArgumentIndex]}' and/or skin '{invocation.Arguments.Arguments[skinIdArgumentIndex]}' are not integer literals.");
-            }
+                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationParameterCountMismatch, invocation.IdentifierName, expectedArgumentCount, invocation.Arguments.Arguments.Length);
 
-            adaptedInvocationName = null;
-            adaptedInvocationArguments = null;
-            return false;
+                adaptedInvocationName = null;
+                adaptedInvocationArguments = null;
+                return false;
+            }
         }
     }
 }

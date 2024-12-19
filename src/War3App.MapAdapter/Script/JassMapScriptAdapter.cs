@@ -56,7 +56,7 @@ namespace War3App.MapAdapter.Script
                 return context.ReportParseError(e);
             }
 
-            var scriptAdapterContext = new JassMapScriptAdapterContext();
+            var scriptAdapterContext = new JassMapScriptAdapterContext(context);
 
             foreach (var declaration in commonJCompilationUnit.Declarations)
             {
@@ -68,17 +68,17 @@ namespace War3App.MapAdapter.Script
                 RegisterDeclaration(declaration, scriptAdapterContext);
             }
 
-            // Common.j and Blizzard.j should not cause any diagnostics.
-            if (scriptAdapterContext.Diagnostics.Count > 0)
+            // Common.j and Blizzard.j should not report any diagnostics.
+            if (context.HasDiagnostics)
             {
                 return MapFileStatus.Error;
             }
 
             var adapted = TryAdaptCompilationUnit(scriptAdapterContext, compilationUnit, out var adaptedCompilationUnit);
 
-            var status = scriptAdapterContext.Diagnostics.Count == 0
-                ? MapFileStatus.Compatible
-                : MapFileStatus.Incompatible;
+            var status = context.HasErrorDiagnostics
+                ? MapFileStatus.Incompatible
+                : MapFileStatus.Compatible;
 
             if (!adapted)
             {
@@ -107,7 +107,7 @@ namespace War3App.MapAdapter.Script
             {
                 if (!context.KnownTypes.ContainsKey(typeDeclaration.BaseType.TypeName.Name))
                 {
-                    context.Diagnostics.Add($"Unknown base type '{typeDeclaration.BaseType}'.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.TypeDeclarationUnknownBaseType, typeDeclaration.BaseType, typeDeclaration.IdentifierName);
                 }
 
                 context.KnownTypes.Add(typeDeclaration.IdentifierName.Name, typeDeclaration.BaseType.TypeName.Name);
@@ -128,7 +128,7 @@ namespace War3App.MapAdapter.Script
                     nativeFunctionDeclaration.FunctionDeclarator.IdentifierName.Name,
                     nativeFunctionDeclaration.FunctionDeclarator.ParameterList.Parameters.Select(parameter => parameter.Type.TypeName.Name).ToArray()))
                 {
-                    context.Diagnostics.Add($"Duplicate function '{nativeFunctionDeclaration.FunctionDeclarator.IdentifierName}'.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.FunctionDeclarationConflictingFunctionName, nativeFunctionDeclaration.FunctionDeclarator.IdentifierName);
                 }
             }
             else if (declaration is JassFunctionDeclarationSyntax functionDeclaration)
@@ -137,19 +137,19 @@ namespace War3App.MapAdapter.Script
                     functionDeclaration.FunctionDeclarator.IdentifierName.Name,
                     functionDeclaration.FunctionDeclarator.ParameterList.Parameters.Select(parameter => parameter.Type.TypeName.Name).ToArray()))
                 {
-                    context.Diagnostics.Add($"Duplicate function '{functionDeclaration.FunctionDeclarator.IdentifierName}'.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.FunctionDeclarationConflictingFunctionName, functionDeclaration.FunctionDeclarator.IdentifierName);
                 }
 
                 foreach (var parameter in functionDeclaration.FunctionDeclarator.ParameterList.Parameters)
                 {
                     if (!context.KnownTypes.ContainsKey(parameter.Type.TypeName.Name))
                     {
-                        context.Diagnostics.Add($"Unknown variable type '{parameter.Type}'.");
+                        context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.FunctionDeclarationUnknownParameterVariableType, parameter.Type, functionDeclaration.FunctionDeclarator.IdentifierName, parameter.IdentifierName);
                     }
 
                     if (!context.KnownLocalVariables.TryAdd(parameter.IdentifierName.Name, parameter.Type.TypeName.Name))
                     {
-                        context.Diagnostics.Add($"Duplicate local variable '{parameter.IdentifierName}'.");
+                        context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.FunctionDeclarationConflictingParameterVariableName, parameter.IdentifierName, functionDeclaration.FunctionDeclarator.IdentifierName);
                     }
                 }
 
@@ -163,7 +163,7 @@ namespace War3App.MapAdapter.Script
         {
             if (!context.KnownTypes.ContainsKey(declarator.Type.TypeName.Name))
             {
-                context.Diagnostics.Add($"Unknown variable type '{declarator.Type}'.");
+                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationUnknownType, declarator.Type, declarator.IdentifierName);
             }
 
             if (declarator is JassVariableDeclaratorSyntax variableDeclarator)
@@ -178,14 +178,14 @@ namespace War3App.MapAdapter.Script
             {
                 if (!context.KnownGlobalVariables.TryAdd(declarator.IdentifierName.Name, declarator.Type.TypeName.Name))
                 {
-                    context.Diagnostics.Add($"Duplicate global variable '{declarator.IdentifierName}'.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationConflictingVariableName, declarator.IdentifierName, "global");
                 }
             }
             else
             {
                 if (!context.KnownLocalVariables.TryAdd(declarator.IdentifierName.Name, declarator.Type.TypeName.Name))
                 {
-                    context.Diagnostics.Add($"Duplicate local variable '{declarator.IdentifierName}'.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationConflictingVariableName, declarator.IdentifierName, "local");
                 }
             }
         }
@@ -211,7 +211,7 @@ namespace War3App.MapAdapter.Script
                 {
                     if (knownFunctionParameters.Length != invocationExpression.Arguments.Arguments.Length)
                     {
-                        context.Diagnostics.Add($"Invalid function invocation: '{invocationExpression.IdentifierName}' expected {knownFunctionParameters.Length} parameters but got {invocationExpression.Arguments.Arguments.Length}.");
+                        context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationParameterCountMismatch, invocationExpression.IdentifierName, knownFunctionParameters.Length, invocationExpression.Arguments.Arguments.Length);
                     }
                     else
                     {
@@ -223,7 +223,7 @@ namespace War3App.MapAdapter.Script
                 }
                 else
                 {
-                    context.Diagnostics.Add($"Unknown function '{invocationExpression.IdentifierName}'.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationUnknownFunctionIdentifier, invocationExpression.IdentifierName, "invocation expression");
                 }
             }
             else if (expression is JassFunctionReferenceExpressionSyntax functionReferenceExpression)
@@ -232,12 +232,12 @@ namespace War3App.MapAdapter.Script
                 {
                     if (knownFunctionParameters.Length != 0)
                     {
-                        context.Diagnostics.Add($"Invalid function reference: '{functionReferenceExpression.IdentifierName}' should not have any parameters.");
+                        context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.FunctionReferenceHasParameters, functionReferenceExpression.IdentifierName, knownFunctionParameters.Length);
                     }
                 }
                 else
                 {
-                    context.Diagnostics.Add($"Unknown function '{functionReferenceExpression.IdentifierName}'.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.FunctionReferenceUnknownIdentifier, functionReferenceExpression.IdentifierName);
                 }
             }
             else if (expression is JassVariableReferenceExpressionSyntax variableReferenceExpression)
@@ -245,7 +245,7 @@ namespace War3App.MapAdapter.Script
                 if (!context.KnownLocalVariables.ContainsKey(variableReferenceExpression.IdentifierName.Name) &&
                     !context.KnownGlobalVariables.ContainsKey(variableReferenceExpression.IdentifierName.Name))
                 {
-                    context.Diagnostics.Add($"Unknown variable '{variableReferenceExpression.IdentifierName}'.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableReferenceUnknownIdentifier, variableReferenceExpression.IdentifierName);
                 }
             }
             else if (expression is JassArrayReferenceExpressionSyntax arrayReferenceExpression)
@@ -253,7 +253,7 @@ namespace War3App.MapAdapter.Script
                 if (!context.KnownLocalVariables.ContainsKey(arrayReferenceExpression.IdentifierName.Name) &&
                     !context.KnownGlobalVariables.ContainsKey(arrayReferenceExpression.IdentifierName.Name))
                 {
-                    context.Diagnostics.Add($"Unknown array '{arrayReferenceExpression.IdentifierName}'.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.ArrayReferenceUnknownIdentifier, arrayReferenceExpression.IdentifierName);
                 }
             }
         }
@@ -273,7 +273,7 @@ namespace War3App.MapAdapter.Script
                 if (!context.KnownLocalVariables.ContainsKey(setStatement.IdentifierName.Name) &&
                     !context.KnownGlobalVariables.ContainsKey(setStatement.IdentifierName.Name))
                 {
-                    context.Diagnostics.Add($"Unknown variable '{setStatement.IdentifierName}'.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.SetStatementUnknownVariableIdentifier, setStatement.IdentifierName);
                 }
 
                 if (setStatement.Indexer is not null)
@@ -289,7 +289,7 @@ namespace War3App.MapAdapter.Script
                 {
                     if (knownFunctionParameters.Length != callStatement.Arguments.Arguments.Length)
                     {
-                        context.Diagnostics.Add($"Invalid function invocation: '{callStatement.IdentifierName}' expected {knownFunctionParameters.Length} parameters but got {callStatement.Arguments.Arguments.Length}.");
+                        context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationParameterCountMismatch, callStatement.IdentifierName, knownFunctionParameters.Length, callStatement.Arguments.Arguments.Length);
                     }
                     else
                     {
@@ -301,7 +301,7 @@ namespace War3App.MapAdapter.Script
                 }
                 else
                 {
-                    context.Diagnostics.Add($"Unknown function '{callStatement.IdentifierName}'.");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationUnknownFunctionIdentifier, callStatement.IdentifierName, "call statement");
                 }
             }
             else if (statement is JassDebugStatementSyntax debugStatement)
