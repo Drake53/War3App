@@ -20,7 +20,7 @@ namespace War3App.MapAdapter.WinForms.Extensions
             var item = new ListViewItem(new[]
             {
                 string.Empty,
-                tag.FileName ?? "<unknown filename>",
+                tag.OriginalFileName ?? "<unknown filename>",
                 tag.Adapter?.MapFileDescription ?? string.Empty,
                 tag.ArchiveName,
             });
@@ -56,6 +56,17 @@ namespace War3App.MapAdapter.WinForms.Extensions
 
             item.SubItems[StatusColumnIndex].Text = tag.Status.ToString();
             item.SubItems[FileNameColumnIndex].ForeColor = adaptResult?.AdaptedFileStream is not null ? Color.Violet : Color.Black;
+
+            if (adaptResult is null || adaptResult.Status == MapFileStatus.Removed)
+            {
+                item.SubItems[FileNameColumnIndex].Text = tag.OriginalFileName ?? "<unknown filename>";
+            }
+            else if (adaptResult.NewFileName is not null)
+            {
+                item.SubItems[FileNameColumnIndex].Text = adaptResult.NewFileName;
+                item.SubItems[FileNameColumnIndex].ForeColor = Color.Blue;
+            }
+
             item.SetImageIndex(tag, adaptResult);
         }
 

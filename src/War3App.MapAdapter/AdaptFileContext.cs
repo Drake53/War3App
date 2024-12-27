@@ -17,6 +17,8 @@ namespace War3App.MapAdapter
 
         public string? FileName { get; set; }
 
+        public string? NewFileName { get; set; }
+
         public MpqArchive Archive { get; set; }
 
         public TargetPatch TargetPatch { get; set; }

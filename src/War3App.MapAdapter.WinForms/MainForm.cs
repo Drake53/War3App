@@ -284,7 +284,7 @@ namespace War3App.MapAdapter.WinForms
                     {
                         var context = new AdaptFileContext
                         {
-                            FileName = tag.FileName,
+                            FileName = tag.CurrentFileName,
                             Archive = tag.MpqArchive,
                             TargetPatch = GetTargetPatch(_targetPatch.Value),
                             OriginPatch = tag.GetOriginPatch(_originPatch.Value),
@@ -292,7 +292,6 @@ namespace War3App.MapAdapter.WinForms
 
                         tag.CurrentStream.Position = 0;
                         var adaptResult = adapter.Run(tag.CurrentStream, context);
-                        adaptResult.Diagnostics = context.GetDiagnostics();
                         tag.UpdateAdaptResult(adaptResult);
 
                         if (tag.Parent != null)
@@ -511,7 +510,7 @@ namespace War3App.MapAdapter.WinForms
                 {
                     OverwritePrompt = true,
                     CreatePrompt = false,
-                    FileName = Path.GetFileName(tag.FileName) ?? tag.Adapter?.DefaultFileName,
+                    FileName = Path.GetFileName(tag.CurrentFileName) ?? tag.Adapter?.DefaultFileName,
                 };
 
                 var extension = Path.GetExtension(saveFileDialog.FileName);
@@ -606,7 +605,7 @@ namespace War3App.MapAdapter.WinForms
                         {
                             var context = new AdaptFileContext
                             {
-                                FileName = child.FileName,
+                                FileName = child.CurrentFileName,
                                 Archive = child.MpqArchive,
                                 TargetPatch = GetTargetPatch(_targetPatch.Value),
                                 OriginPatch = child.GetOriginPatch(_originPatch.Value),
@@ -614,7 +613,6 @@ namespace War3App.MapAdapter.WinForms
 
                             tag.CurrentStream.Position = 0;
                             var adaptResult = adapter.Run(child.CurrentStream, context);
-                            adaptResult.Diagnostics = context.GetDiagnostics();
                             child.UpdateAdaptResult(adaptResult);
                         }
                     }
@@ -628,7 +626,7 @@ namespace War3App.MapAdapter.WinForms
                     {
                         var context = new AdaptFileContext
                         {
-                            FileName = tag.FileName,
+                            FileName = tag.CurrentFileName,
                             Archive = tag.MpqArchive,
                             TargetPatch = GetTargetPatch(_targetPatch.Value),
                             OriginPatch = tag.GetOriginPatch(_originPatch.Value),
@@ -636,7 +634,6 @@ namespace War3App.MapAdapter.WinForms
 
                         tag.CurrentStream.Position = 0;
                         var adaptResult = adapter.Run(tag.CurrentStream, context);
-                        adaptResult.Diagnostics = context.GetDiagnostics();
                         tag.UpdateAdaptResult(adaptResult);
 
                         if (tag.Parent != null)
@@ -1069,12 +1066,12 @@ namespace War3App.MapAdapter.WinForms
                     else if (tag.Children.Any(child => child.IsModified || child.Status == MapFileStatus.Removed))
                     {
                         // Assume at most one nested archive (for campaign archives), so no recursion.
-                        using var subArchive = MpqArchive.Open(_archive.OpenFile(tag.FileName));
+                        using var subArchive = MpqArchive.Open(_archive.OpenFile(tag.OriginalFileName));
                         foreach (var child in tag.Children)
                         {
-                            if (child.FileName != null)
+                            if (child.OriginalFileName != null)
                             {
-                                subArchive.AddFileName(child.FileName);
+                                subArchive.AddFileName(child.OriginalFileName);
                             }
                         }
 
@@ -1108,7 +1105,7 @@ namespace War3App.MapAdapter.WinForms
                         subArchiveBuilder.SaveWithPreArchiveData(adaptedSubArchiveStream, true);
 
                         adaptedSubArchiveStream.Position = 0;
-                        var adaptedFile = MpqFile.New(adaptedSubArchiveStream, tag.FileName, false);
+                        var adaptedFile = MpqFile.New(adaptedSubArchiveStream, tag.CurrentFileName, false);
                         adaptedFile.TargetFlags = tag.MpqEntry.Flags;
                         archiveBuilder.AddFile(adaptedFile);
 

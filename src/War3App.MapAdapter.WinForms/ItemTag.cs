@@ -19,7 +19,7 @@ namespace War3App.MapAdapter.WinForms
         {
             MpqArchive = archive;
             MpqEntry = mpqEntry;
-            FileName = mpqEntry.FileName;
+            OriginalFileName = mpqEntry.FileName;
             ArchiveName = archiveName ?? string.Empty;
             OriginalFileStream = archive.OpenFile(mpqEntry);
             OriginalIndex = originalIndex;
@@ -32,7 +32,7 @@ namespace War3App.MapAdapter.WinForms
             }
             else
             {
-                Adapter = AdapterFactory.GetAdapter(OriginalFileStream, FileName);
+                Adapter = AdapterFactory.GetAdapter(OriginalFileStream, OriginalFileName);
                 Status = Adapter is null ? MapFileStatus.Unknown : MapFileStatus.Pending;
             }
         }
@@ -41,7 +41,7 @@ namespace War3App.MapAdapter.WinForms
         {
             MpqArchive = archive;
             MpqEntry = mpqEntry;
-            FileName = mpqEntry.FileName;
+            OriginalFileName = mpqEntry.FileName;
             ArchiveName = string.Empty;
             Adapter = null;
             OriginalFileStream = archive.OpenFile(mpqEntry);
@@ -60,7 +60,7 @@ namespace War3App.MapAdapter.WinForms
 
         public MpqEntry MpqEntry { get; }
 
-        public string? FileName { get; }
+        public string? OriginalFileName { get; }
 
         public string ArchiveName { get; }
 
@@ -86,6 +86,8 @@ namespace War3App.MapAdapter.WinForms
             set => _status = value;
         }
 
+        public string? CurrentFileName => AdaptResult?.NewFileName ?? OriginalFileName;
+
         public Stream? CurrentStream => AdaptResult?.AdaptedFileStream ?? OriginalFileStream;
 
         [MemberNotNullWhen(true, nameof(AdaptResult))]
@@ -93,16 +95,9 @@ namespace War3App.MapAdapter.WinForms
 
         public void UpdateAdaptResult(AdaptResult adaptResult)
         {
-            if (AdaptResult?.AdaptedFileStream is not null)
+            if (AdaptResult is not null)
             {
-                if (adaptResult.AdaptedFileStream is null)
-                {
-                    adaptResult.AdaptedFileStream = AdaptResult.AdaptedFileStream;
-                }
-                else
-                {
-                    AdaptResult.Dispose();
-                }
+                adaptResult.Merge(AdaptResult);
             }
 
             ListViewItem.Update(adaptResult);
@@ -113,7 +108,7 @@ namespace War3App.MapAdapter.WinForms
             if (IsModified)
             {
                 AdaptResult.AdaptedFileStream.Position = 0;
-                mpqFile = MpqFile.New(AdaptResult.AdaptedFileStream, FileName, true);
+                mpqFile = MpqFile.New(AdaptResult.AdaptedFileStream, CurrentFileName, true);
                 mpqFile.TargetFlags = MpqEntry.Flags;
 
                 return true;
@@ -125,13 +120,13 @@ namespace War3App.MapAdapter.WinForms
 
         public bool TryGetHashedFileName(out ulong hashedFileName)
         {
-            if (FileName is null)
+            if (CurrentFileName is null)
             {
                 hashedFileName = default;
                 return false;
             }
 
-            hashedFileName = MpqHash.GetHashedFileName(FileName);
+            hashedFileName = MpqHash.GetHashedFileName(CurrentFileName);
             return true;
         }
 

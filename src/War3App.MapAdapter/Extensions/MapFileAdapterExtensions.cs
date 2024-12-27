@@ -12,14 +12,20 @@ namespace War3App.MapAdapter.Extensions
 
         public static AdaptResult Run(this IMapFileAdapter adapter, Stream stream, AdaptFileContext context)
         {
+            AdaptResult result;
             try
             {
-                return adapter.AdaptFile(stream, context);
+                result = adapter.AdaptFile(stream, context);
             }
             catch (Exception e)
             {
-                return context.ReportAdapterError(e);
+                result = context.ReportAdapterError(e);
             }
+
+            result.Diagnostics = context.GetDiagnostics();
+            result.NewFileName = context.NewFileName;
+
+            return result;
         }
 
         public static string GetJson(this IMapFileAdapter adapter, Stream stream, GamePatch gamePatch)

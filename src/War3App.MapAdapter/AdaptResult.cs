@@ -30,6 +30,8 @@ namespace War3App.MapAdapter
 
         public Diagnostic[]? Diagnostics { get; set; }
 
+        public string? NewFileName { get; set; }
+
         public static implicit operator AdaptResult(MapFileStatus status) => new(status);
 
         public static AdaptResult Create(Stream stream, MapFileStatus status)
