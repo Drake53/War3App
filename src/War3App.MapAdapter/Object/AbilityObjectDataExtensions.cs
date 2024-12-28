@@ -18,6 +18,8 @@ namespace War3App.MapAdapter.Object
     {
         public static bool Adapt(this AbilityObjectData abilityObjectData, AdaptFileContext context, out MapFileStatus status)
         {
+            status = MapFileStatus.Compatible;
+
             var isSkinFileSupported = context.TargetPatch.Patch >= GamePatch.v1_33_0;
             if (!isSkinFileSupported)
             {
@@ -30,49 +32,45 @@ namespace War3App.MapAdapter.Object
                     var isSkinFile = context.FileName.EndsWith($"Skin{AbilityObjectData.FileExtension}");
                     if (isSkinFile)
                     {
-                        context.ReportDiagnostic(DiagnosticRule.ObjectData.RemovedSkinData, context.FileName.Replace($"Skin{AbilityObjectData.FileExtension}", AbilityObjectData.FileExtension));
-                        status = MapFileStatus.Removed;
-                        return false;
+                        var nonSkinFileName = context.FileName.Replace($"Skin{AbilityObjectData.FileExtension}", AbilityObjectData.FileExtension);
+
+                        if (context.Archive.FileExists(nonSkinFileName))
+                        {
+                            context.ReportDiagnostic(DiagnosticRule.ObjectData.RemovedSkinData, nonSkinFileName);
+                            status = MapFileStatus.Removed;
+                            return false;
+                        }
+
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.RenamedSkinData, nonSkinFileName);
+                        context.NewFileName = nonSkinFileName;
                     }
                 }
             }
 
-            var missingDataFiles = false;
+            var knownIds = context.GetKnownAbilityIdsFromSylkTables();
+            var knownProperties = context.GetKnownPropertiesFromSylkTables(PathConstants.AbilityMetaDataPath);
 
-            var abilityDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.AbilityDataPath);
-            if (!File.Exists(abilityDataPath))
-            {
-                context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.AbilityDataPath);
-                missingDataFiles = true;
-            }
-
-            var abilityMetaDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.AbilityMetaDataPath);
-            if (!File.Exists(abilityMetaDataPath))
-            {
-                context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.AbilityMetaDataPath);
-                missingDataFiles = true;
-            }
-
-            if (missingDataFiles)
+            if (knownIds is null ||
+                knownProperties is null)
             {
                 status = MapFileStatus.Inconclusive;
-                return false;
             }
 
             var isAdapted = false;
 
             if (abilityObjectData.GetMinimumPatch() > context.TargetPatch.Patch)
             {
-                if (!abilityObjectData.TryDowngrade(context.TargetPatch.Patch))
+                if (abilityObjectData.TryDowngrade(context.TargetPatch.Patch))
+                {
+                    isAdapted = true;
+                }
+                else
                 {
                     status = MapFileStatus.Incompatible;
-                    return false;
                 }
-
-                isAdapted = true;
             }
 
-            if (!isSkinFileSupported && context.FileName is not null)
+            if (!isSkinFileSupported && context.FileName is not null && !context.FileName.EndsWith($"Skin{AbilityObjectData.FileExtension}"))
             {
                 var expectedSkinFileName = context.FileName.Replace(AbilityObjectData.FileExtension, $"Skin{AbilityObjectData.FileExtension}");
 
@@ -102,30 +100,30 @@ namespace War3App.MapAdapter.Object
                 }
             }
 
-            var knownIds = new HashSet<int>();
-            knownIds.AddItemsFromSylkTable(abilityDataPath, DataConstants.AbilityDataKeyColumn);
-
-            var knownProperties = new HashSet<int>();
-            knownProperties.AddItemsFromSylkTable(abilityMetaDataPath, DataConstants.MetaDataIdColumn);
-
             var baseAbilities = new List<LevelObjectModification>();
             foreach (var ability in abilityObjectData.BaseAbilities)
             {
-                if (!knownIds.Contains(ability.OldId))
+                if (knownIds is not null)
                 {
-                    context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "ability", ability.OldId.ToRawcode());
-                    isAdapted = true;
-                    continue;
+                    if (!knownIds.Contains(ability.OldId))
+                    {
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "ability", ability.OldId.ToRawcode());
+                        isAdapted = true;
+                        continue;
+                    }
                 }
 
-                for (var i = 0; i < ability.Modifications.Count; i++)
+                if (knownProperties is not null)
                 {
-                    var property = ability.Modifications[i];
-                    if (!knownProperties.Contains(property.Id))
+                    for (var i = 0; i < ability.Modifications.Count; i++)
                     {
-                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
-                        isAdapted = true;
-                        ability.Modifications.RemoveAt(i--);
+                        var property = ability.Modifications[i];
+                        if (!knownProperties.Contains(property.Id))
+                        {
+                            context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
+                            isAdapted = true;
+                            ability.Modifications.RemoveAt(i--);
+                        }
                     }
                 }
 
@@ -135,35 +133,39 @@ namespace War3App.MapAdapter.Object
             var newAbilities = new List<LevelObjectModification>();
             foreach (var ability in abilityObjectData.NewAbilities)
             {
-                if (!knownIds.Contains(ability.OldId))
+                if (knownIds is not null)
                 {
-                    context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "ability", ability.NewId.ToRawcode(), ability.OldId.ToRawcode());
-                    isAdapted = true;
-                    continue;
-                }
-
-                if (knownIds.Contains(ability.NewId))
-                {
-                    context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "ability", ability.NewId.ToRawcode());
-                    isAdapted = true;
-                    continue;
-                }
-
-                for (var i = 0; i < ability.Modifications.Count; i++)
-                {
-                    var property = ability.Modifications[i];
-                    if (!knownProperties.Contains(property.Id))
+                    if (!knownIds.Contains(ability.OldId))
                     {
-                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "ability", ability.NewId.ToRawcode(), ability.OldId.ToRawcode());
                         isAdapted = true;
-                        ability.Modifications.RemoveAt(i--);
+                        continue;
+                    }
+
+                    if (knownIds.Contains(ability.NewId))
+                    {
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "ability", ability.NewId.ToRawcode());
+                        isAdapted = true;
+                        continue;
+                    }
+                }
+
+                if (knownProperties is not null)
+                {
+                    for (var i = 0; i < ability.Modifications.Count; i++)
+                    {
+                        var property = ability.Modifications[i];
+                        if (!knownProperties.Contains(property.Id))
+                        {
+                            context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
+                            isAdapted = true;
+                            ability.Modifications.RemoveAt(i--);
+                        }
                     }
                 }
 
                 newAbilities.Add(ability);
             }
-
-            status = MapFileStatus.Compatible;
 
             if (!isAdapted)
             {

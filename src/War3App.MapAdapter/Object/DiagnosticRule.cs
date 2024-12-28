@@ -28,6 +28,12 @@
                 Description = "The object data from this file will be merged into {0}.",
             };
 
+            public static readonly DiagnosticDescriptor RenamedSkinData = new()
+            {
+                Severity = DiagnosticSeverity.Info,
+                Description = "The file has been renamed to {0}, because skin object data files are not supported.",
+            };
+
             public static readonly DiagnosticDescriptor UnknownBaseId = new()
             {
                 Severity = DiagnosticSeverity.Warning,

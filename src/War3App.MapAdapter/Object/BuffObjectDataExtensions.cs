@@ -18,6 +18,8 @@ namespace War3App.MapAdapter.Object
     {
         public static bool Adapt(this BuffObjectData buffObjectData, AdaptFileContext context, out MapFileStatus status)
         {
+            status = MapFileStatus.Compatible;
+
             var isSkinFileSupported = context.TargetPatch.Patch >= GamePatch.v1_33_0;
             if (!isSkinFileSupported)
             {
@@ -30,49 +32,45 @@ namespace War3App.MapAdapter.Object
                     var isSkinFile = context.FileName.EndsWith($"Skin{BuffObjectData.FileExtension}");
                     if (isSkinFile)
                     {
-                        context.ReportDiagnostic(DiagnosticRule.ObjectData.RemovedSkinData, context.FileName.Replace($"Skin{BuffObjectData.FileExtension}", BuffObjectData.FileExtension));
-                        status = MapFileStatus.Removed;
-                        return false;
+                        var nonSkinFileName = context.FileName.Replace($"Skin{BuffObjectData.FileExtension}", BuffObjectData.FileExtension);
+                        
+                        if (context.Archive.FileExists(nonSkinFileName))
+                        {
+                            context.ReportDiagnostic(DiagnosticRule.ObjectData.RemovedSkinData, nonSkinFileName);
+                            status = MapFileStatus.Removed;
+                            return false;
+                        }
+
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.RenamedSkinData, nonSkinFileName);
+                        context.NewFileName = nonSkinFileName;
                     }
                 }
             }
 
-            var missingDataFiles = false;
+            var knownIds = context.GetKnownBuffIdsFromSylkTables();
+            var knownProperties = context.GetKnownPropertiesFromSylkTables(PathConstants.BuffMetaDataPath);
 
-            var buffDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.BuffDataPath);
-            if (!File.Exists(buffDataPath))
-            {
-                context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.BuffDataPath);
-                missingDataFiles = true;
-            }
-
-            var buffMetaDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.BuffMetaDataPath);
-            if (!File.Exists(buffMetaDataPath))
-            {
-                context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.BuffMetaDataPath);
-                missingDataFiles = true;
-            }
-
-            if (missingDataFiles)
+            if (knownIds is null ||
+                knownProperties is null)
             {
                 status = MapFileStatus.Inconclusive;
-                return false;
             }
 
             var isAdapted = false;
 
             if (buffObjectData.GetMinimumPatch() > context.TargetPatch.Patch)
             {
-                if (!buffObjectData.TryDowngrade(context.TargetPatch.Patch))
+                if (buffObjectData.TryDowngrade(context.TargetPatch.Patch))
+                {
+                    isAdapted = true;
+                }
+                else
                 {
                     status = MapFileStatus.Incompatible;
-                    return false;
                 }
-
-                isAdapted = true;
             }
 
-            if (!isSkinFileSupported && context.FileName is not null)
+            if (!isSkinFileSupported && context.FileName is not null && !context.FileName.EndsWith($"Skin{BuffObjectData.FileExtension}"))
             {
                 var expectedSkinFileName = context.FileName.Replace(BuffObjectData.FileExtension, $"Skin{BuffObjectData.FileExtension}");
 
@@ -102,30 +100,30 @@ namespace War3App.MapAdapter.Object
                 }
             }
 
-            var knownIds = new HashSet<int>();
-            knownIds.AddItemsFromSylkTable(buffDataPath, DataConstants.BuffDataKeyColumn);
-
-            var knownProperties = new HashSet<int>();
-            knownProperties.AddItemsFromSylkTable(buffMetaDataPath, DataConstants.MetaDataIdColumn);
-
             var baseBuffs = new List<SimpleObjectModification>();
             foreach (var buff in buffObjectData.BaseBuffs)
             {
-                if (!knownIds.Contains(buff.OldId))
+                if (knownIds is not null)
                 {
-                    context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "buff", buff.OldId.ToRawcode());
-                    isAdapted = true;
-                    continue;
+                    if (!knownIds.Contains(buff.OldId))
+                    {
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "buff", buff.OldId.ToRawcode());
+                        isAdapted = true;
+                        continue;
+                    }
                 }
 
-                for (var i = 0; i < buff.Modifications.Count; i++)
+                if (knownProperties is not null)
                 {
-                    var property = buff.Modifications[i];
-                    if (!knownProperties.Contains(property.Id))
+                    for (var i = 0; i < buff.Modifications.Count; i++)
                     {
-                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
-                        isAdapted = true;
-                        buff.Modifications.RemoveAt(i--);
+                        var property = buff.Modifications[i];
+                        if (!knownProperties.Contains(property.Id))
+                        {
+                            context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
+                            isAdapted = true;
+                            buff.Modifications.RemoveAt(i--);
+                        }
                     }
                 }
 
@@ -135,35 +133,39 @@ namespace War3App.MapAdapter.Object
             var newBuffs = new List<SimpleObjectModification>();
             foreach (var buff in buffObjectData.NewBuffs)
             {
-                if (!knownIds.Contains(buff.OldId))
+                if (knownIds is not null)
                 {
-                    context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "buff", buff.NewId.ToRawcode(), buff.OldId.ToRawcode());
-                    isAdapted = true;
-                    continue;
-                }
-
-                if (knownIds.Contains(buff.NewId))
-                {
-                    context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "buff", buff.NewId.ToRawcode());
-                    isAdapted = true;
-                    continue;
-                }
-
-                for (var i = 0; i < buff.Modifications.Count; i++)
-                {
-                    var property = buff.Modifications[i];
-                    if (!knownProperties.Contains(property.Id))
+                    if (!knownIds.Contains(buff.OldId))
                     {
-                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "buff", buff.NewId.ToRawcode(), buff.OldId.ToRawcode());
                         isAdapted = true;
-                        buff.Modifications.RemoveAt(i--);
+                        continue;
+                    }
+
+                    if (knownIds.Contains(buff.NewId))
+                    {
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "buff", buff.NewId.ToRawcode());
+                        isAdapted = true;
+                        continue;
+                    }
+                }
+
+                if (knownProperties is not null)
+                {
+                    for (var i = 0; i < buff.Modifications.Count; i++)
+                    {
+                        var property = buff.Modifications[i];
+                        if (!knownProperties.Contains(property.Id))
+                        {
+                            context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
+                            isAdapted = true;
+                            buff.Modifications.RemoveAt(i--);
+                        }
                     }
                 }
 
                 newBuffs.Add(buff);
             }
-
-            status = MapFileStatus.Compatible;
 
             if (!isAdapted)
             {

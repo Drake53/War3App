@@ -18,6 +18,8 @@ namespace War3App.MapAdapter.Object
     {
         public static bool Adapt(this ItemObjectData itemObjectData, AdaptFileContext context, out MapFileStatus status)
         {
+            status = MapFileStatus.Compatible;
+
             var isSkinFileSupported = context.TargetPatch.Patch >= GamePatch.v1_33_0;
             if (!isSkinFileSupported)
             {
@@ -30,49 +32,45 @@ namespace War3App.MapAdapter.Object
                     var isSkinFile = context.FileName.EndsWith($"Skin{ItemObjectData.FileExtension}");
                     if (isSkinFile)
                     {
-                        context.ReportDiagnostic(DiagnosticRule.ObjectData.RemovedSkinData, context.FileName.Replace($"Skin{ItemObjectData.FileExtension}", ItemObjectData.FileExtension));
-                        status = MapFileStatus.Removed;
-                        return false;
+                        var nonSkinFileName = context.FileName.Replace($"Skin{ItemObjectData.FileExtension}", ItemObjectData.FileExtension);
+
+                        if (context.Archive.FileExists(nonSkinFileName))
+                        {
+                            context.ReportDiagnostic(DiagnosticRule.ObjectData.RemovedSkinData, nonSkinFileName);
+                            status = MapFileStatus.Removed;
+                            return false;
+                        }
+
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.RenamedSkinData, nonSkinFileName);
+                        context.NewFileName = nonSkinFileName;
                     }
                 }
             }
 
-            var missingDataFiles = false;
+            var knownIds = context.GetKnownItemIdsFromSylkTables();
+            var knownProperties = context.GetKnownPropertiesFromSylkTables(PathConstants.ItemMetaDataPath);
 
-            var itemDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.ItemDataPath);
-            if (!File.Exists(itemDataPath))
-            {
-                context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.ItemDataPath);
-                missingDataFiles = true;
-            }
-
-            var itemMetaDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.ItemMetaDataPath);
-            if (!File.Exists(itemMetaDataPath))
-            {
-                context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.ItemMetaDataPath);
-                missingDataFiles = true;
-            }
-
-            if (missingDataFiles)
+            if (knownIds is null ||
+                knownProperties is null)
             {
                 status = MapFileStatus.Inconclusive;
-                return false;
             }
 
             var isAdapted = false;
 
             if (itemObjectData.GetMinimumPatch() > context.TargetPatch.Patch)
             {
-                if (!itemObjectData.TryDowngrade(context.TargetPatch.Patch))
+                if (itemObjectData.TryDowngrade(context.TargetPatch.Patch))
+                {
+                    isAdapted = true;
+                }
+                else
                 {
                     status = MapFileStatus.Incompatible;
-                    return false;
                 }
-
-                isAdapted = true;
             }
 
-            if (!isSkinFileSupported && context.FileName is not null)
+            if (!isSkinFileSupported && context.FileName is not null && context.FileName.EndsWith($"Skin{ItemObjectData.FileExtension}"))
             {
                 var expectedSkinFileName = context.FileName.Replace(ItemObjectData.FileExtension, $"Skin{ItemObjectData.FileExtension}");
 
@@ -102,30 +100,30 @@ namespace War3App.MapAdapter.Object
                 }
             }
 
-            var knownIds = new HashSet<int>();
-            knownIds.AddItemsFromSylkTable(itemDataPath, DataConstants.ItemDataKeyColumn);
-
-            var knownProperties = new HashSet<int>();
-            knownProperties.AddItemsFromSylkTable(itemMetaDataPath, DataConstants.MetaDataIdColumn);
-
             var baseItems = new List<SimpleObjectModification>();
             foreach (var item in itemObjectData.BaseItems)
             {
-                if (!knownIds.Contains(item.OldId))
+                if (knownIds is not null)
                 {
-                    context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "item", item.OldId.ToRawcode());
-                    isAdapted = true;
-                    continue;
+                    if (!knownIds.Contains(item.OldId))
+                    {
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "item", item.OldId.ToRawcode());
+                        isAdapted = true;
+                        continue;
+                    }
                 }
 
-                for (var i = 0; i < item.Modifications.Count; i++)
+                if (knownProperties is not null)
                 {
-                    var property = item.Modifications[i];
-                    if (!knownProperties.Contains(property.Id))
+                    for (var i = 0; i < item.Modifications.Count; i++)
                     {
-                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
-                        isAdapted = true;
-                        item.Modifications.RemoveAt(i--);
+                        var property = item.Modifications[i];
+                        if (!knownProperties.Contains(property.Id))
+                        {
+                            context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
+                            isAdapted = true;
+                            item.Modifications.RemoveAt(i--);
+                        }
                     }
                 }
 
@@ -135,35 +133,39 @@ namespace War3App.MapAdapter.Object
             var newItems = new List<SimpleObjectModification>();
             foreach (var item in itemObjectData.NewItems)
             {
-                if (!knownIds.Contains(item.OldId))
+                if (knownIds is not null)
                 {
-                    context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "item", item.NewId.ToRawcode(), item.OldId.ToRawcode());
-                    isAdapted = true;
-                    continue;
-                }
-
-                if (knownIds.Contains(item.NewId))
-                {
-                    context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "item", item.NewId.ToRawcode());
-                    isAdapted = true;
-                    continue;
-                }
-
-                for (var i = 0; i < item.Modifications.Count; i++)
-                {
-                    var property = item.Modifications[i];
-                    if (!knownProperties.Contains(property.Id))
+                    if (!knownIds.Contains(item.OldId))
                     {
-                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "item", item.NewId.ToRawcode(), item.OldId.ToRawcode());
                         isAdapted = true;
-                        item.Modifications.RemoveAt(i--);
+                        continue;
+                    }
+
+                    if (knownIds.Contains(item.NewId))
+                    {
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "item", item.NewId.ToRawcode());
+                        isAdapted = true;
+                        continue;
+                    }
+                }
+
+                if (knownProperties is not null)
+                {
+                    for (var i = 0; i < item.Modifications.Count; i++)
+                    {
+                        var property = item.Modifications[i];
+                        if (!knownProperties.Contains(property.Id))
+                        {
+                            context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
+                            isAdapted = true;
+                            item.Modifications.RemoveAt(i--);
+                        }
                     }
                 }
 
                 newItems.Add(item);
             }
-
-            status = MapFileStatus.Compatible;
 
             if (!isAdapted)
             {

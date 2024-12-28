@@ -18,6 +18,8 @@ namespace War3App.MapAdapter.Object
     {
         public static bool Adapt(this DestructableObjectData destructableObjectData, AdaptFileContext context, out MapFileStatus status)
         {
+            status = MapFileStatus.Compatible;
+
             var isSkinFileSupported = context.TargetPatch.Patch >= GamePatch.v1_33_0;
             if (!isSkinFileSupported)
             {
@@ -30,49 +32,45 @@ namespace War3App.MapAdapter.Object
                     var isSkinFile = context.FileName.EndsWith($"Skin{DestructableObjectData.FileExtension}");
                     if (isSkinFile)
                     {
-                        context.ReportDiagnostic(DiagnosticRule.ObjectData.RemovedSkinData, context.FileName.Replace($"Skin{DestructableObjectData.FileExtension}", DestructableObjectData.FileExtension));
-                        status = MapFileStatus.Removed;
-                        return false;
+                        var nonSkinFileName = context.FileName.Replace($"Skin{DestructableObjectData.FileExtension}", DestructableObjectData.FileExtension);
+
+                        if (context.Archive.FileExists(nonSkinFileName))
+                        {
+                            context.ReportDiagnostic(DiagnosticRule.ObjectData.RemovedSkinData, nonSkinFileName);
+                            status = MapFileStatus.Removed;
+                            return false;
+                        }
+
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.RenamedSkinData, nonSkinFileName);
+                        context.NewFileName = nonSkinFileName;
                     }
                 }
             }
 
-            var missingDataFiles = false;
+            var knownIds = context.GetKnownDestructableIdsFromSylkTables();
+            var knownProperties = context.GetKnownPropertiesFromSylkTables(PathConstants.DestructableMetaDataPath);
 
-            var destructableDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.DestructableDataPath);
-            if (!File.Exists(destructableDataPath))
-            {
-                context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.DestructableDataPath);
-                missingDataFiles = true;
-            }
-
-            var destructableMetaDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.DestructableMetaDataPath);
-            if (!File.Exists(destructableMetaDataPath))
-            {
-                context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.DestructableMetaDataPath);
-                missingDataFiles = true;
-            }
-
-            if (missingDataFiles)
+            if (knownIds is null ||
+                knownProperties is null)
             {
                 status = MapFileStatus.Inconclusive;
-                return false;
             }
 
             var isAdapted = false;
 
             if (destructableObjectData.GetMinimumPatch() > context.TargetPatch.Patch)
             {
-                if (!destructableObjectData.TryDowngrade(context.TargetPatch.Patch))
+                if (destructableObjectData.TryDowngrade(context.TargetPatch.Patch))
+                {
+                    isAdapted = true;
+                }
+                else
                 {
                     status = MapFileStatus.Incompatible;
-                    return false;
                 }
-
-                isAdapted = true;
             }
 
-            if (!isSkinFileSupported && context.FileName is not null)
+            if (!isSkinFileSupported && context.FileName is not null && !context.FileName.EndsWith($"Skin{DestructableObjectData.FileExtension}"))
             {
                 var expectedSkinFileName = context.FileName.Replace(DestructableObjectData.FileExtension, $"Skin{DestructableObjectData.FileExtension}");
 
@@ -102,30 +100,30 @@ namespace War3App.MapAdapter.Object
                 }
             }
 
-            var knownIds = new HashSet<int>();
-            knownIds.AddItemsFromSylkTable(destructableDataPath, DataConstants.DestructableDataKeyColumn);
-
-            var knownProperties = new HashSet<int>();
-            knownProperties.AddItemsFromSylkTable(destructableMetaDataPath, DataConstants.MetaDataIdColumn);
-
             var baseDestructables = new List<SimpleObjectModification>();
             foreach (var destructable in destructableObjectData.BaseDestructables)
             {
-                if (!knownIds.Contains(destructable.OldId))
+                if (knownIds is not null)
                 {
-                    context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "destructable", destructable.OldId.ToRawcode());
-                    isAdapted = true;
-                    continue;
+                    if (!knownIds.Contains(destructable.OldId))
+                    {
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "destructable", destructable.OldId.ToRawcode());
+                        isAdapted = true;
+                        continue;
+                    }
                 }
 
-                for (var i = 0; i < destructable.Modifications.Count; i++)
+                if (knownProperties is not null)
                 {
-                    var property = destructable.Modifications[i];
-                    if (!knownProperties.Contains(property.Id))
+                    for (var i = 0; i < destructable.Modifications.Count; i++)
                     {
-                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
-                        isAdapted = true;
-                        destructable.Modifications.RemoveAt(i--);
+                        var property = destructable.Modifications[i];
+                        if (!knownProperties.Contains(property.Id))
+                        {
+                            context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
+                            isAdapted = true;
+                            destructable.Modifications.RemoveAt(i--);
+                        }
                     }
                 }
 
@@ -135,35 +133,39 @@ namespace War3App.MapAdapter.Object
             var newDestructables = new List<SimpleObjectModification>();
             foreach (var destructable in destructableObjectData.NewDestructables)
             {
-                if (!knownIds.Contains(destructable.OldId))
+                if (knownIds is not null)
                 {
-                    context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "destructable", destructable.NewId.ToRawcode(), destructable.OldId.ToRawcode());
-                    isAdapted = true;
-                    continue;
-                }
-
-                if (knownIds.Contains(destructable.NewId))
-                {
-                    context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "destructable", destructable.NewId.ToRawcode());
-                    isAdapted = true;
-                    continue;
-                }
-
-                for (var i = 0; i < destructable.Modifications.Count; i++)
-                {
-                    var property = destructable.Modifications[i];
-                    if (!knownProperties.Contains(property.Id))
+                    if (!knownIds.Contains(destructable.OldId))
                     {
-                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "destructable", destructable.NewId.ToRawcode(), destructable.OldId.ToRawcode());
                         isAdapted = true;
-                        destructable.Modifications.RemoveAt(i--);
+                        continue;
+                    }
+
+                    if (knownIds.Contains(destructable.NewId))
+                    {
+                        context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "destructable", destructable.NewId.ToRawcode());
+                        isAdapted = true;
+                        continue;
+                    }
+                }
+
+                if (knownProperties is not null)
+                {
+                    for (var i = 0; i < destructable.Modifications.Count; i++)
+                    {
+                        var property = destructable.Modifications[i];
+                        if (!knownProperties.Contains(property.Id))
+                        {
+                            context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
+                            isAdapted = true;
+                            destructable.Modifications.RemoveAt(i--);
+                        }
                     }
                 }
 
                 newDestructables.Add(destructable);
             }
-
-            status = MapFileStatus.Compatible;
 
             if (!isAdapted)
             {
