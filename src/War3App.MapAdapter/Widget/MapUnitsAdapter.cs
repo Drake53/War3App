@@ -12,6 +12,14 @@ namespace War3App.MapAdapter.Widget
 {
     public sealed class MapUnitsAdapter : IMapFileAdapter
     {
+        private static readonly MapUnitsAdapter _instance = new();
+
+        private MapUnitsAdapter()
+        {
+        }
+
+        public static MapUnitsAdapter Instance => _instance;
+
         public string MapFileDescription => "Units";
 
         public string DefaultFileName => MapUnits.FileName;

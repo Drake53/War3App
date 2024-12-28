@@ -11,6 +11,14 @@ namespace War3App.MapAdapter.Environment
 {
     public sealed class MapEnvironmentAdapter : IMapFileAdapter
     {
+        private static readonly MapEnvironmentAdapter _instance = new();
+
+        private MapEnvironmentAdapter()
+        {
+        }
+
+        public static MapEnvironmentAdapter Instance => _instance;
+
         public string MapFileDescription => "Environment";
 
         public string DefaultFileName => MapEnvironment.FileName;

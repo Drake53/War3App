@@ -12,6 +12,14 @@ namespace War3App.MapAdapter.Script
 {
     public sealed class MapTriggersAdapter : IMapFileAdapter
     {
+        private static readonly MapTriggersAdapter _instance = new();
+
+        private MapTriggersAdapter()
+        {
+        }
+
+        public static MapTriggersAdapter Instance => _instance;
+
         public string MapFileDescription => "Triggers";
 
         public string DefaultFileName => MapTriggers.FileName;

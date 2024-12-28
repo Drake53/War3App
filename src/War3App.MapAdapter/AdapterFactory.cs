@@ -78,65 +78,65 @@ namespace War3App.MapAdapter
 
         private static IEnumerable<KeyValuePair<int, IMapFileAdapter>> GetAdaptersByFileHeader()
         {
-            yield return new("BLP0".FromRawcode(), new BlpImageAdapter());
-            yield return new("BLP1".FromRawcode(), new BlpImageAdapter());
-            yield return new("BLP2".FromRawcode(), new BlpImageAdapter());
+            yield return new("BLP0".FromRawcode(), BlpImageAdapter.Instance);
+            yield return new("BLP1".FromRawcode(), BlpImageAdapter.Instance);
+            yield return new("BLP2".FromRawcode(), BlpImageAdapter.Instance);
 
-            yield return new("MDLX".FromRawcode(), new BinaryModelAdapter());
+            yield return new("MDLX".FromRawcode(), BinaryModelAdapter.Instance);
 
-            yield return new("WTG!".FromRawcode(), new MapTriggersAdapter());
+            yield return new("WTG!".FromRawcode(), MapTriggersAdapter.Instance);
         }
 
         private static IEnumerable<KeyValuePair<string, IMapFileAdapter>> GetAdaptersByFileName()
         {
             // No file extension.
-            yield return new(Attributes.FileName, new AttributesAdapter());
-            yield return new(ListFile.FileName, new ListFileAdapter());
+            yield return new(Attributes.FileName, AttributesAdapter.Instance);
+            yield return new(ListFile.FileName, ListFileAdapter.Instance);
 
             // Different file types with same file extension.
-            yield return new(MapDoodads.FileName, new MapDoodadsAdapter());
-            yield return new(MapUnits.FileName, new MapUnitsAdapter());
+            yield return new(MapDoodads.FileName, MapDoodadsAdapter.Instance);
+            yield return new(MapUnits.FileName, MapUnitsAdapter.Instance);
         }
 
         private static IEnumerable<KeyValuePair<string, IMapFileAdapter>> GetAdaptersByFileExtension()
         {
-            yield return new(MapSounds.FileExtension, new MapSoundsAdapter());
-            yield return new(".flac", new FlacAdapter());
-            yield return new(".mp3", new Mp3Adapter());
-            yield return new(".ogg", new OggAdapter());
-            yield return new(".wav", new WavAdapter());
+            yield return new(MapSounds.FileExtension, MapSoundsAdapter.Instance);
+            yield return new(".flac", FlacAdapter.Instance);
+            yield return new(".mp3", Mp3Adapter.Instance);
+            yield return new(".ogg", OggAdapter.Instance);
+            yield return new(".wav", WavAdapter.Instance);
 
-            yield return new(".blp", new BlpImageAdapter());
-            yield return new(".dds", new DdsImageAdapter());
-            yield return new(".tga", new TgaImageAdapter());
+            yield return new(".blp", BlpImageAdapter.Instance);
+            yield return new(".dds", DdsImageAdapter.Instance);
+            yield return new(".tga", TgaImageAdapter.Instance);
 
-            yield return new(MapCameras.FileExtension, new MapCamerasAdapter());
-            yield return new(MapEnvironment.FileExtension, new MapEnvironmentAdapter());
-            yield return new(MapPathingMap.FileExtension, new MapPathingMapAdapter());
-            yield return new(MapPreviewIcons.FileExtension, new MapPreviewIconsAdapter());
-            yield return new(MapRegions.FileExtension, new MapRegionsAdapter());
-            yield return new(MapShadowMap.FileExtension, new MapShadowMapAdapter());
+            yield return new(MapCameras.FileExtension, MapCamerasAdapter.Instance);
+            yield return new(MapEnvironment.FileExtension, MapEnvironmentAdapter.Instance);
+            yield return new(MapPathingMap.FileExtension, MapPathingMapAdapter.Instance);
+            yield return new(MapPreviewIcons.FileExtension, MapPreviewIconsAdapter.Instance);
+            yield return new(MapRegions.FileExtension, MapRegionsAdapter.Instance);
+            yield return new(MapShadowMap.FileExtension, MapShadowMapAdapter.Instance);
 
-            yield return new(CampaignInfo.FileExtension, new CampaignInfoAdapter());
-            yield return new(MapInfo.FileExtension, new MapInfoAdapter());
+            yield return new(CampaignInfo.FileExtension, CampaignInfoAdapter.Instance);
+            yield return new(MapInfo.FileExtension, MapInfoAdapter.Instance);
 
-            yield return new(".mdx", new BinaryModelAdapter());
-            yield return new(".mdl", new TextModelAdapter());
+            yield return new(".mdx", BinaryModelAdapter.Instance);
+            yield return new(".mdl", TextModelAdapter.Instance);
 
-            yield return new(AbilityObjectData.FileExtension, new AbilityObjectDataAdapter());
-            yield return new(BuffObjectData.FileExtension, new BuffObjectDataAdapter());
-            yield return new(DestructableObjectData.FileExtension, new DestructableObjectDataAdapter());
-            yield return new(DoodadObjectData.FileExtension, new DoodadObjectDataAdapter());
-            yield return new(ItemObjectData.FileExtension, new ItemObjectDataAdapter());
+            yield return new(AbilityObjectData.FileExtension, AbilityObjectDataAdapter.Instance);
+            yield return new(BuffObjectData.FileExtension, BuffObjectDataAdapter.Instance);
+            yield return new(DestructableObjectData.FileExtension, DestructableObjectDataAdapter.Instance);
+            yield return new(DoodadObjectData.FileExtension, DoodadObjectDataAdapter.Instance);
+            yield return new(ItemObjectData.FileExtension, ItemObjectDataAdapter.Instance);
             // TODO: .w3o
-            yield return new(UnitObjectData.FileExtension, new UnitObjectDataAdapter());
-            yield return new(UpgradeObjectData.FileExtension, new UpgradeObjectDataAdapter());
+            yield return new(UnitObjectData.FileExtension, UnitObjectDataAdapter.Instance);
+            yield return new(UpgradeObjectData.FileExtension, UpgradeObjectDataAdapter.Instance);
 
-            yield return new(MapCustomTextTriggers.FileExtension, new MapCustomTextTriggersAdapter());
-            yield return new(MapTriggers.FileExtension, new MapTriggersAdapter());
-            yield return new(TriggerStrings.FileExtension, new TriggerStringsAdapter());
-            yield return new(JassMapScript.FileName.GetFileExtension(), new JassMapScriptAdapter());
-            yield return new(LuaMapScript.FileName.GetFileExtension(), new MapScriptRegexAdapter());
+            yield return new(MapCustomTextTriggers.FileExtension, MapCustomTextTriggersAdapter.Instance);
+            yield return new(MapTriggers.FileExtension, MapTriggersAdapter.Instance);
+            yield return new(TriggerStrings.FileExtension, TriggerStringsAdapter.Instance);
+            yield return new(JassMapScript.FileName.GetFileExtension(), JassMapScriptAdapter.Instance);
+            yield return new(LuaMapScript.FileName.GetFileExtension(), MapScriptRegexAdapter.Instance);
         }
     }
 }

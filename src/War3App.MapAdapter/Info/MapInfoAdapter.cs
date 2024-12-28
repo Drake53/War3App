@@ -12,6 +12,14 @@ namespace War3App.MapAdapter.Info
 {
     public sealed class MapInfoAdapter : IMapFileAdapter
     {
+        private static readonly MapInfoAdapter _instance = new();
+
+        private MapInfoAdapter()
+        {
+        }
+
+        public static MapInfoAdapter Instance => _instance;
+
         public string MapFileDescription => "Map Info";
 
         public string DefaultFileName => MapInfo.FileName;

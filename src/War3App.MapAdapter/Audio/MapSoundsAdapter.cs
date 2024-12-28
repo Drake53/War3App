@@ -12,6 +12,14 @@ namespace War3App.MapAdapter.Audio
 {
     public sealed class MapSoundsAdapter : IMapFileAdapter
     {
+        private static readonly MapSoundsAdapter _instance = new();
+
+        private MapSoundsAdapter()
+        {
+        }
+
+        public static MapSoundsAdapter Instance => _instance;
+
         public string MapFileDescription => "Sounds";
 
         public string DefaultFileName => MapSounds.FileName;

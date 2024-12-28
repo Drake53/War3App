@@ -12,6 +12,14 @@ namespace War3App.MapAdapter.Object
 {
     public sealed class UpgradeObjectDataAdapter : IMapFileAdapter
     {
+        private static readonly UpgradeObjectDataAdapter _instance = new();
+
+        private UpgradeObjectDataAdapter()
+        {
+        }
+
+        public static UpgradeObjectDataAdapter Instance => _instance;
+
         public string MapFileDescription => "Object Data (Upgrade)";
 
         public string DefaultFileName => UpgradeObjectData.MapFileName;

@@ -11,6 +11,14 @@ namespace War3App.MapAdapter.Environment
 {
     public sealed class MapRegionsAdapter : IMapFileAdapter
     {
+        private static readonly MapRegionsAdapter _instance = new();
+
+        private MapRegionsAdapter()
+        {
+        }
+
+        public static MapRegionsAdapter Instance => _instance;
+
         public string MapFileDescription => "Regions";
 
         public string DefaultFileName => MapRegions.FileName;

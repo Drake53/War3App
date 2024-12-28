@@ -12,6 +12,14 @@ namespace War3App.MapAdapter.Widget
 {
     public sealed class MapDoodadsAdapter : IMapFileAdapter
     {
+        private static readonly MapDoodadsAdapter _instance = new();
+
+        private MapDoodadsAdapter()
+        {
+        }
+
+        public static MapDoodadsAdapter Instance => _instance;
+
         public string MapFileDescription => "Doodads";
 
         public string DefaultFileName => MapDoodads.FileName;

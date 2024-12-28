@@ -10,6 +10,14 @@ namespace War3App.MapAdapter.Script
 {
     public sealed class MapCustomTextTriggersAdapter : IMapFileAdapter
     {
+        private static readonly MapCustomTextTriggersAdapter _instance = new();
+
+        private MapCustomTextTriggersAdapter()
+        {
+        }
+
+        public static MapCustomTextTriggersAdapter Instance => _instance;
+
         public string MapFileDescription => "Custom Text Triggers";
 
         public string DefaultFileName => MapCustomTextTriggers.FileName;

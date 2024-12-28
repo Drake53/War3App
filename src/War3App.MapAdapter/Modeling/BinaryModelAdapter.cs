@@ -11,6 +11,14 @@ namespace War3App.MapAdapter.Modeling
 {
     public sealed class BinaryModelAdapter : IMapFileAdapter
     {
+        private static readonly BinaryModelAdapter _instance = new();
+
+        private BinaryModelAdapter()
+        {
+        }
+
+        public static BinaryModelAdapter Instance => _instance;
+
         public string MapFileDescription => "Binary Model";
 
         public string DefaultFileName => "file.mdx";

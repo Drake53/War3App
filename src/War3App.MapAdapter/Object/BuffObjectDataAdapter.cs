@@ -12,6 +12,14 @@ namespace War3App.MapAdapter.Object
 {
     public sealed class BuffObjectDataAdapter : IMapFileAdapter
     {
+        private static readonly BuffObjectDataAdapter _instance = new();
+
+        private BuffObjectDataAdapter()
+        {
+        }
+
+        public static BuffObjectDataAdapter Instance => _instance;
+
         public string MapFileDescription => "Object Data (Buff)";
 
         public string DefaultFileName => BuffObjectData.MapFileName;

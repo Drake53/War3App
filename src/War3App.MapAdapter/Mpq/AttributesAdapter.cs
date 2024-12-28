@@ -6,6 +6,14 @@ namespace War3App.MapAdapter.Mpq
 {
     public sealed class AttributesAdapter : IMapFileAdapter
     {
+        private static readonly AttributesAdapter _instance = new();
+
+        private AttributesAdapter()
+        {
+        }
+
+        public static AttributesAdapter Instance => _instance;
+
         public string MapFileDescription => "MPQ Attributes";
 
         public string DefaultFileName => Attributes.FileName;

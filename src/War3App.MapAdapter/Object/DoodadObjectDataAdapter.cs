@@ -12,6 +12,14 @@ namespace War3App.MapAdapter.Object
 {
     public sealed class DoodadObjectDataAdapter : IMapFileAdapter
     {
+        private static readonly DoodadObjectDataAdapter _instance = new();
+
+        private DoodadObjectDataAdapter()
+        {
+        }
+
+        public static DoodadObjectDataAdapter Instance => _instance;
+
         public string MapFileDescription => "Object Data (Doodad)";
 
         public string DefaultFileName => DoodadObjectData.MapFileName;

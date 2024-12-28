@@ -11,6 +11,14 @@ namespace War3App.MapAdapter.Environment
 {
     public sealed class MapPathingMapAdapter : IMapFileAdapter
     {
+        private static readonly MapPathingMapAdapter _instance = new();
+
+        private MapPathingMapAdapter()
+        {
+        }
+
+        public static MapPathingMapAdapter Instance => _instance;
+
         public string MapFileDescription => "Pathing Map";
 
         public string DefaultFileName => MapPathingMap.FileName;

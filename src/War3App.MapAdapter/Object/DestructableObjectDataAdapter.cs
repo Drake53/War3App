@@ -12,6 +12,14 @@ namespace War3App.MapAdapter.Object
 {
     public sealed class DestructableObjectDataAdapter : IMapFileAdapter
     {
+        private static readonly DestructableObjectDataAdapter _instance = new();
+
+        private DestructableObjectDataAdapter()
+        {
+        }
+
+        public static DestructableObjectDataAdapter Instance => _instance;
+
         public string MapFileDescription => "Object Data (Destructable)";
 
         public string DefaultFileName => DestructableObjectData.MapFileName;

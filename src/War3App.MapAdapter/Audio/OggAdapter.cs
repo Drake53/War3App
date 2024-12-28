@@ -8,6 +8,14 @@ namespace War3App.MapAdapter.Audio
 {
     public sealed class OggAdapter : IMapFileAdapter
     {
+        private static readonly OggAdapter _instance = new();
+
+        private OggAdapter()
+        {
+        }
+
+        public static OggAdapter Instance => _instance;
+
         public string MapFileDescription => "Audio File (OGG)";
 
         public string DefaultFileName => "file.ogg";

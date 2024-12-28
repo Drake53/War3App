@@ -8,6 +8,14 @@ namespace War3App.MapAdapter.Audio
 {
     public sealed class FlacAdapter : IMapFileAdapter
     {
+        private static readonly FlacAdapter _instance = new();
+
+        private FlacAdapter()
+        {
+        }
+
+        public static FlacAdapter Instance => _instance;
+
         public string MapFileDescription => "Audio File (FLAC)";
 
         public string DefaultFileName => "file.flac";

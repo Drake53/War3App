@@ -11,6 +11,14 @@ namespace War3App.MapAdapter.Environment
 {
     public sealed class MapShadowMapAdapter : IMapFileAdapter
     {
+        private static readonly MapShadowMapAdapter _instance = new();
+
+        private MapShadowMapAdapter()
+        {
+        }
+
+        public static MapShadowMapAdapter Instance => _instance;
+
         public string MapFileDescription => "Shadow Map";
 
         public string DefaultFileName => MapShadowMap.FileName;

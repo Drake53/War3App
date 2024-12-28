@@ -13,6 +13,14 @@ namespace War3App.MapAdapter.Script
 {
     public sealed partial class JassMapScriptAdapter : IMapFileAdapter
     {
+        private static readonly JassMapScriptAdapter _instance = new();
+
+        private JassMapScriptAdapter()
+        {
+        }
+
+        public static JassMapScriptAdapter Instance => _instance;
+
         public string MapFileDescription => "Map Script (JASS)";
 
         public string DefaultFileName => JassMapScript.FileName;

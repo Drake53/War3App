@@ -11,6 +11,14 @@ namespace War3App.MapAdapter.Environment
 {
     public sealed class MapPreviewIconsAdapter : IMapFileAdapter
     {
+        private static readonly MapPreviewIconsAdapter _instance = new();
+
+        private MapPreviewIconsAdapter()
+        {
+        }
+
+        public static MapPreviewIconsAdapter Instance => _instance;
+
         public string MapFileDescription => "Map Preview Icons";
 
         public string DefaultFileName => MapPreviewIcons.FileName;

@@ -12,6 +12,14 @@ namespace War3App.MapAdapter.Info
 {
     public sealed class CampaignInfoAdapter : IMapFileAdapter
     {
+        private static readonly CampaignInfoAdapter _instance = new();
+
+        private CampaignInfoAdapter()
+        {
+        }
+
+        public static CampaignInfoAdapter Instance => _instance;
+
         public string MapFileDescription => "Campaign Info";
 
         public string DefaultFileName => CampaignInfo.FileName;

@@ -12,6 +12,14 @@ namespace War3App.MapAdapter.Object
 {
     public sealed class ItemObjectDataAdapter : IMapFileAdapter
     {
+        private static readonly ItemObjectDataAdapter _instance = new();
+
+        private ItemObjectDataAdapter()
+        {
+        }
+
+        public static ItemObjectDataAdapter Instance => _instance;
+
         public string MapFileDescription => "Object Data (Item)";
 
         public string DefaultFileName => ItemObjectData.MapFileName;

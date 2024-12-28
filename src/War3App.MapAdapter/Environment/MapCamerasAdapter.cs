@@ -12,6 +12,14 @@ namespace War3App.MapAdapter.Environment
 {
     public sealed class MapCamerasAdapter : IMapFileAdapter
     {
+        private static readonly MapCamerasAdapter _instance = new();
+
+        private MapCamerasAdapter()
+        {
+        }
+
+        public static MapCamerasAdapter Instance => _instance;
+
         public string MapFileDescription => "Cameras";
 
         public string DefaultFileName => MapCameras.FileName;

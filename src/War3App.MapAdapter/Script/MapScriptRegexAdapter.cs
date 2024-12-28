@@ -13,6 +13,14 @@ namespace War3App.MapAdapter.Script
 {
     public sealed class MapScriptRegexAdapter : IMapFileAdapter
     {
+        private static readonly MapScriptRegexAdapter _instance = new();
+
+        private MapScriptRegexAdapter()
+        {
+        }
+
+        public static MapScriptRegexAdapter Instance => _instance;
+
         public string MapFileDescription => "Map Script";
 
         public string DefaultFileName => LuaMapScript.FileName;
