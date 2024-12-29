@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -100,45 +99,45 @@ namespace War3App.MapAdapter.Object
                 }
             }
 
-            var baseUnits = new List<SimpleObjectModification>();
-            foreach (var unit in unitObjectData.BaseUnits)
+            for (var i = 0; i < unitObjectData.BaseUnits.Count; i++)
             {
+                var unit = unitObjectData.BaseUnits[i];
                 if (knownIds is not null)
                 {
                     if (!knownIds.Contains(unit.OldId))
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "unit", unit.OldId.ToRawcode());
                         isAdapted = true;
+                        unitObjectData.BaseUnits.RemoveAt(i--);
                         continue;
                     }
                 }
 
                 if (knownProperties is not null)
                 {
-                    for (var i = 0; i < unit.Modifications.Count; i++)
+                    for (var j = 0; j < unit.Modifications.Count; j++)
                     {
-                        var property = unit.Modifications[i];
+                        var property = unit.Modifications[j];
                         if (!knownProperties.Contains(property.Id))
                         {
                             context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
                             isAdapted = true;
-                            unit.Modifications.RemoveAt(i--);
+                            unit.Modifications.RemoveAt(j--);
                         }
                     }
                 }
-
-                baseUnits.Add(unit);
             }
 
-            var newUnits = new List<SimpleObjectModification>();
-            foreach (var unit in unitObjectData.NewUnits)
+            for (var i = 0; i < unitObjectData.NewUnits.Count; i++)
             {
+                var unit = unitObjectData.NewUnits[i];
                 if (knownIds is not null)
                 {
                     if (!knownIds.Contains(unit.OldId))
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "unit", unit.NewId.ToRawcode(), unit.OldId.ToRawcode());
                         isAdapted = true;
+                        unitObjectData.NewUnits.RemoveAt(i--);
                         continue;
                     }
 
@@ -146,39 +145,27 @@ namespace War3App.MapAdapter.Object
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "unit", unit.NewId.ToRawcode());
                         isAdapted = true;
+                        unitObjectData.NewUnits.RemoveAt(i--);
                         continue;
                     }
                 }
 
                 if (knownProperties is not null)
                 {
-                    for (var i = 0; i < unit.Modifications.Count; i++)
+                    for (var j = 0; j < unit.Modifications.Count; j++)
                     {
-                        var property = unit.Modifications[i];
+                        var property = unit.Modifications[j];
                         if (!knownProperties.Contains(property.Id))
                         {
                             context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
                             isAdapted = true;
-                            unit.Modifications.RemoveAt(i--);
+                            unit.Modifications.RemoveAt(j--);
                         }
                     }
                 }
-
-                newUnits.Add(unit);
             }
 
-            if (!isAdapted)
-            {
-                return false;
-            }
-
-            unitObjectData.BaseUnits.Clear();
-            unitObjectData.NewUnits.Clear();
-
-            unitObjectData.BaseUnits.AddRange(baseUnits);
-            unitObjectData.NewUnits.AddRange(newUnits);
-
-            return true;
+            return isAdapted;
         }
 
         public static bool TryDowngrade(this UnitObjectData unitObjectData, GamePatch targetPatch)

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -100,45 +99,45 @@ namespace War3App.MapAdapter.Object
                 }
             }
 
-            var baseDoodads = new List<VariationObjectModification>();
-            foreach (var doodad in doodadObjectData.BaseDoodads)
+            for (var i = 0; i < doodadObjectData.BaseDoodads.Count; i++)
             {
+                var doodad = doodadObjectData.BaseDoodads[i];
                 if (knownIds is not null)
                 {
                     if (!knownIds.Contains(doodad.OldId))
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "doodad", doodad.OldId.ToRawcode());
                         isAdapted = true;
+                        doodadObjectData.BaseDoodads.RemoveAt(i--);
                         continue;
                     }
                 }
 
                 if (knownProperties is not null)
                 {
-                    for (var i = 0; i < doodad.Modifications.Count; i++)
+                    for (var j = 0; j < doodad.Modifications.Count; j++)
                     {
-                        var property = doodad.Modifications[i];
+                        var property = doodad.Modifications[j];
                         if (!knownProperties.Contains(property.Id))
                         {
                             context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
                             isAdapted = true;
-                            doodad.Modifications.RemoveAt(i--);
+                            doodad.Modifications.RemoveAt(j--);
                         }
                     }
                 }
-
-                baseDoodads.Add(doodad);
             }
 
-            var newDoodads = new List<VariationObjectModification>();
-            foreach (var doodad in doodadObjectData.NewDoodads)
+            for (var i = 0; i < doodadObjectData.NewDoodads.Count; i++)
             {
+                var doodad = doodadObjectData.NewDoodads[i];
                 if (knownIds is not null)
                 {
                     if (!knownIds.Contains(doodad.OldId))
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "doodad", doodad.NewId.ToRawcode(), doodad.OldId.ToRawcode());
                         isAdapted = true;
+                        doodadObjectData.NewDoodads.RemoveAt(i--);
                         continue;
                     }
 
@@ -146,39 +145,27 @@ namespace War3App.MapAdapter.Object
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "doodad", doodad.NewId.ToRawcode());
                         isAdapted = true;
+                        doodadObjectData.NewDoodads.RemoveAt(i--);
                         continue;
                     }
                 }
 
                 if (knownProperties is not null)
                 {
-                    for (var i = 0; i < doodad.Modifications.Count; i++)
+                    for (var j = 0; j < doodad.Modifications.Count; j++)
                     {
-                        var property = doodad.Modifications[i];
+                        var property = doodad.Modifications[j];
                         if (!knownProperties.Contains(property.Id))
                         {
                             context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
                             isAdapted = true;
-                            doodad.Modifications.RemoveAt(i--);
+                            doodad.Modifications.RemoveAt(j--);
                         }
                     }
                 }
-
-                newDoodads.Add(doodad);
             }
 
-            if (!isAdapted)
-            {
-                return false;
-            }
-
-            doodadObjectData.BaseDoodads.Clear();
-            doodadObjectData.NewDoodads.Clear();
-
-            doodadObjectData.BaseDoodads.AddRange(baseDoodads);
-            doodadObjectData.NewDoodads.AddRange(newDoodads);
-
-            return true;
+            return isAdapted;
         }
 
         public static bool TryDowngrade(this DoodadObjectData doodadObjectData, GamePatch targetPatch)

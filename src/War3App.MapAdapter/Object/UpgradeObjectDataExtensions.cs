@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -100,45 +99,45 @@ namespace War3App.MapAdapter.Object
                 }
             }
 
-            var baseUpgrades = new List<LevelObjectModification>();
-            foreach (var upgrade in upgradeObjectData.BaseUpgrades)
+            for (var i = 0; i < upgradeObjectData.BaseUpgrades.Count; i++)
             {
+                var upgrade = upgradeObjectData.BaseUpgrades[i];
                 if (knownIds is not null)
                 {
                     if (!knownIds.Contains(upgrade.OldId))
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "upgrade", upgrade.OldId.ToRawcode());
                         isAdapted = true;
+                        upgradeObjectData.BaseUpgrades.RemoveAt(i--);
                         continue;
                     }
                 }
 
                 if (knownProperties is not null)
                 {
-                    for (var i = 0; i < upgrade.Modifications.Count; i++)
+                    for (var j = 0; j < upgrade.Modifications.Count; j++)
                     {
-                        var property = upgrade.Modifications[i];
+                        var property = upgrade.Modifications[j];
                         if (!knownProperties.Contains(property.Id))
                         {
                             context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
                             isAdapted = true;
-                            upgrade.Modifications.RemoveAt(i--);
+                            upgrade.Modifications.RemoveAt(j--);
                         }
                     }
                 }
-
-                baseUpgrades.Add(upgrade);
             }
 
-            var newUpgrades = new List<LevelObjectModification>();
-            foreach (var upgrade in upgradeObjectData.NewUpgrades)
+            for (var i = 0; i < upgradeObjectData.NewUpgrades.Count; i++)
             {
+                var upgrade = upgradeObjectData.NewUpgrades[i];
                 if (knownIds is not null)
                 {
                     if (!knownIds.Contains(upgrade.OldId))
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "upgrade", upgrade.NewId.ToRawcode(), upgrade.OldId.ToRawcode());
                         isAdapted = true;
+                        upgradeObjectData.NewUpgrades.RemoveAt(i--);
                         continue;
                     }
 
@@ -146,39 +145,27 @@ namespace War3App.MapAdapter.Object
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "upgrade", upgrade.NewId.ToRawcode());
                         isAdapted = true;
+                        upgradeObjectData.NewUpgrades.RemoveAt(i--);
                         continue;
                     }
                 }
 
                 if (knownProperties is not null)
                 {
-                    for (var i = 0; i < upgrade.Modifications.Count; i++)
+                    for (var j = 0; j < upgrade.Modifications.Count; j++)
                     {
-                        var property = upgrade.Modifications[i];
+                        var property = upgrade.Modifications[j];
                         if (!knownProperties.Contains(property.Id))
                         {
                             context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
                             isAdapted = true;
-                            upgrade.Modifications.RemoveAt(i--);
+                            upgrade.Modifications.RemoveAt(j--);
                         }
                     }
                 }
-
-                newUpgrades.Add(upgrade);
             }
 
-            if (!isAdapted)
-            {
-                return false;
-            }
-
-            upgradeObjectData.BaseUpgrades.Clear();
-            upgradeObjectData.NewUpgrades.Clear();
-
-            upgradeObjectData.BaseUpgrades.AddRange(baseUpgrades);
-            upgradeObjectData.NewUpgrades.AddRange(newUpgrades);
-
-            return true;
+            return isAdapted;
         }
 
         public static bool TryDowngrade(this UpgradeObjectData upgradeObjectData, GamePatch targetPatch)

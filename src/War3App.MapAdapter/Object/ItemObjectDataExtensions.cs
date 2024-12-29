@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -100,45 +99,45 @@ namespace War3App.MapAdapter.Object
                 }
             }
 
-            var baseItems = new List<SimpleObjectModification>();
-            foreach (var item in itemObjectData.BaseItems)
+            for (var i = 0; i < itemObjectData.BaseItems.Count; i++)
             {
+                var item = itemObjectData.BaseItems[i];
                 if (knownIds is not null)
                 {
                     if (!knownIds.Contains(item.OldId))
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "item", item.OldId.ToRawcode());
                         isAdapted = true;
+                        itemObjectData.BaseItems.RemoveAt(i--);
                         continue;
                     }
                 }
 
                 if (knownProperties is not null)
                 {
-                    for (var i = 0; i < item.Modifications.Count; i++)
+                    for (var j = 0; j < item.Modifications.Count; j++)
                     {
-                        var property = item.Modifications[i];
+                        var property = item.Modifications[j];
                         if (!knownProperties.Contains(property.Id))
                         {
                             context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
                             isAdapted = true;
-                            item.Modifications.RemoveAt(i--);
+                            item.Modifications.RemoveAt(j--);
                         }
                     }
                 }
-
-                baseItems.Add(item);
             }
 
-            var newItems = new List<SimpleObjectModification>();
-            foreach (var item in itemObjectData.NewItems)
+            for (var i = 0; i < itemObjectData.NewItems.Count; i++)
             {
+                var item = itemObjectData.NewItems[i];
                 if (knownIds is not null)
                 {
                     if (!knownIds.Contains(item.OldId))
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "item", item.NewId.ToRawcode(), item.OldId.ToRawcode());
                         isAdapted = true;
+                        itemObjectData.NewItems.RemoveAt(i--);
                         continue;
                     }
 
@@ -146,39 +145,27 @@ namespace War3App.MapAdapter.Object
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "item", item.NewId.ToRawcode());
                         isAdapted = true;
+                        itemObjectData.NewItems.RemoveAt(i--);
                         continue;
                     }
                 }
 
                 if (knownProperties is not null)
                 {
-                    for (var i = 0; i < item.Modifications.Count; i++)
+                    for (var j = 0; j < item.Modifications.Count; j++)
                     {
-                        var property = item.Modifications[i];
+                        var property = item.Modifications[j];
                         if (!knownProperties.Contains(property.Id))
                         {
                             context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
                             isAdapted = true;
-                            item.Modifications.RemoveAt(i--);
+                            item.Modifications.RemoveAt(j--);
                         }
                     }
                 }
-
-                newItems.Add(item);
             }
 
-            if (!isAdapted)
-            {
-                return false;
-            }
-
-            itemObjectData.BaseItems.Clear();
-            itemObjectData.NewItems.Clear();
-
-            itemObjectData.BaseItems.AddRange(baseItems);
-            itemObjectData.NewItems.AddRange(newItems);
-
-            return true;
+            return isAdapted;
         }
 
         public static bool TryDowngrade(this ItemObjectData itemObjectData, GamePatch targetPatch)

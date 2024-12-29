@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -100,45 +99,45 @@ namespace War3App.MapAdapter.Object
                 }
             }
 
-            var baseAbilities = new List<LevelObjectModification>();
-            foreach (var ability in abilityObjectData.BaseAbilities)
+            for (var i = 0; i < abilityObjectData.BaseAbilities.Count; i++)
             {
+                var ability = abilityObjectData.BaseAbilities[i];
                 if (knownIds is not null)
                 {
                     if (!knownIds.Contains(ability.OldId))
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "ability", ability.OldId.ToRawcode());
                         isAdapted = true;
+                        abilityObjectData.BaseAbilities.RemoveAt(i--);
                         continue;
                     }
                 }
 
                 if (knownProperties is not null)
                 {
-                    for (var i = 0; i < ability.Modifications.Count; i++)
+                    for (var j = 0; j < ability.Modifications.Count; j++)
                     {
-                        var property = ability.Modifications[i];
+                        var property = ability.Modifications[j];
                         if (!knownProperties.Contains(property.Id))
                         {
                             context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
                             isAdapted = true;
-                            ability.Modifications.RemoveAt(i--);
+                            ability.Modifications.RemoveAt(j--);
                         }
                     }
                 }
-
-                baseAbilities.Add(ability);
             }
 
-            var newAbilities = new List<LevelObjectModification>();
-            foreach (var ability in abilityObjectData.NewAbilities)
+            for (var i = 0; i < abilityObjectData.NewAbilities.Count; i++)
             {
+                var ability = abilityObjectData.NewAbilities[i];
                 if (knownIds is not null)
                 {
                     if (!knownIds.Contains(ability.OldId))
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "ability", ability.NewId.ToRawcode(), ability.OldId.ToRawcode());
                         isAdapted = true;
+                        abilityObjectData.NewAbilities.RemoveAt(i--);
                         continue;
                     }
 
@@ -146,39 +145,27 @@ namespace War3App.MapAdapter.Object
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "ability", ability.NewId.ToRawcode());
                         isAdapted = true;
+                        abilityObjectData.NewAbilities.RemoveAt(i--);
                         continue;
                     }
                 }
 
                 if (knownProperties is not null)
                 {
-                    for (var i = 0; i < ability.Modifications.Count; i++)
+                    for (var j = 0; j < ability.Modifications.Count; j++)
                     {
-                        var property = ability.Modifications[i];
+                        var property = ability.Modifications[j];
                         if (!knownProperties.Contains(property.Id))
                         {
                             context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
                             isAdapted = true;
-                            ability.Modifications.RemoveAt(i--);
+                            ability.Modifications.RemoveAt(j--);
                         }
                     }
                 }
-
-                newAbilities.Add(ability);
             }
 
-            if (!isAdapted)
-            {
-                return false;
-            }
-
-            abilityObjectData.BaseAbilities.Clear();
-            abilityObjectData.NewAbilities.Clear();
-
-            abilityObjectData.BaseAbilities.AddRange(baseAbilities);
-            abilityObjectData.NewAbilities.AddRange(newAbilities);
-
-            return true;
+            return isAdapted;
         }
 
         public static bool TryDowngrade(this AbilityObjectData abilityObjectData, GamePatch targetPatch)

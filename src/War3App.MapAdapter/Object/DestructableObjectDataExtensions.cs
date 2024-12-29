@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -100,45 +99,45 @@ namespace War3App.MapAdapter.Object
                 }
             }
 
-            var baseDestructables = new List<SimpleObjectModification>();
-            foreach (var destructable in destructableObjectData.BaseDestructables)
+            for (var i = 0; i < destructableObjectData.BaseDestructables.Count; i++)
             {
+                var destructable = destructableObjectData.BaseDestructables[i];
                 if (knownIds is not null)
                 {
                     if (!knownIds.Contains(destructable.OldId))
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "destructable", destructable.OldId.ToRawcode());
                         isAdapted = true;
+                        destructableObjectData.BaseDestructables.RemoveAt(i--);
                         continue;
                     }
                 }
 
                 if (knownProperties is not null)
                 {
-                    for (var i = 0; i < destructable.Modifications.Count; i++)
+                    for (var j = 0; j < destructable.Modifications.Count; j++)
                     {
-                        var property = destructable.Modifications[i];
+                        var property = destructable.Modifications[j];
                         if (!knownProperties.Contains(property.Id))
                         {
                             context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
                             isAdapted = true;
-                            destructable.Modifications.RemoveAt(i--);
+                            destructable.Modifications.RemoveAt(j--);
                         }
                     }
                 }
-
-                baseDestructables.Add(destructable);
             }
 
-            var newDestructables = new List<SimpleObjectModification>();
-            foreach (var destructable in destructableObjectData.NewDestructables)
+            for (var i = 0; i < destructableObjectData.NewDestructables.Count; i++)
             {
+                var destructable = destructableObjectData.NewDestructables[i];
                 if (knownIds is not null)
                 {
                     if (!knownIds.Contains(destructable.OldId))
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "destructable", destructable.NewId.ToRawcode(), destructable.OldId.ToRawcode());
                         isAdapted = true;
+                        destructableObjectData.NewDestructables.RemoveAt(i--);
                         continue;
                     }
 
@@ -146,39 +145,27 @@ namespace War3App.MapAdapter.Object
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "destructable", destructable.NewId.ToRawcode());
                         isAdapted = true;
+                        destructableObjectData.NewDestructables.RemoveAt(i--);
                         continue;
                     }
                 }
 
                 if (knownProperties is not null)
                 {
-                    for (var i = 0; i < destructable.Modifications.Count; i++)
+                    for (var j = 0; j < destructable.Modifications.Count; j++)
                     {
-                        var property = destructable.Modifications[i];
+                        var property = destructable.Modifications[j];
                         if (!knownProperties.Contains(property.Id))
                         {
                             context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
                             isAdapted = true;
-                            destructable.Modifications.RemoveAt(i--);
+                            destructable.Modifications.RemoveAt(j--);
                         }
                     }
                 }
-
-                newDestructables.Add(destructable);
             }
 
-            if (!isAdapted)
-            {
-                return false;
-            }
-
-            destructableObjectData.BaseDestructables.Clear();
-            destructableObjectData.NewDestructables.Clear();
-
-            destructableObjectData.BaseDestructables.AddRange(baseDestructables);
-            destructableObjectData.NewDestructables.AddRange(newDestructables);
-
-            return true;
+            return isAdapted;
         }
 
         public static bool TryDowngrade(this DestructableObjectData destructableObjectData, GamePatch targetPatch)

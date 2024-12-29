@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -100,45 +99,45 @@ namespace War3App.MapAdapter.Object
                 }
             }
 
-            var baseBuffs = new List<SimpleObjectModification>();
-            foreach (var buff in buffObjectData.BaseBuffs)
+            for (var i = 0; i < buffObjectData.BaseBuffs.Count; i++)
             {
+                var buff = buffObjectData.BaseBuffs[i];
                 if (knownIds is not null)
                 {
                     if (!knownIds.Contains(buff.OldId))
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseId, "buff", buff.OldId.ToRawcode());
                         isAdapted = true;
+                        buffObjectData.BaseBuffs.RemoveAt(i--);
                         continue;
                     }
                 }
 
                 if (knownProperties is not null)
                 {
-                    for (var i = 0; i < buff.Modifications.Count; i++)
+                    for (var j = 0; j < buff.Modifications.Count; j++)
                     {
-                        var property = buff.Modifications[i];
+                        var property = buff.Modifications[j];
                         if (!knownProperties.Contains(property.Id))
                         {
                             context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
                             isAdapted = true;
-                            buff.Modifications.RemoveAt(i--);
+                            buff.Modifications.RemoveAt(j--);
                         }
                     }
                 }
-
-                baseBuffs.Add(buff);
             }
 
-            var newBuffs = new List<SimpleObjectModification>();
-            foreach (var buff in buffObjectData.NewBuffs)
+            for (var i = 0; i < buffObjectData.NewBuffs.Count; i++)
             {
+                var buff = buffObjectData.NewBuffs[i];
                 if (knownIds is not null)
                 {
                     if (!knownIds.Contains(buff.OldId))
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownBaseIdNew, "buff", buff.NewId.ToRawcode(), buff.OldId.ToRawcode());
                         isAdapted = true;
+                        buffObjectData.NewBuffs.RemoveAt(i--);
                         continue;
                     }
 
@@ -146,39 +145,27 @@ namespace War3App.MapAdapter.Object
                     {
                         context.ReportDiagnostic(DiagnosticRule.ObjectData.ConflictingId, "buff", buff.NewId.ToRawcode());
                         isAdapted = true;
+                        buffObjectData.NewBuffs.RemoveAt(i--);
                         continue;
                     }
                 }
 
                 if (knownProperties is not null)
                 {
-                    for (var i = 0; i < buff.Modifications.Count; i++)
+                    for (var j = 0; j < buff.Modifications.Count; j++)
                     {
-                        var property = buff.Modifications[i];
+                        var property = buff.Modifications[j];
                         if (!knownProperties.Contains(property.Id))
                         {
                             context.ReportDiagnostic(DiagnosticRule.ObjectData.UnknownProperty, property.Id.ToRawcode());
                             isAdapted = true;
-                            buff.Modifications.RemoveAt(i--);
+                            buff.Modifications.RemoveAt(j--);
                         }
                     }
                 }
-
-                newBuffs.Add(buff);
             }
 
-            if (!isAdapted)
-            {
-                return false;
-            }
-
-            buffObjectData.BaseBuffs.Clear();
-            buffObjectData.NewBuffs.Clear();
-
-            buffObjectData.BaseBuffs.AddRange(baseBuffs);
-            buffObjectData.NewBuffs.AddRange(newBuffs);
-
-            return true;
+            return isAdapted;
         }
 
         public static bool TryDowngrade(this BuffObjectData buffObjectData, GamePatch targetPatch)
