@@ -15,6 +15,11 @@ namespace War3App.MapAdapter
     {
         private readonly List<Diagnostic> _diagnostics = new();
 
+        public AdaptFileContext()
+        {
+            AdaptationLevel = AdaptationLevel.Normal;
+        }
+
         public string? FileName { get; set; }
 
         public string? NewFileName { get; set; }
@@ -24,6 +29,8 @@ namespace War3App.MapAdapter
         public TargetPatch TargetPatch { get; set; }
 
         public GamePatch OriginPatch { get; set; }
+
+        public AdaptationLevel AdaptationLevel { get; set; }
 
         public bool HasDiagnostics => _diagnostics.Count > 0;
 
