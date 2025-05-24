@@ -277,6 +277,8 @@ namespace War3App.MapAdapter.WinForms
 
             _adaptAllButton.Click += (s, e) =>
             {
+                var adaptedItemIndices = new List<int>();
+
                 _targetPatchesComboBox.Enabled = false;
                 var parentsToUpdate = new HashSet<ItemTag>();
                 for (var i = 0; i < _fileList.Items.Count; i++)
@@ -303,12 +305,29 @@ namespace War3App.MapAdapter.WinForms
                         {
                             parentsToUpdate.Add(tag.Parent);
                         }
+
+                        if (adaptResult.Diagnostics is not null &&
+                            adaptResult.Diagnostics.Length > 0)
+                        {
+                            adaptedItemIndices.Add(i);
+                        }
                     }
                 }
 
                 foreach (var parent in parentsToUpdate)
                 {
                     parent.ListViewItem.Update();
+                }
+
+                if (_fileList.SelectedItems.Count == 0)
+                {
+                    _fileList.BeginUpdate();
+                    foreach (var itemIndex in adaptedItemIndices)
+                    {
+                        _fileList.SelectedIndices.Add(itemIndex);
+                    }
+
+                    _fileList.EndUpdate();
                 }
 
                 UpdateDiagnosticsDisplay();
@@ -728,47 +747,54 @@ namespace War3App.MapAdapter.WinForms
 
         private static void UpdateDiagnosticsDisplay()
         {
-            if (_fileList.TryGetSelectedItemTag(out var tag))
+            if (_fileList.SelectedItems.Count == 0)
             {
-                _diagnosticsDisplay.Text = string.Empty;
-
-                if (tag.AdaptResult?.Diagnostics is not null)
-                {
-                    var anyDiagnosticWritten = false;
-                    var originalColor = _diagnosticsDisplay.SelectionColor;
-
-                    void WriteDiagnostics(DiagnosticSeverity severity, Color color, string prefix)
-                    {
-                        foreach (var grouping in tag.AdaptResult.Diagnostics.Where(d => d.Descriptor.Severity == severity).Select(d => d.Message).GroupBy(m => m, StringComparer.Ordinal))
-                        {
-                            if (anyDiagnosticWritten)
-                            {
-                                _diagnosticsDisplay.AppendText(System.Environment.NewLine);
-                            }
-                            else
-                            {
-                                anyDiagnosticWritten = true;
-                            }
-
-                            _diagnosticsDisplay.SelectionStart = _diagnosticsDisplay.TextLength;
-                            _diagnosticsDisplay.SelectionLength = 0;
-                            _diagnosticsDisplay.SelectionColor = color;
-                            _diagnosticsDisplay.AppendText(prefix);
-                            _diagnosticsDisplay.SelectionColor = originalColor;
-
-                            var count = grouping.Count();
-                            _diagnosticsDisplay.AppendText(count > 1 ? $"{grouping.Key} ({count})" : grouping.Key);
-                        }
-                    }
-
-                    WriteDiagnostics(DiagnosticSeverity.Error, Color.Red, "[ERR] ");
-                    WriteDiagnostics(DiagnosticSeverity.Warning, Color.Orange, "[WRN] ");
-                    WriteDiagnostics(DiagnosticSeverity.Info, Color.Blue, "[INF] ");
-                }
+                _diagnosticsDisplay.Text = "Select a file to view its diagnostics.";
+                return;
             }
-            else
+
+            var isFirstItem = true;
+
+            _diagnosticsDisplay.Text = string.Empty;
+
+            foreach (ListViewItem item in _fileList.SelectedItems)
             {
-                _diagnosticsDisplay.Text = $"{_fileList.SelectedItems.Count} files selected.";
+                var tag = item.GetTag();
+
+                if (!isFirstItem)
+                {
+                    _diagnosticsDisplay.WriteLine();
+                    _diagnosticsDisplay.WriteLine();
+                }
+
+                isFirstItem = false;
+
+                _diagnosticsDisplay.Write($"// {tag.CurrentFileName}", Color.Green);
+
+                if (tag.AdaptResult?.Diagnostics is null ||
+                    tag.AdaptResult.Diagnostics.Length == 0)
+                {
+                    _diagnosticsDisplay.WriteLine();
+                    _diagnosticsDisplay.Write("-- No diagnostics --", Color.Gray);
+
+                    continue;
+                }
+
+                void WriteDiagnostics(DiagnosticSeverity severity, Color color, string prefix)
+                {
+                    foreach (var grouping in tag.AdaptResult.Diagnostics.Where(d => d.Descriptor.Severity == severity).Select(d => d.Message).GroupBy(m => m, StringComparer.Ordinal))
+                    {
+                        _diagnosticsDisplay.WriteLine();
+                        _diagnosticsDisplay.Write(prefix, color);
+
+                        var count = grouping.Count();
+                        _diagnosticsDisplay.AppendText(count > 1 ? $"{grouping.Key} ({count}x)" : grouping.Key);
+                    }
+                }
+
+                WriteDiagnostics(DiagnosticSeverity.Error, Color.Red, "[ERR] ");
+                WriteDiagnostics(DiagnosticSeverity.Warning, Color.Orange, "[WRN] ");
+                WriteDiagnostics(DiagnosticSeverity.Info, Color.Blue, "[INF] ");
             }
         }
 
@@ -1002,6 +1028,8 @@ namespace War3App.MapAdapter.WinForms
                 _saveAsButton.Enabled = true;
 
                 _progressBar.Visible = false;
+
+                UpdateDiagnosticsDisplay();
             }
         }
 

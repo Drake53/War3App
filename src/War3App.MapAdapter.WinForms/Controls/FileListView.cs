@@ -49,6 +49,8 @@ namespace War3App.MapAdapter.WinForms.Controls
             _questionImageIndex = SmallImageList.AddImage(Icons.Question);
             _trashImageIndex = SmallImageList.AddImage(Icons.Trash);
             _warningImageIndex = SmallImageList.AddImage(Icons.Warning);
+
+            KeyDown += HandleKeyDown;
         }
 
         public int ErrorImageIndex => _errorImageIndex;
@@ -80,6 +82,22 @@ namespace War3App.MapAdapter.WinForms.Controls
             }
 
             Items.Clear();
+        }
+
+        private void HandleKeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.A && e.Modifiers == Keys.Control)
+            {
+                BeginUpdate();
+                SelectedIndices.Clear();
+
+                for (var i = 0; i < Items.Count; i++)
+                {
+                    SelectedIndices.Add(i);
+                }
+
+                EndUpdate();
+            }
         }
     }
 }
