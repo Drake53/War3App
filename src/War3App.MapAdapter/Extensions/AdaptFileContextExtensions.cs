@@ -90,12 +90,12 @@ namespace War3App.MapAdapter.Extensions
             string sylkTableDataPath,
             params string[] knownKeyColumnNames)
         {
-            var sylkTableFilePath = Path.Combine(context.TargetPatch.GameDataPath, sylkTableDataPath);
-            if (File.Exists(sylkTableFilePath))
+            using var sylkTableStream = context.TargetPatch.OpenGameDataFile(sylkTableDataPath);
+            if (sylkTableStream is not null)
             {
                 try
                 {
-                    knownIds.AddItemsFromSylkTable(sylkTableFilePath, knownKeyColumnNames);
+                    knownIds.AddItemsFromSylkTable(sylkTableStream, knownKeyColumnNames);
                     return true;
                 }
                 catch (Exception e)

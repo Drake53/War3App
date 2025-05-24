@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 
 using War3App.MapAdapter.Diagnostics;
+using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Script;
 using War3Net.CodeAnalysis.Jass;
@@ -31,26 +32,28 @@ namespace War3App.MapAdapter.Script
 
         public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
-            var commonJPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.CommonJPath);
-            if (!File.Exists(commonJPath))
+            var commonJStream = context.TargetPatch.OpenGameDataFile(PathConstants.CommonJPath);
+            if (commonJStream is null)
             {
                 context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.CommonJPath);
-
-                return MapFileStatus.Inconclusive;
             }
 
-            var blizzardJPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.BlizzardJPath);
-            if (!File.Exists(blizzardJPath))
+            var blizzardJStream = context.TargetPatch.OpenGameDataFile(PathConstants.BlizzardJPath);
+            if (blizzardJStream is null)
             {
                 context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.BlizzardJPath);
+            }
 
+            if (commonJStream is null ||
+                blizzardJStream is null)
+            {
                 return MapFileStatus.Inconclusive;
             }
 
-            var commonJText = File.ReadAllText(commonJPath);
+            var commonJText = commonJStream.ReadAllText();
             var commonJCompilationUnit = JassSyntaxFactory.ParseCompilationUnit(commonJText);
 
-            var blizzardJText = File.ReadAllText(blizzardJPath);
+            var blizzardJText = blizzardJStream.ReadAllText();
             var blizzardJCompilationUnit = JassSyntaxFactory.ParseCompilationUnit(blizzardJText);
 
             JassCompilationUnitSyntax compilationUnit;

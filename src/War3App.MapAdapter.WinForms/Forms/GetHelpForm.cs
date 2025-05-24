@@ -3,10 +3,13 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Windows.Forms;
 
 using War3App.Common.WinForms.Extensions;
+using War3App.MapAdapter.Extensions;
+using War3App.MapAdapter.WinForms.Extensions;
 using War3App.MapAdapter.WinForms.Helpers;
 
 namespace War3App.MapAdapter.WinForms.Forms
@@ -131,7 +134,8 @@ If the issue can only be reproduced on the unprotected version, you can enable t
 
         private void SaveZipFile(string zipFilePath)
         {
-            using var zipFile = new Ionic.Zip.ZipFile();
+            using var fileStream = File.Create(zipFilePath);
+            using var zipFile = new ZipArchive(fileStream, ZipArchiveMode.Create);
 
             if (_encryptMapFileCheckBox.Checked)
             {
@@ -168,10 +172,12 @@ If the issue can only be reproduced on the unprotected version, you can enable t
 
             foreach (var path in PathConstants.GetAllPaths())
             {
-                zipFile.AddFile(Path.Combine(_targetPatch.GameDataPath, path), Path.GetDirectoryName(path));
+                using var gameDataFileStream = _targetPatch.OpenGameDataFile(path);
+                if (gameDataFileStream is not null)
+                {
+                    zipFile.AddEntry(Path.Combine(Path.GetDirectoryName(path), Path.GetFileName(path)), gameDataFileStream);
+                }
             }
-
-            zipFile.Save(zipFilePath);
         }
     }
 }

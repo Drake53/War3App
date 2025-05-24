@@ -7,5 +7,7 @@ namespace War3App.MapAdapter
         public GamePatch Patch { get; set; }
 
         public string GameDataPath { get; set; }
+
+        public ContainerType GameDataContainerType { get; set; }
     }
 }

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 
 using War3App.MapAdapter.Diagnostics;
+using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Common;
 using War3Net.Build.Extensions;
@@ -15,15 +16,15 @@ namespace War3App.MapAdapter.Script
     {
         public static bool Adapt(this MapTriggers mapTriggers, AdaptFileContext context, out MapFileStatus status)
         {
-            var triggerDataPath = Path.Combine(context.TargetPatch.GameDataPath, PathConstants.TriggerDataPath);
-            if (!File.Exists(triggerDataPath))
+            var triggerDataStream = context.TargetPatch.OpenGameDataFile(PathConstants.TriggerDataPath);
+            if (triggerDataStream is null)
             {
                 context.ReportDiagnostic(DiagnosticRule.General.ConfigFileNotFound, PathConstants.TriggerDataPath);
                 status = MapFileStatus.Inconclusive;
                 return false;
             }
 
-            var triggerDataText = File.ReadAllText(triggerDataPath);
+            var triggerDataText = triggerDataStream.ReadAllText();
             var triggerDataReader = new StringReader(triggerDataText);
             var triggerData = triggerDataReader.ReadTriggerData();
 

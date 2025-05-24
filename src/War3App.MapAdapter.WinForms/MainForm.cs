@@ -1,9 +1,12 @@
-﻿using System;
+﻿#define USE_KEY_CONTAINER
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -34,7 +37,8 @@ namespace War3App.MapAdapter.WinForms
 
         private static readonly GamePatch _latestPatch = Enum.GetValues<GamePatch>().Max();
 
-        private static MpqArchive _archive;
+        private static MpqArchive? _archive;
+        private static TargetPatch? _targetPatchFromZipArchive;
 
         private static TextBox _archiveInput;
         private static Button _archiveInputBrowseButton;
@@ -61,7 +65,7 @@ namespace War3App.MapAdapter.WinForms
         private static IConfiguration _configuration;
         private static AppSettings _appSettings;
 
-        internal static bool TargetPatchSelected => _targetPatch.HasValue;
+        internal static bool TargetPatchSelected => _targetPatchFromZipArchive is not null || _targetPatch.HasValue;
 
         [STAThread]
         private static void Main(string[] args)
@@ -84,6 +88,7 @@ namespace War3App.MapAdapter.WinForms
                         {
                             GameDataPath = initialSetupDialog.GameDirectory,
                             Patch = initialSetupDialog.GamePatch,
+                            GameDataContainerType = ContainerType.Directory,
                         },
                     },
                 };
@@ -199,8 +204,8 @@ namespace War3App.MapAdapter.WinForms
             _targetPatchesComboBox.SelectedIndexChanged += (s, e) =>
             {
                 _targetPatch = (GamePatch?)_targetPatchesComboBox.SelectedItem;
-                _adaptAllButton.Enabled = _targetPatch.HasValue && _fileList.Items.Count > 0;
-                _getHelpButton.Enabled = _targetPatch.HasValue;
+                _adaptAllButton.Enabled = TargetPatchSelected && _fileList.Items.Count > 0;
+                _getHelpButton.Enabled = TargetPatchSelected;
             };
 
             _targetPatchesComboBox.FormattingEnabled = true;
@@ -222,9 +227,9 @@ namespace War3App.MapAdapter.WinForms
 
             _getHelpButton.Click += (s, e) =>
             {
-                if (_targetPatch.HasValue)
+                if (TargetPatchSelected)
                 {
-                    _ = new GetHelpForm(_archiveInput.Text, GetTargetPatch(_targetPatch.Value)).ShowDialog();
+                    _ = new GetHelpForm(_archiveInput.Text, GetTargetPatch()).ShowDialog();
                 }
             };
 
@@ -280,13 +285,13 @@ namespace War3App.MapAdapter.WinForms
                     var tag = item.GetTag();
 
                     var adapter = tag.Adapter;
-                    if (adapter != null && tag.Status == MapFileStatus.Pending)
+                    if (adapter is not null && tag.Status == MapFileStatus.Pending)
                     {
                         var context = new AdaptFileContext
                         {
                             FileName = tag.CurrentFileName,
                             Archive = tag.MpqArchive,
-                            TargetPatch = GetTargetPatch(_targetPatch.Value),
+                            TargetPatch = GetTargetPatch(),
                             OriginPatch = tag.GetOriginPatch(_originPatch.Value),
                         };
 
@@ -294,7 +299,7 @@ namespace War3App.MapAdapter.WinForms
                         var adaptResult = adapter.Run(tag.CurrentStream, context);
                         tag.UpdateAdaptResult(adaptResult);
 
-                        if (tag.Parent != null)
+                        if (tag.Parent is not null)
                         {
                             parentsToUpdate.Add(tag.Parent);
                         }
@@ -406,6 +411,7 @@ namespace War3App.MapAdapter.WinForms
                 {
                     Patch = Enum.Parse<GamePatch>(targetPatch.GetSection(nameof(TargetPatch.Patch)).Value),
                     GameDataPath = targetPatch.GetSection(nameof(TargetPatch.GameDataPath)).Value,
+                    GameDataContainerType = ContainerType.Directory,
                 }).ToList(),
             };
         }
@@ -563,7 +569,7 @@ namespace War3App.MapAdapter.WinForms
                     tag.AdaptResult.AdaptedFileStream.Position = 0;
 
                     oldText = tag.Adapter.GetJson(tag.OriginalFileStream, tag.GetOriginPatch(_originPatch.Value));
-                    newText = tag.Adapter.GetJson(tag.AdaptResult.AdaptedFileStream, _targetPatch.Value);
+                    newText = tag.Adapter.GetJson(tag.AdaptResult.AdaptedFileStream, _targetPatchFromZipArchive?.Patch ?? _targetPatch.Value);
                 }
                 else
                 {
@@ -596,18 +602,18 @@ namespace War3App.MapAdapter.WinForms
                 var item = _fileList.Items[index];
                 var tag = item.GetTag();
 
-                if (tag.Children != null)
+                if (tag.Children is not null)
                 {
                     foreach (var child in tag.Children)
                     {
                         var adapter = child.Adapter;
-                        if (adapter != null && child.Status == MapFileStatus.Pending)
+                        if (adapter is not null && child.Status == MapFileStatus.Pending)
                         {
                             var context = new AdaptFileContext
                             {
                                 FileName = child.CurrentFileName,
                                 Archive = child.MpqArchive,
-                                TargetPatch = GetTargetPatch(_targetPatch.Value),
+                                TargetPatch = GetTargetPatch(),
                                 OriginPatch = child.GetOriginPatch(_originPatch.Value),
                             };
 
@@ -622,13 +628,13 @@ namespace War3App.MapAdapter.WinForms
                 else
                 {
                     var adapter = tag.Adapter;
-                    if (adapter != null && tag.Status == MapFileStatus.Pending)
+                    if (adapter is not null && tag.Status == MapFileStatus.Pending)
                     {
                         var context = new AdaptFileContext
                         {
                             FileName = tag.CurrentFileName,
                             Archive = tag.MpqArchive,
-                            TargetPatch = GetTargetPatch(_targetPatch.Value),
+                            TargetPatch = GetTargetPatch(),
                             OriginPatch = tag.GetOriginPatch(_originPatch.Value),
                         };
 
@@ -636,7 +642,7 @@ namespace War3App.MapAdapter.WinForms
                         var adaptResult = adapter.Run(tag.CurrentStream, context);
                         tag.UpdateAdaptResult(adaptResult);
 
-                        if (tag.Parent != null)
+                        if (tag.Parent is not null)
                         {
                             tag.Parent.ListViewItem.Update();
                         }
@@ -726,7 +732,7 @@ namespace War3App.MapAdapter.WinForms
             {
                 _diagnosticsDisplay.Text = string.Empty;
 
-                if (tag.AdaptResult?.Diagnostics != null)
+                if (tag.AdaptResult?.Diagnostics is not null)
                 {
                     var anyDiagnosticWritten = false;
                     var originalColor = _diagnosticsDisplay.SelectionColor;
@@ -792,12 +798,13 @@ namespace War3App.MapAdapter.WinForms
 #if USE_KEY_CONTAINER
             if (string.Equals(Path.GetExtension(filePath), ".zip", StringComparison.OrdinalIgnoreCase))
             {
-                using var zipFile = Ionic.Zip.ZipFile.Read(filePath);
+                using var stream = File.OpenRead(filePath);
+                using var zipFile = new ZipArchive(stream, ZipArchiveMode.Read);
 
-                var encryptedAesParameters = zipFile.Entries.SingleOrDefault(e => string.Equals(e.FileName, "aes.enc", StringComparison.OrdinalIgnoreCase));
+                var encryptedAesParameters = zipFile.Entries.SingleOrDefault(e => string.Equals(e.FullName, "aes.enc", StringComparison.OrdinalIgnoreCase));
                 if (encryptedAesParameters is null)
                 {
-                    var mapEntry = zipFile.Entries.Single(e => Path.GetExtension(e.FileName).StartsWith(".w3", StringComparison.OrdinalIgnoreCase));
+                    var mapEntry = zipFile.Entries.Single(e => Path.GetExtension(e.FullName).StartsWith(".w3", StringComparison.OrdinalIgnoreCase));
 
                     var mapStream = new MemoryStream();
                     mapEntry.Extract(mapStream);
@@ -830,7 +837,7 @@ namespace War3App.MapAdapter.WinForms
                     using var aes = Aes.Create();
                     aes.Padding = PaddingMode.PKCS7;
 
-                    var encryptedMapEntry = zipFile.Entries.Single(e => string.Equals(Path.GetExtension(e.FileName), ".aes", StringComparison.OrdinalIgnoreCase));
+                    var encryptedMapEntry = zipFile.Entries.Single(e => string.Equals(Path.GetExtension(e.FullName), ".aes", StringComparison.OrdinalIgnoreCase));
 
                     using var encryptedMapStream = new MemoryStream();
                     encryptedMapEntry.Extract(encryptedMapStream);
@@ -845,6 +852,16 @@ namespace War3App.MapAdapter.WinForms
 
                     _archive = MpqArchive.Open(mapStream, true);
                 }
+
+                var gamePatchEntry = zipFile.Entries.SingleOrDefault(e => string.Equals(e.FullName, "patch.txt", StringComparison.OrdinalIgnoreCase));
+                using var gamePatchStream = gamePatchEntry.Open();
+
+                _targetPatchFromZipArchive = new TargetPatch
+                {
+                    Patch = Enum.Parse<GamePatch>(gamePatchStream.ReadAllText()),
+                    GameDataPath = filePath,
+                    GameDataContainerType = ContainerType.ZipArchive,
+                };
             }
             else
 #endif
@@ -975,11 +992,11 @@ namespace War3App.MapAdapter.WinForms
 
                 _fileList.EndUpdate();
 
-                _targetPatchesComboBox.Enabled = _targetPatchesComboBox.Items.Count > 1;
+                _targetPatchesComboBox.Enabled = _targetPatchFromZipArchive is null && _targetPatchesComboBox.Items.Count > 1;
 
                 _targetPatch = (GamePatch?)_targetPatchesComboBox.SelectedItem;
-                _adaptAllButton.Enabled = _targetPatch.HasValue && _fileList.Items.Count > 0;
-                _getHelpButton.Enabled = _targetPatch.HasValue;
+                _adaptAllButton.Enabled = TargetPatchSelected && _fileList.Items.Count > 0;
+                _getHelpButton.Enabled = TargetPatchSelected;
 
                 _openCloseArchiveButton.Enabled = true;
                 _saveAsButton.Enabled = true;
@@ -992,6 +1009,7 @@ namespace War3App.MapAdapter.WinForms
         {
             _archive.Dispose();
             _archive = null;
+            _targetPatchFromZipArchive = null;
 
             _archiveInput.Enabled = true;
             _archiveInputBrowseButton.Enabled = true;
@@ -1069,7 +1087,7 @@ namespace War3App.MapAdapter.WinForms
                         using var subArchive = MpqArchive.Open(_archive.OpenFile(tag.OriginalFileName));
                         foreach (var child in tag.Children)
                         {
-                            if (child.OriginalFileName != null)
+                            if (child.OriginalFileName is not null)
                             {
                                 subArchive.AddFileName(child.OriginalFileName);
                             }
@@ -1164,6 +1182,12 @@ namespace War3App.MapAdapter.WinForms
             {
                 _progressBar.Visible = false;
             }
+        }
+
+        private static TargetPatch GetTargetPatch()
+        {
+            return _targetPatchFromZipArchive
+                ?? GetTargetPatch(_targetPatch.Value);
         }
 
         private static TargetPatch GetTargetPatch(GamePatch patch)
