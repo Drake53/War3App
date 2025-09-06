@@ -1,6 +1,8 @@
 name: Publish War3App.MapAdapter
 
 on:
+  pull_request:
+    branches: ['master']
   workflow_dispatch:
 
 env:
