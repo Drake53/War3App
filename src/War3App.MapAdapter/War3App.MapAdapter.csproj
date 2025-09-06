@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="War3Api.Blizzard" Version="1.33.0" />
-    <PackageReference Include="War3Net.Build.Core" Version="5.7.1" />
+    <PackageReference Include="War3Net.Build.Core" Version="5.8.0" />
   </ItemGroup>
 
 </Project>
