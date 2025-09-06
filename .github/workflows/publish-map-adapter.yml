@@ -1,0 +1,46 @@
+name: Publish War3App.MapAdapter
+
+on:
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        submodules: true
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Publish project
+      run: dotnet publish src/War3App.MapAdapter.WinForms/War3App.MapAdapter.WinForms.csproj -c Release -o ./artifacts/map-adapter
+
+    - name: Create zip
+      run: cd ./artifacts/map-adapter && zip -r ../MapAdapter.zip .
+
+    - name: Get version from csproj
+      run: |
+        VERSION=$(grep '<Version>' src/War3App.MapAdapter.WinForms/War3App.MapAdapter.WinForms.csproj | cut -d'>' -f2 | cut -d'<' -f1)
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2.3.2
+      with:
+        name: War3App.MapAdapter v${{ env.VERSION }}
+        tag_name: mapadapter-v${{ env.VERSION }}
+        files: |
+          ./artifacts/MapAdapter.zip
+        draft: ${{ github.ref_name != 'master' }}
