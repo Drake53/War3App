@@ -61,6 +61,7 @@ namespace War3App.MapAdapter.Info
         {
             switch (mapInfo.FormatVersion)
             {
+                case MapInfoFormatVersion.v32:
                 case MapInfoFormatVersion.v33:
                     mapInfo.MapFlags &= ~(MapFlags.DisableDenyIcon | MapFlags.ForceDefaultCameraZoom | MapFlags.ForceMaxCameraZoom | MapFlags.ForceMinCameraZoom);
                     mapInfo.FormatVersion = MapInfoFormatVersion.v31;
@@ -71,6 +72,8 @@ namespace War3App.MapAdapter.Info
                     mapInfo.FormatVersion = MapInfoFormatVersion.v28;
                     break;
 
+                case MapInfoFormatVersion.v26:
+                case MapInfoFormatVersion.v27:
                 case MapInfoFormatVersion.v28:
                     if (mapInfo.ScriptLanguage == ScriptLanguage.Lua)
                     {
@@ -81,6 +84,8 @@ namespace War3App.MapAdapter.Info
                     mapInfo.FormatVersion = MapInfoFormatVersion.v25;
                     break;
 
+                case MapInfoFormatVersion.v23:
+                case MapInfoFormatVersion.v24:
                 case MapInfoFormatVersion.v25:
                     if (mapInfo.Players.Count > 12 || mapInfo.Forces.Count > 12)
                     {
