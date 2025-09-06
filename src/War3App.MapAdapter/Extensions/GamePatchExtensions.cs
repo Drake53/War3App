@@ -124,19 +124,42 @@ namespace War3App.MapAdapter.Extensions
                 case GamePatch.v1_32_2:
                     return 6106;
 
-                // TODO
                 case GamePatch.v1_32_3:
+                    return 6108;
+
                 case GamePatch.v1_32_4:
                 case GamePatch.v1_32_5:
+                    return 6109;
+
                 case GamePatch.v1_32_6:
                 case GamePatch.v1_32_7:
+                    return 6110;
+
                 case GamePatch.v1_32_8:
+                    return 6111;
+
                 case GamePatch.v1_32_9:
+                    return 6112;
+
                 case GamePatch.v1_32_10:
-                    return 6106;
+                case GamePatch.v1_33_0:
+                case GamePatch.v1_34_0:
+                    return 6114;
+
+                case GamePatch.v1_35_0:
+                case GamePatch.v1_35_0a:
+                case GamePatch.v1_36_1:
+                case GamePatch.v1_36_2:
+                case GamePatch.v2_0_0:
+                case GamePatch.v2_0_1:
+                case GamePatch.v2_0_2:
+                    return 6115;
+
+                case GamePatch.v2_0_3:
+                    return 6116;
 
                 default: throw new NotSupportedException();
-            };
+            }
         }
 
         public static string PrettyPrint(this GamePatch gamePatch)
