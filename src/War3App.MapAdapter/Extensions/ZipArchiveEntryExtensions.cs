@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.IO.Compression;
 
-namespace War3App.MapAdapter.WinForms.Extensions
+namespace War3App.MapAdapter.Extensions
 {
     public static class ZipArchiveEntryExtensions
     {
