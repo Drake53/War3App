@@ -61,11 +61,13 @@ namespace War3App.MapAdapter.Info
         {
             switch (mapInfo.FormatVersion)
             {
+                case MapInfoFormatVersion.v33:
+                    mapInfo.MapFlags &= ~(MapFlags.DisableDenyIcon | MapFlags.ForceDefaultCameraZoom | MapFlags.ForceMaxCameraZoom | MapFlags.ForceMinCameraZoom);
+                    mapInfo.FormatVersion = MapInfoFormatVersion.v31;
+                    break;
+
                 case MapInfoFormatVersion.v31:
                     mapInfo.MapFlags &= ~(MapFlags.AccurateProbabilityForCalculations | MapFlags.CustomAbilitySkin);
-                    mapInfo.EditorVersion = EditorVersion.v6072;
-                    mapInfo.GameVersion = new Version(1, 31, 1, 12173);
-
                     mapInfo.FormatVersion = MapInfoFormatVersion.v28;
                     break;
 
@@ -76,7 +78,6 @@ namespace War3App.MapAdapter.Info
                     }
 
                     mapInfo.GameVersion = null;
-
                     mapInfo.FormatVersion = MapInfoFormatVersion.v25;
                     break;
 
@@ -104,6 +105,7 @@ namespace War3App.MapAdapter.Info
                 MapInfoFormatVersion.v25 => GamePatch.v1_07,
                 MapInfoFormatVersion.v28 => GamePatch.v1_31_0,
                 MapInfoFormatVersion.v31 => GamePatch.v1_32_0,
+                MapInfoFormatVersion.v33 => GamePatch.v2_0_3,
 
                 MapInfoFormatVersion.v8 => GamePatch.v1_00,
                 MapInfoFormatVersion.v10 => GamePatch.v1_00,
@@ -113,6 +115,7 @@ namespace War3App.MapAdapter.Info
                 MapInfoFormatVersion.v24 => GamePatch.v1_07,
                 MapInfoFormatVersion.v26 => GamePatch.v1_31_0,
                 MapInfoFormatVersion.v27 => GamePatch.v1_31_0,
+                MapInfoFormatVersion.v32 => GamePatch.v2_0_3,
             };
 
             return minimumBySlotCounts > minimumByFormatVersion ? minimumBySlotCounts : minimumByFormatVersion;
