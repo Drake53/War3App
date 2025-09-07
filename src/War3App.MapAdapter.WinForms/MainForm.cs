@@ -9,8 +9,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Windows.Forms;
 
 using Microsoft.Extensions.Configuration;
@@ -192,9 +190,10 @@ namespace War3App.MapAdapter.WinForms
 
             _getHelpButton.Click += (s, e) =>
             {
-                if (TargetPatchSelected)
+                var targetPatch = GetTargetPatch();
+                if (targetPatch is not null)
                 {
-                    _ = new GetHelpForm(_archiveInput.Text, GetTargetPatch()).ShowDialog();
+                    _ = new GetHelpForm(_archiveInput.Text, targetPatch).ShowDialog();
                 }
             };
 
@@ -242,6 +241,12 @@ namespace War3App.MapAdapter.WinForms
 
             _adaptAllButton.Click += (s, e) =>
             {
+                var targetPatch = GetTargetPatch();
+                if (targetPatch is null)
+                {
+                    return;
+                }
+
                 var adaptedItemIndices = new List<int>();
 
                 _targetPatchesComboBox.Enabled = false;
@@ -258,7 +263,7 @@ namespace War3App.MapAdapter.WinForms
                         {
                             FileName = mapFile.CurrentFileName,
                             Archive = mapFile.MpqArchive,
-                            TargetPatch = GetTargetPatch(),
+                            TargetPatch = targetPatch,
                             OriginPatch = mapFile.GetOriginPatch(_originPatch.Value),
                         };
 
@@ -581,6 +586,12 @@ namespace War3App.MapAdapter.WinForms
 
         private static void OnClickAdaptSelected(object? sender, EventArgs e)
         {
+            var targetPatch = GetTargetPatch();
+            if (targetPatch is null)
+            {
+                return;
+            }
+
             _targetPatchesComboBox.Enabled = false;
             for (var i = 0; i < _fileList.SelectedIndices.Count; i++)
             {
@@ -599,7 +610,7 @@ namespace War3App.MapAdapter.WinForms
                             {
                                 FileName = childMapFile.CurrentFileName,
                                 Archive = childMapFile.MpqArchive,
-                                TargetPatch = GetTargetPatch(),
+                                TargetPatch = targetPatch,
                                 OriginPatch = childMapFile.GetOriginPatch(_originPatch.Value),
                             };
 
@@ -621,7 +632,7 @@ namespace War3App.MapAdapter.WinForms
                         {
                             FileName = mapFile.CurrentFileName,
                             Archive = mapFile.MpqArchive,
-                            TargetPatch = GetTargetPatch(),
+                            TargetPatch = targetPatch,
                             OriginPatch = mapFile.GetOriginPatch(_originPatch.Value),
                         };
 
@@ -1184,15 +1195,21 @@ namespace War3App.MapAdapter.WinForms
             }
         }
 
-        private static TargetPatch GetTargetPatch()
+        private static TargetPatch? GetTargetPatch()
         {
-            return _targetPatchFromZipArchive
-                ?? GetTargetPatch(_targetPatch.Value);
+            if (_targetPatchFromZipArchive is not null)
+            {
+                return _targetPatchFromZipArchive;
+            }
+
+            return _targetPatch.HasValue
+                ? GetTargetPatch(_targetPatch.Value)
+                : null;
         }
 
-        private static TargetPatch GetTargetPatch(GamePatch patch)
+        private static TargetPatch? GetTargetPatch(GamePatch patch)
         {
-            return _appSettings.TargetPatches.First(targetPatch => targetPatch.Patch == patch);
+            return _appSettings.TargetPatches.FirstOrDefault(targetPatch => targetPatch.Patch == patch);
         }
     }
 }
