@@ -104,7 +104,7 @@ namespace War3App.MapAdapter.WinForms.Controls
         {
             if (_fileList.TryGetSelectedMapFile(out var mapFile))
             {
-                _adaptContextButton.Enabled = MainForm.TargetPatchSelected && mapFile.Status == MapFileStatus.Pending;
+                _adaptContextButton.Enabled = MainForm.CanAdapt && mapFile.Status == MapFileStatus.Pending;
                 _editContextButton.Enabled = mapFile.Adapter?.IsTextFile == true;
                 _saveContextButton.Enabled = mapFile.CurrentStream is not null && mapFile.Children is null;
                 _diffContextButton.Enabled = mapFile.Adapter is not null && mapFile.AdaptResult?.AdaptedFileStream is not null && (mapFile.Adapter.IsTextFile || mapFile.Adapter.IsJsonSerializationSupported);
@@ -115,7 +115,7 @@ namespace War3App.MapAdapter.WinForms.Controls
             {
                 var mapFiles = _fileList.GetSelectedMapFiles();
 
-                _adaptContextButton.Enabled = MainForm.TargetPatchSelected && mapFiles.Any(mapFile => mapFile.Status == MapFileStatus.Pending);
+                _adaptContextButton.Enabled = MainForm.CanAdapt && mapFiles.Any(mapFile => mapFile.Status == MapFileStatus.Pending);
                 _editContextButton.Enabled = false;
                 _saveContextButton.Enabled = false;
                 _diffContextButton.Enabled = false;

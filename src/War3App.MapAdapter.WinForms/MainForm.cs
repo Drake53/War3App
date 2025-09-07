@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
 using System.IO.Compression;
@@ -36,7 +37,7 @@ namespace War3App.MapAdapter.WinForms
         private static readonly GamePatch _latestPatch = Enum.GetValues<GamePatch>().Max();
 
         private static MpqArchive? _archive;
-        private static TargetPatch? _targetPatchFromZipArchive;
+        private static bool _isTargetPatchFromZipArchive;
 
         private static TextBox _archiveInput;
         private static Button _archiveInputBrowseButton;
@@ -46,7 +47,7 @@ namespace War3App.MapAdapter.WinForms
         private static Button _adaptAllButton;
         private static Button _saveAsButton;
         private static ComboBox _targetPatchesComboBox;
-        private static GamePatch? _targetPatch;
+        private static TargetPatch? _targetPatch;
         private static GamePatch? _originPatch;
         private static Button _getHelpButton;
 
@@ -63,7 +64,8 @@ namespace War3App.MapAdapter.WinForms
         private static IConfiguration _configuration;
         private static AppSettings _appSettings;
 
-        internal static bool TargetPatchSelected => _targetPatchFromZipArchive is not null || _targetPatch.HasValue;
+        [MemberNotNullWhen(true, nameof(_targetPatch))]
+        internal static bool CanAdapt => _targetPatch is not null;
 
         [STAThread]
         internal static void Run(IConfiguration configuration)
@@ -166,9 +168,9 @@ namespace War3App.MapAdapter.WinForms
 
             _targetPatchesComboBox.SelectedIndexChanged += (s, e) =>
             {
-                _targetPatch = (GamePatch?)_targetPatchesComboBox.SelectedItem;
-                _adaptAllButton.Enabled = TargetPatchSelected && _fileList.Items.Count > 0;
-                _getHelpButton.Enabled = TargetPatchSelected;
+                _targetPatch = GetTargetPatch((GamePatch?)_targetPatchesComboBox.SelectedItem);
+                _adaptAllButton.Enabled = CanAdapt && _fileList.Items.Count > 0;
+                _getHelpButton.Enabled = _targetPatch is not null;
             };
 
             _targetPatchesComboBox.FormattingEnabled = true;
@@ -190,10 +192,9 @@ namespace War3App.MapAdapter.WinForms
 
             _getHelpButton.Click += (s, e) =>
             {
-                var targetPatch = GetTargetPatch();
-                if (targetPatch is not null)
+                if (_targetPatch is not null)
                 {
-                    _ = new GetHelpForm(_archiveInput.Text, targetPatch).ShowDialog();
+                    _ = new GetHelpForm(_archiveInput.Text, _targetPatch).ShowDialog();
                 }
             };
 
@@ -241,8 +242,7 @@ namespace War3App.MapAdapter.WinForms
 
             _adaptAllButton.Click += (s, e) =>
             {
-                var targetPatch = GetTargetPatch();
-                if (targetPatch is null)
+                if (!CanAdapt)
                 {
                     return;
                 }
@@ -263,7 +263,7 @@ namespace War3App.MapAdapter.WinForms
                         {
                             FileName = mapFile.CurrentFileName,
                             Archive = mapFile.MpqArchive,
-                            TargetPatch = targetPatch,
+                            TargetPatch = _targetPatch,
                             OriginPatch = mapFile.GetOriginPatch(_originPatch.Value),
                         };
 
@@ -554,13 +554,13 @@ namespace War3App.MapAdapter.WinForms
                     oldText = oldStreamReader.ReadToEnd();
                     newText = newStreamReader.ReadToEnd();
                 }
-                else if (mapFile.Adapter.IsJsonSerializationSupported)
+                else if (mapFile.Adapter.IsJsonSerializationSupported && _targetPatch is not null)
                 {
                     mapFile.OriginalFileStream.Position = 0;
                     mapFile.AdaptResult.AdaptedFileStream.Position = 0;
 
                     oldText = mapFile.Adapter.GetJson(mapFile.OriginalFileStream, mapFile.GetOriginPatch(_originPatch.Value));
-                    newText = mapFile.Adapter.GetJson(mapFile.AdaptResult.AdaptedFileStream, _targetPatchFromZipArchive?.Patch ?? _targetPatch.Value);
+                    newText = mapFile.Adapter.GetJson(mapFile.AdaptResult.AdaptedFileStream, _targetPatch.Patch);
                 }
                 else
                 {
@@ -586,8 +586,7 @@ namespace War3App.MapAdapter.WinForms
 
         private static void OnClickAdaptSelected(object? sender, EventArgs e)
         {
-            var targetPatch = GetTargetPatch();
-            if (targetPatch is null)
+            if (!CanAdapt)
             {
                 return;
             }
@@ -610,7 +609,7 @@ namespace War3App.MapAdapter.WinForms
                             {
                                 FileName = childMapFile.CurrentFileName,
                                 Archive = childMapFile.MpqArchive,
-                                TargetPatch = targetPatch,
+                                TargetPatch = _targetPatch,
                                 OriginPatch = childMapFile.GetOriginPatch(_originPatch.Value),
                             };
 
@@ -632,7 +631,7 @@ namespace War3App.MapAdapter.WinForms
                         {
                             FileName = mapFile.CurrentFileName,
                             Archive = mapFile.MpqArchive,
-                            TargetPatch = targetPatch,
+                            TargetPatch = _targetPatch,
                             OriginPatch = mapFile.GetOriginPatch(_originPatch.Value),
                         };
 
@@ -864,12 +863,14 @@ namespace War3App.MapAdapter.WinForms
                 var gamePatchEntry = zipFile.Entries.SingleOrDefault(e => string.Equals(e.FullName, FileName.TargetPatch, StringComparison.OrdinalIgnoreCase));
                 using var gamePatchStream = gamePatchEntry.Open();
 
-                _targetPatchFromZipArchive = new TargetPatch
+                _targetPatch = new TargetPatch
                 {
                     Patch = Enum.Parse<GamePatch>(gamePatchStream.ReadAllText()),
                     GameDataPath = filePath,
                     GameDataContainerType = ContainerType.ZipArchive,
                 };
+
+                _isTargetPatchFromZipArchive = true;
             }
             else
 #endif
@@ -1001,11 +1002,20 @@ namespace War3App.MapAdapter.WinForms
 
                 _fileList.EndUpdate();
 
-                _targetPatchesComboBox.Enabled = _targetPatchFromZipArchive is null && _targetPatchesComboBox.Items.Count > 1;
+                if (!_isTargetPatchFromZipArchive)
+                {
+                    if (_targetPatchesComboBox.Items.Count > 1)
+                    {
+                        _targetPatchesComboBox.Enabled = true;
+                    }
+                    else
+                    {
+                        _targetPatch = GetTargetPatch((GamePatch?)_targetPatchesComboBox.SelectedItem);
+                    }
+                }
 
-                _targetPatch = (GamePatch?)_targetPatchesComboBox.SelectedItem;
-                _adaptAllButton.Enabled = TargetPatchSelected && _fileList.Items.Count > 0;
-                _getHelpButton.Enabled = TargetPatchSelected;
+                _adaptAllButton.Enabled = CanAdapt && _fileList.Items.Count > 0;
+                _getHelpButton.Enabled = _targetPatch is not null;
 
                 _openCloseArchiveButton.Enabled = true;
                 _saveAsButton.Enabled = true;
@@ -1020,7 +1030,7 @@ namespace War3App.MapAdapter.WinForms
         {
             _archive.Dispose();
             _archive = null;
-            _targetPatchFromZipArchive = null;
+            _isTargetPatchFromZipArchive = false;
 
             _archiveInput.Enabled = true;
             _archiveInputBrowseButton.Enabled = true;
@@ -1031,6 +1041,7 @@ namespace War3App.MapAdapter.WinForms
             _getHelpButton.Enabled = false;
 
             _targetPatchesComboBox.Enabled = false;
+            _targetPatch = null;
             _originPatch = null;
 
             _fileList.Reset();
@@ -1195,21 +1206,11 @@ namespace War3App.MapAdapter.WinForms
             }
         }
 
-        private static TargetPatch? GetTargetPatch()
+        private static TargetPatch? GetTargetPatch(GamePatch? patch)
         {
-            if (_targetPatchFromZipArchive is not null)
-            {
-                return _targetPatchFromZipArchive;
-            }
-
-            return _targetPatch.HasValue
-                ? GetTargetPatch(_targetPatch.Value)
+            return patch.HasValue
+                ? _appSettings.TargetPatches.FirstOrDefault(targetPatch => targetPatch.Patch == patch.Value)
                 : null;
-        }
-
-        private static TargetPatch? GetTargetPatch(GamePatch patch)
-        {
-            return _appSettings.TargetPatches.FirstOrDefault(targetPatch => targetPatch.Patch == patch);
         }
     }
 }
