@@ -235,7 +235,7 @@ namespace War3App.MapAdapter.WinForms
             fileListContextMenu.Undo += OnClickUndoChangesSelected;
             fileListContextMenu.Remove += OnClickRemoveSelected;
 
-            fileListContextMenu.EnableClickEvents();
+            fileListContextMenu.RegisterClickEvents();
 
             _openCloseArchiveButton.Size = _openCloseArchiveButton.PreferredSize;
             _openCloseArchiveButton.Click += OnClickOpenCloseMap;

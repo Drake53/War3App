@@ -33,23 +33,12 @@ namespace War3App.MapAdapter.WinForms.Controls
 
             _fileList = fileList;
 
-            _adaptContextButton = new ToolStripButton(ButtonText.Adapt);
-            _adaptContextButton.Image = Icons.Lightning;
-
-            _editContextButton = new ToolStripButton(ButtonText.Edit);
-            _editContextButton.Image = Icons.Modify;
-
-            _saveContextButton = new ToolStripButton(ButtonText.SaveFile);
-            _saveContextButton.Image = Icons.Download;
-
-            _diffContextButton = new ToolStripButton(ButtonText.Compare);
-            _diffContextButton.Image = Icons.Copy;
-
-            _undoContextButton = new ToolStripButton(ButtonText.Undo);
-            _undoContextButton.Image = Icons.Undo;
-
-            _removeContextButton = new ToolStripButton(ButtonText.Remove);
-            _removeContextButton.Image = Icons.Delete;
+            _adaptContextButton = new ToolStripButton(ButtonText.Adapt, Icons.Lightning);
+            _editContextButton = new ToolStripButton(ButtonText.Edit, Icons.Modify);
+            _saveContextButton = new ToolStripButton(ButtonText.SaveFile, Icons.Download);
+            _diffContextButton = new ToolStripButton(ButtonText.Compare, Icons.Copy);
+            _undoContextButton = new ToolStripButton(ButtonText.Undo, Icons.Undo);
+            _removeContextButton = new ToolStripButton(ButtonText.Remove, Icons.Delete);
 
             Items.AddRange(new[]
             {
@@ -66,23 +55,23 @@ namespace War3App.MapAdapter.WinForms.Controls
             Opening += OnOpeningFileListContextMenu;
         }
 
-        public event EventHandler Adapt;
+        public event EventHandler? Adapt;
 
-        public event EventHandler Edit;
+        public event EventHandler? Edit;
 
-        public event EventHandler Save;
+        public event EventHandler? Save;
 
-        public event EventHandler Diff;
+        public event EventHandler? Diff;
 
-        public event EventHandler Undo;
+        public event EventHandler? Undo;
 
-        public event EventHandler Remove;
+        public event EventHandler? Remove;
 
         protected override Size MaxItemSize => new(_itemWidth, _itemHeight);
 
         public void SetMaxItemWidth(int width) => _itemWidth = width;
 
-        public void EnableClickEvents()
+        public void RegisterClickEvents()
         {
             _adaptContextButton.Click += Adapt;
             _editContextButton.Click += Edit;
@@ -92,7 +81,7 @@ namespace War3App.MapAdapter.WinForms.Controls
             _removeContextButton.Click += Remove;
         }
 
-        public void ResizeToFitItems()
+        private void ResizeToFitItems()
         {
             var width = Items.Cast<ToolStripItem>().Max(item => item.GetPreferredSize(MaxItemSize).Width) + Padding.Horizontal + Margin.Horizontal;
 
