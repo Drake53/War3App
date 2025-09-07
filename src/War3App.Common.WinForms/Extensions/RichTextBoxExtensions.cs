@@ -1,7 +1,7 @@
 ﻿using System.Drawing;
 using System.Windows.Forms;
 
-namespace War3App.MapAdapter.WinForms.Extensions
+namespace War3App.Common.WinForms.Extensions
 {
     public static class RichTextBoxExtensions
     {

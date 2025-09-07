@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace War3App.MapAdapter.WinForms
+namespace War3App.MapAdapter
 {
     public class AppSettings
     {
