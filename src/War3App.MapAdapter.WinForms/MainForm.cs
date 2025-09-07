@@ -24,6 +24,7 @@ using War3App.MapAdapter.Info;
 using War3App.MapAdapter.WinForms.Controls;
 using War3App.MapAdapter.WinForms.Extensions;
 using War3App.MapAdapter.WinForms.Forms;
+using War3App.MapAdapter.WinForms.Helpers;
 
 using War3Net.Build.Common;
 using War3Net.Build.Extensions;
@@ -945,7 +946,7 @@ namespace War3App.MapAdapter.WinForms
 
                     foreach (var mapFile in mapArchive)
                     {
-                        var subItem = ListViewItemExtensions.Create(new MapFile(mapArchive, mapFile, ++index, mapName), _fileList);
+                        var subItem = ListViewItemFactory.Create(new MapFile(mapArchive, mapFile, ++index, mapName), _fileList);
 
                         subItem.IndentCount = 1;
                         children.Add(subItem);
@@ -959,7 +960,7 @@ namespace War3App.MapAdapter.WinForms
                         var mapArchiveOriginPatch = reader.ReadMapInfo().GetOriginGamePatch();
 
                         var childMapFiles = children.Select(child => child.GetMapFile()).ToArray();
-                        var mapArchiveItem = ListViewItemExtensions.Create(new MapFile(_archive, file, parentIndex, childMapFiles, mapArchiveOriginPatch), _fileList);
+                        var mapArchiveItem = ListViewItemFactory.Create(new MapFile(_archive, file, parentIndex, childMapFiles, mapArchiveOriginPatch), _fileList);
 
                         listViewItems.Add(mapArchiveItem);
 
@@ -978,7 +979,7 @@ namespace War3App.MapAdapter.WinForms
                 }
                 else
                 {
-                    var item = ListViewItemExtensions.Create(new MapFile(_archive, file, index), _fileList);
+                    var item = ListViewItemFactory.Create(new MapFile(_archive, file, index), _fileList);
 
                     listViewItems.Add(item);
 

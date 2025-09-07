@@ -16,23 +16,6 @@ namespace War3App.MapAdapter.WinForms.Extensions
         internal const int FileTypeColumnIndex = 2;
         internal const int ArchiveNameColumnIndex = 3;
 
-        public static ListViewItem Create(MapFile mapFile, FileListView fileList)
-        {
-            var item = new ListViewItem(new[]
-            {
-                string.Empty,
-                mapFile.OriginalFileName ?? MiscStrings.UnknownFileName,
-                mapFile.Adapter?.MapFileDescription ?? string.Empty,
-                mapFile.ArchiveName,
-            });
-
-            item.UseItemStyleForSubItems = false;
-            item.Tag = mapFile;
-            fileList.AddMapping(mapFile, item);
-
-            return item;
-        }
-
         public static MapFile GetMapFile(this ListViewItem item)
         {
             return (MapFile)item.Tag;
