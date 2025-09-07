@@ -279,30 +279,31 @@ namespace War3App.MapAdapter.WinForms
                 var adaptedItemIndices = new List<int>();
 
                 _targetPatchesComboBox.Enabled = false;
-                var parentsToUpdate = new HashSet<ItemTag>();
+                var parentsToUpdate = new HashSet<MapFile>();
                 for (var i = 0; i < _fileList.Items.Count; i++)
                 {
                     var item = _fileList.Items[i];
-                    var tag = item.GetTag();
+                    var mapFile = item.GetMapFile();
 
-                    var adapter = tag.Adapter;
-                    if (adapter is not null && tag.Status == MapFileStatus.Pending)
+                    var adapter = mapFile.Adapter;
+                    if (adapter is not null && mapFile.Status == MapFileStatus.Pending)
                     {
                         var context = new AdaptFileContext
                         {
-                            FileName = tag.CurrentFileName,
-                            Archive = tag.MpqArchive,
+                            FileName = mapFile.CurrentFileName,
+                            Archive = mapFile.MpqArchive,
                             TargetPatch = GetTargetPatch(),
-                            OriginPatch = tag.GetOriginPatch(_originPatch.Value),
+                            OriginPatch = mapFile.GetOriginPatch(_originPatch.Value),
                         };
 
-                        tag.CurrentStream.Position = 0;
-                        var adaptResult = adapter.Run(tag.CurrentStream, context);
-                        tag.UpdateAdaptResult(adaptResult);
+                        mapFile.CurrentStream.Position = 0;
+                        var adaptResult = adapter.Run(mapFile.CurrentStream, context);
+                        mapFile.UpdateAdaptResult(adaptResult);
+                        _fileList.UpdateItemForMapFile(mapFile);
 
-                        if (tag.Parent is not null)
+                        if (mapFile.Parent is not null)
                         {
-                            parentsToUpdate.Add(tag.Parent);
+                            parentsToUpdate.Add(mapFile.Parent);
                         }
 
                         if (adaptResult.Diagnostics is not null &&
@@ -315,7 +316,7 @@ namespace War3App.MapAdapter.WinForms
 
                 foreach (var parent in parentsToUpdate)
                 {
-                    parent.ListViewItem.Update();
+                    _fileList.GetItemByMapFile(parent).Update();
                 }
 
                 if (_fileList.SelectedItems.Count == 0)
@@ -490,17 +491,17 @@ namespace War3App.MapAdapter.WinForms
 
         private static void OnClickEditSelected(object? sender, EventArgs e)
         {
-            if (_fileList.TryGetSelectedItemTag(out var tag))
+            if (_fileList.TryGetSelectedMapFile(out var mapFile))
             {
-                if (tag.Adapter is null || !tag.Adapter.IsTextFile)
+                if (mapFile.Adapter is null || !mapFile.Adapter.IsTextFile)
                 {
                     return;
                 }
 
-                var scriptEditForm = new ScriptEditForm(tag.AdaptResult?.Diagnostics ?? Array.Empty<Diagnostic>());
+                var scriptEditForm = new ScriptEditForm(mapFile.AdaptResult?.Diagnostics ?? Array.Empty<Diagnostic>());
 
-                tag.CurrentStream.Position = 0;
-                using (var reader = new StreamReader(tag.CurrentStream, leaveOpen: true))
+                mapFile.CurrentStream.Position = 0;
+                using (var reader = new StreamReader(mapFile.CurrentStream, leaveOpen: true))
                 {
                     scriptEditForm.Text = reader.ReadToEnd();
                 }
@@ -514,7 +515,8 @@ namespace War3App.MapAdapter.WinForms
                     }
 
                     memoryStream.Position = 0;
-                    tag.ListViewItem.Update(AdaptResult.ModifiedByUser(memoryStream));
+                    mapFile.AdaptResult = AdaptResult.ModifiedByUser(memoryStream);
+                    _fileList.UpdateItemForMapFile(mapFile);
 
                     _diagnosticsDisplay.Text = string.Empty;
                 }
@@ -523,9 +525,9 @@ namespace War3App.MapAdapter.WinForms
 
         private static void OnClickSaveSelected(object? sender, EventArgs e)
         {
-            if (_fileList.TryGetSelectedItemTag(out var tag))
+            if (_fileList.TryGetSelectedMapFile(out var mapFile))
             {
-                if (tag.CurrentStream is null || tag.Children is not null)
+                if (mapFile.CurrentStream is null || mapFile.Children is not null)
                 {
                     return;
                 }
@@ -534,7 +536,7 @@ namespace War3App.MapAdapter.WinForms
                 {
                     OverwritePrompt = true,
                     CreatePrompt = false,
-                    FileName = Path.GetFileName(tag.CurrentFileName) ?? tag.Adapter?.DefaultFileName,
+                    FileName = Path.GetFileName(mapFile.CurrentFileName) ?? mapFile.Adapter?.DefaultFileName,
                 };
 
                 var extension = Path.GetExtension(saveFileDialog.FileName);
@@ -544,7 +546,7 @@ namespace War3App.MapAdapter.WinForms
                 }
                 else
                 {
-                    var fileTypeDescription = tag.Adapter?.MapFileDescription ?? $"{extension.TrimStart('.').ToUpperInvariant()} file";
+                    var fileTypeDescription = mapFile.Adapter?.MapFileDescription ?? $"{extension.TrimStart('.').ToUpperInvariant()} file";
 
                     saveFileDialog.Filter = $"{fileTypeDescription}|*{extension}{FilterStrings.Separator}{FilterStrings.AllFiles}";
                 }
@@ -554,40 +556,40 @@ namespace War3App.MapAdapter.WinForms
                 {
                     using var fileStream = File.Create(saveFileDialog.FileName);
 
-                    tag.CurrentStream.Position = 0;
-                    tag.CurrentStream.CopyTo(fileStream);
+                    mapFile.CurrentStream.Position = 0;
+                    mapFile.CurrentStream.CopyTo(fileStream);
                 }
             }
         }
 
         private static void OnClickDiffSelected(object? sender, EventArgs e)
         {
-            if (_fileList.TryGetSelectedItemTag(out var tag))
+            if (_fileList.TryGetSelectedMapFile(out var mapFile))
             {
-                if (tag.Adapter is null || tag.AdaptResult?.AdaptedFileStream is null)
+                if (mapFile.Adapter is null || mapFile.AdaptResult?.AdaptedFileStream is null)
                 {
                     return;
                 }
 
                 string oldText, newText;
-                if (tag.Adapter.IsTextFile)
+                if (mapFile.Adapter.IsTextFile)
                 {
-                    tag.OriginalFileStream.Position = 0;
-                    tag.AdaptResult.AdaptedFileStream.Position = 0;
+                    mapFile.OriginalFileStream.Position = 0;
+                    mapFile.AdaptResult.AdaptedFileStream.Position = 0;
 
-                    using var oldStreamReader = new StreamReader(tag.OriginalFileStream, leaveOpen: true);
-                    using var newStreamReader = new StreamReader(tag.AdaptResult.AdaptedFileStream, leaveOpen: true);
+                    using var oldStreamReader = new StreamReader(mapFile.OriginalFileStream, leaveOpen: true);
+                    using var newStreamReader = new StreamReader(mapFile.AdaptResult.AdaptedFileStream, leaveOpen: true);
 
                     oldText = oldStreamReader.ReadToEnd();
                     newText = newStreamReader.ReadToEnd();
                 }
-                else if (tag.Adapter.IsJsonSerializationSupported)
+                else if (mapFile.Adapter.IsJsonSerializationSupported)
                 {
-                    tag.OriginalFileStream.Position = 0;
-                    tag.AdaptResult.AdaptedFileStream.Position = 0;
+                    mapFile.OriginalFileStream.Position = 0;
+                    mapFile.AdaptResult.AdaptedFileStream.Position = 0;
 
-                    oldText = tag.Adapter.GetJson(tag.OriginalFileStream, tag.GetOriginPatch(_originPatch.Value));
-                    newText = tag.Adapter.GetJson(tag.AdaptResult.AdaptedFileStream, _targetPatchFromZipArchive?.Patch ?? _targetPatch.Value);
+                    oldText = mapFile.Adapter.GetJson(mapFile.OriginalFileStream, mapFile.GetOriginPatch(_originPatch.Value));
+                    newText = mapFile.Adapter.GetJson(mapFile.AdaptResult.AdaptedFileStream, _targetPatchFromZipArchive?.Patch ?? _targetPatch.Value);
                 }
                 else
                 {
@@ -618,26 +620,27 @@ namespace War3App.MapAdapter.WinForms
             {
                 var index = _fileList.SelectedIndices[i];
                 var item = _fileList.Items[index];
-                var tag = item.GetTag();
+                var mapFile = item.GetMapFile();
 
-                if (tag.Children is not null)
+                if (mapFile.Children is not null)
                 {
-                    foreach (var child in tag.Children)
+                    foreach (var childMapFile in mapFile.Children)
                     {
-                        var adapter = child.Adapter;
-                        if (adapter is not null && child.Status == MapFileStatus.Pending)
+                        var adapter = childMapFile.Adapter;
+                        if (adapter is not null && childMapFile.Status == MapFileStatus.Pending)
                         {
                             var context = new AdaptFileContext
                             {
-                                FileName = child.CurrentFileName,
-                                Archive = child.MpqArchive,
+                                FileName = childMapFile.CurrentFileName,
+                                Archive = childMapFile.MpqArchive,
                                 TargetPatch = GetTargetPatch(),
-                                OriginPatch = child.GetOriginPatch(_originPatch.Value),
+                                OriginPatch = childMapFile.GetOriginPatch(_originPatch.Value),
                             };
 
-                            tag.CurrentStream.Position = 0;
-                            var adaptResult = adapter.Run(child.CurrentStream, context);
-                            child.UpdateAdaptResult(adaptResult);
+                            mapFile.CurrentStream.Position = 0;
+                            var adaptResult = adapter.Run(childMapFile.CurrentStream, context);
+                            childMapFile.UpdateAdaptResult(adaptResult);
+                            _fileList.UpdateItemForMapFile(childMapFile);
                         }
                     }
 
@@ -645,24 +648,25 @@ namespace War3App.MapAdapter.WinForms
                 }
                 else
                 {
-                    var adapter = tag.Adapter;
-                    if (adapter is not null && tag.Status == MapFileStatus.Pending)
+                    var adapter = mapFile.Adapter;
+                    if (adapter is not null && mapFile.Status == MapFileStatus.Pending)
                     {
                         var context = new AdaptFileContext
                         {
-                            FileName = tag.CurrentFileName,
-                            Archive = tag.MpqArchive,
+                            FileName = mapFile.CurrentFileName,
+                            Archive = mapFile.MpqArchive,
                             TargetPatch = GetTargetPatch(),
-                            OriginPatch = tag.GetOriginPatch(_originPatch.Value),
+                            OriginPatch = mapFile.GetOriginPatch(_originPatch.Value),
                         };
 
-                        tag.CurrentStream.Position = 0;
-                        var adaptResult = adapter.Run(tag.CurrentStream, context);
-                        tag.UpdateAdaptResult(adaptResult);
+                        mapFile.CurrentStream.Position = 0;
+                        var adaptResult = adapter.Run(mapFile.CurrentStream, context);
+                        mapFile.UpdateAdaptResult(adaptResult);
+                        _fileList.UpdateItemForMapFile(mapFile);
 
-                        if (tag.Parent is not null)
+                        if (mapFile.Parent is not null)
                         {
-                            tag.Parent.ListViewItem.Update();
+                            _fileList.GetItemByMapFile(mapFile.Parent).Update();
                         }
                     }
                 }
@@ -676,18 +680,19 @@ namespace War3App.MapAdapter.WinForms
             for (var i = 0; i < _fileList.SelectedItems.Count; i++)
             {
                 var item = _fileList.SelectedItems[i];
-                var tag = item.GetTag();
+                var mapFile = item.GetMapFile();
 
-                if (tag.AdaptResult?.AdaptedFileStream is not null)
+                if (mapFile.AdaptResult?.AdaptedFileStream is not null)
                 {
-                    tag.AdaptResult.Dispose();
+                    mapFile.AdaptResult.Dispose();
                 }
-                else if (tag.Status != MapFileStatus.Removed)
+                else if (mapFile.Status != MapFileStatus.Removed)
                 {
                     continue;
                 }
 
-                item.Update(null);
+                mapFile.AdaptResult = null;
+                item.Update(mapFile.AdaptResult);
             }
         }
 
@@ -696,16 +701,17 @@ namespace War3App.MapAdapter.WinForms
             for (var i = 0; i < _fileList.SelectedItems.Count; i++)
             {
                 var item = _fileList.SelectedItems[i];
-                var tag = item.GetTag();
+                var mapFile = item.GetMapFile();
 
-                if (tag.Status == MapFileStatus.Removed)
+                if (mapFile.Status == MapFileStatus.Removed)
                 {
                     continue;
                 }
 
-                tag.AdaptResult?.Dispose();
+                mapFile.AdaptResult?.Dispose();
+                mapFile.AdaptResult = MapFileStatus.Removed;
 
-                item.Update(MapFileStatus.Removed);
+                item.Update(mapFile.AdaptResult);
             }
         }
 
@@ -758,7 +764,7 @@ namespace War3App.MapAdapter.WinForms
 
             foreach (ListViewItem item in _fileList.SelectedItems)
             {
-                var tag = item.GetTag();
+                var mapFile = item.GetMapFile();
 
                 if (!isFirstItem)
                 {
@@ -768,10 +774,10 @@ namespace War3App.MapAdapter.WinForms
 
                 isFirstItem = false;
 
-                _diagnosticsDisplay.Write($"// {tag.CurrentFileName}", Color.Green);
+                _diagnosticsDisplay.Write($"// {mapFile.CurrentFileName}", Color.Green);
 
-                if (tag.AdaptResult?.Diagnostics is null ||
-                    tag.AdaptResult.Diagnostics.Length == 0)
+                if (mapFile.AdaptResult?.Diagnostics is null ||
+                    mapFile.AdaptResult.Diagnostics.Length == 0)
                 {
                     _diagnosticsDisplay.WriteLine();
                     _diagnosticsDisplay.Write(DiagnosticText.None, Color.Gray);
@@ -781,7 +787,7 @@ namespace War3App.MapAdapter.WinForms
 
                 void WriteDiagnostics(DiagnosticSeverity severity, Color color, string prefix)
                 {
-                    foreach (var grouping in tag.AdaptResult.Diagnostics.Where(d => d.Descriptor.Severity == severity).Select(d => d.Message).GroupBy(m => m, StringComparer.Ordinal))
+                    foreach (var grouping in mapFile.AdaptResult.Diagnostics.Where(d => d.Descriptor.Severity == severity).Select(d => d.Message).GroupBy(m => m, StringComparer.Ordinal))
                     {
                         _diagnosticsDisplay.WriteLine();
                         _diagnosticsDisplay.Write(prefix, color);
@@ -939,7 +945,7 @@ namespace War3App.MapAdapter.WinForms
 
                     foreach (var mapFile in mapArchive)
                     {
-                        var subItem = ListViewItemExtensions.Create(new ItemTag(mapArchive, mapFile, ++index, mapName));
+                        var subItem = ListViewItemExtensions.Create(new MapFile(mapArchive, mapFile, ++index, mapName), _fileList);
 
                         subItem.IndentCount = 1;
                         children.Add(subItem);
@@ -952,7 +958,8 @@ namespace War3App.MapAdapter.WinForms
                         using var reader = new BinaryReader(mapInfoFileStream);
                         var mapArchiveOriginPatch = reader.ReadMapInfo().GetOriginGamePatch();
 
-                        var mapArchiveItem = ListViewItemExtensions.Create(new ItemTag(_archive, file, parentIndex, children.ToArray(), mapArchiveOriginPatch));
+                        var childMapFiles = children.Select(child => child.GetMapFile()).ToArray();
+                        var mapArchiveItem = ListViewItemExtensions.Create(new MapFile(_archive, file, parentIndex, childMapFiles, mapArchiveOriginPatch), _fileList);
 
                         listViewItems.Add(mapArchiveItem);
 
@@ -971,7 +978,7 @@ namespace War3App.MapAdapter.WinForms
                 }
                 else
                 {
-                    var item = ListViewItemExtensions.Create(new ItemTag(_archive, file, index));
+                    var item = ListViewItemExtensions.Create(new MapFile(_archive, file, index), _fileList);
 
                     listViewItems.Add(item);
 
@@ -1061,8 +1068,8 @@ namespace War3App.MapAdapter.WinForms
             var itemCount = 0;
             for (var i = 0; i < _fileList.Items.Count; i++)
             {
-                var tag = _fileList.Items[i].GetTag();
-                if (tag.Status != MapFileStatus.Removed)
+                var mapFile = _fileList.Items[i].GetMapFile();
+                if (mapFile.Status != MapFileStatus.Removed)
                 {
                     itemCount++;
                 }
@@ -1085,34 +1092,34 @@ namespace War3App.MapAdapter.WinForms
 
             for (var i = 0; i < _fileList.Items.Count; i++)
             {
-                var tag = _fileList.Items[i].GetTag();
-                if (tag.Parent is not null)
+                var mapFile = _fileList.Items[i].GetMapFile();
+                if (mapFile.Parent is not null)
                 {
                     continue;
                 }
 
-                if (tag.Status == MapFileStatus.Removed)
+                if (mapFile.Status == MapFileStatus.Removed)
                 {
-                    if (tag.TryGetHashedFileName(out var hashedFileName))
+                    if (mapFile.TryGetHashedFileName(out var hashedFileName))
                     {
                         archiveBuilder.RemoveFile(hashedFileName);
                     }
                     else
                     {
-                        archiveBuilder.RemoveFile(_archive, tag.MpqEntry);
+                        archiveBuilder.RemoveFile(_archive, mapFile.MpqEntry);
                     }
                 }
-                else if (tag.Children is not null)
+                else if (mapFile.Children is not null)
                 {
-                    if (tag.Children.All(child => child.Status == MapFileStatus.Removed))
+                    if (mapFile.Children.All(child => child.Status == MapFileStatus.Removed))
                     {
-                        throw new InvalidOperationException(string.Format(ExceptionText.ChildrenRemoved, tag.Status));
+                        throw new InvalidOperationException(string.Format(ExceptionText.ChildrenRemoved, mapFile.Status));
                     }
-                    else if (tag.Children.Any(child => child.IsModified || child.Status == MapFileStatus.Removed))
+                    else if (mapFile.Children.Any(child => child.IsModified || child.Status == MapFileStatus.Removed))
                     {
                         // Assume at most one nested archive (for campaign archives), so no recursion.
-                        using var subArchive = MpqArchive.Open(_archive.OpenFile(tag.OriginalFileName));
-                        foreach (var child in tag.Children)
+                        using var subArchive = MpqArchive.Open(_archive.OpenFile(mapFile.OriginalFileName));
+                        foreach (var child in mapFile.Children)
                         {
                             if (child.OriginalFileName is not null)
                             {
@@ -1121,7 +1128,7 @@ namespace War3App.MapAdapter.WinForms
                         }
 
                         var subArchiveBuilder = new MpqArchiveBuilder(subArchive);
-                        foreach (var child in tag.Children)
+                        foreach (var child in mapFile.Children)
                         {
                             if (child.Status == MapFileStatus.Removed)
                             {
@@ -1150,18 +1157,18 @@ namespace War3App.MapAdapter.WinForms
                         subArchiveBuilder.SaveWithPreArchiveData(adaptedSubArchiveStream, true);
 
                         adaptedSubArchiveStream.Position = 0;
-                        var adaptedFile = MpqFile.New(adaptedSubArchiveStream, tag.CurrentFileName, false);
-                        adaptedFile.TargetFlags = tag.MpqEntry.Flags;
+                        var adaptedFile = MpqFile.New(adaptedSubArchiveStream, mapFile.CurrentFileName, false);
+                        adaptedFile.TargetFlags = mapFile.MpqEntry.Flags;
                         archiveBuilder.AddFile(adaptedFile);
 
                         _saveArchiveWorker.ReportProgress(0, progress);
                     }
                     else
                     {
-                        _saveArchiveWorker.ReportProgress(tag.Children.Length, progress);
+                        _saveArchiveWorker.ReportProgress(mapFile.Children.Length, progress);
                     }
                 }
-                else if (tag.TryGetModifiedMpqFile(out var adaptedFile))
+                else if (mapFile.TryGetModifiedMpqFile(out var adaptedFile))
                 {
                     archiveBuilder.AddFile(adaptedFile);
 

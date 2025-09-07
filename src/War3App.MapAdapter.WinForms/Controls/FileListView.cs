@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 using War3App.MapAdapter.Constants;
@@ -11,6 +12,7 @@ namespace War3App.MapAdapter.WinForms.Controls
     public class FileListView : ListView
     {
         private readonly FileListSorter _fileListSorter;
+        private readonly Dictionary<MapFile, ListViewItem> _fileMapping;
 
         private readonly int _bubbleImageIndex;
         private readonly int _errorImageIndex;
@@ -29,6 +31,7 @@ namespace War3App.MapAdapter.WinForms.Controls
             MultiSelect = true;
 
             _fileListSorter = new FileListSorter(this);
+            _fileMapping = new();
 
             ListViewItemSorter = _fileListSorter;
             ColumnClick += _fileListSorter.Sort;
@@ -58,6 +61,21 @@ namespace War3App.MapAdapter.WinForms.Controls
 
         public int WarningImageIndex => _warningImageIndex;
 
+        public void AddMapping(MapFile mapFile, ListViewItem listViewItem)
+        {
+            _fileMapping.Add(mapFile, listViewItem);
+        }
+
+        public ListViewItem GetItemByMapFile(MapFile mapFile)
+        {
+            return _fileMapping[mapFile];
+        }
+
+        public void UpdateItemForMapFile(MapFile mapFile)
+        {
+            GetItemByMapFile(mapFile).Update(mapFile.AdaptResult);
+        }
+
         public int GetImageIndexForStatus(MapFileStatus mapFileStatus)
         {
             return mapFileStatus switch
@@ -79,7 +97,7 @@ namespace War3App.MapAdapter.WinForms.Controls
 
             for (var i = 0; i < Items.Count; i++)
             {
-                Items[i].GetTag().Dispose();
+                Items[i].GetMapFile().Dispose();
             }
 
             Items.Clear();

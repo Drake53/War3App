@@ -17,27 +17,27 @@ namespace War3App.MapAdapter.WinForms.Extensions
             return false;
         }
 
-        public static bool TryGetSelectedItemTag(this ListView listView, [NotNullWhen(true)] out ItemTag? tag)
+        public static bool TryGetSelectedMapFile(this ListView listView, [NotNullWhen(true)] out MapFile? mapFile)
         {
             if (listView.SelectedItems.Count == 1)
             {
-                tag = listView.SelectedItems[0].GetTag();
+                mapFile = listView.SelectedItems[0].GetMapFile();
                 return true;
             }
 
-            tag = null;
+            mapFile = null;
             return false;
         }
 
-        public static ItemTag[] GetSelectedItemTags(this ListView listView)
+        public static MapFile[] GetSelectedMapFiles(this ListView listView)
         {
-            var tags = new ItemTag[listView.SelectedItems.Count];
+            var mapFiles = new MapFile[listView.SelectedItems.Count];
             for (var i = 0; i < listView.SelectedItems.Count; i++)
             {
-                tags[i] = listView.SelectedItems[i].GetTag();
+                mapFiles[i] = listView.SelectedItems[i].GetMapFile();
             }
 
-            return tags;
+            return mapFiles;
         }
     }
 }

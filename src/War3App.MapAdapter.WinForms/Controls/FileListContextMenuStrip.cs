@@ -102,25 +102,25 @@ namespace War3App.MapAdapter.WinForms.Controls
 
         private void OnOpeningFileListContextMenu(object? sender, EventArgs e)
         {
-            if (_fileList.TryGetSelectedItemTag(out var tag))
+            if (_fileList.TryGetSelectedMapFile(out var mapFile))
             {
-                _adaptContextButton.Enabled = MainForm.TargetPatchSelected && tag.Status == MapFileStatus.Pending;
-                _editContextButton.Enabled = tag.Adapter?.IsTextFile ?? false;
-                _saveContextButton.Enabled = tag.CurrentStream is not null && tag.Children is null;
-                _diffContextButton.Enabled = tag.Adapter is not null && tag.AdaptResult?.AdaptedFileStream is not null && (tag.Adapter.IsTextFile || tag.Adapter.IsJsonSerializationSupported);
-                _undoContextButton.Enabled = tag.Status == MapFileStatus.Removed || tag.AdaptResult?.AdaptedFileStream is not null;
-                _removeContextButton.Enabled = tag.Status != MapFileStatus.Removed;
+                _adaptContextButton.Enabled = MainForm.TargetPatchSelected && mapFile.Status == MapFileStatus.Pending;
+                _editContextButton.Enabled = mapFile.Adapter?.IsTextFile == true;
+                _saveContextButton.Enabled = mapFile.CurrentStream is not null && mapFile.Children is null;
+                _diffContextButton.Enabled = mapFile.Adapter is not null && mapFile.AdaptResult?.AdaptedFileStream is not null && (mapFile.Adapter.IsTextFile || mapFile.Adapter.IsJsonSerializationSupported);
+                _undoContextButton.Enabled = mapFile.Status == MapFileStatus.Removed || mapFile.AdaptResult?.AdaptedFileStream is not null;
+                _removeContextButton.Enabled = mapFile.Status != MapFileStatus.Removed;
             }
             else
             {
-                var tags = _fileList.GetSelectedItemTags();
+                var mapFiles = _fileList.GetSelectedMapFiles();
 
-                _adaptContextButton.Enabled = MainForm.TargetPatchSelected && tags.Any(tag => tag.Status == MapFileStatus.Pending);
+                _adaptContextButton.Enabled = MainForm.TargetPatchSelected && mapFiles.Any(mapFile => mapFile.Status == MapFileStatus.Pending);
                 _editContextButton.Enabled = false;
                 _saveContextButton.Enabled = false;
                 _diffContextButton.Enabled = false;
-                _undoContextButton.Enabled = tags.Any(tag => tag.Status == MapFileStatus.Removed || tag.AdaptResult?.AdaptedFileStream is not null);
-                _removeContextButton.Enabled = tags.Any(tag => tag.Status != MapFileStatus.Removed);
+                _undoContextButton.Enabled = mapFiles.Any(mapFile => mapFile.Status == MapFileStatus.Removed || mapFile.AdaptResult?.AdaptedFileStream is not null);
+                _removeContextButton.Enabled = mapFiles.Any(mapFile => mapFile.Status != MapFileStatus.Removed);
             }
         }
     }
