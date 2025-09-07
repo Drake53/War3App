@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Windows.Forms;
 
+using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.WinForms.Extensions;
 using War3App.MapAdapter.WinForms.Resources;
 
@@ -34,10 +35,10 @@ namespace War3App.MapAdapter.WinForms.Controls
 
             Columns.AddRange(new[]
             {
-                new ColumnHeader { Text = "Status", Width = 102 },
-                new ColumnHeader { Text = "FileName", Width = 300 },
-                new ColumnHeader { Text = "FileType", Width = 130 },
-                new ColumnHeader { Text = "Archive", Width = 87 },
+                new ColumnHeader { Text = HeaderText.Status, Width = 102 },
+                new ColumnHeader { Text = HeaderText.FileName, Width = 300 },
+                new ColumnHeader { Text = HeaderText.FileType, Width = 130 },
+                new ColumnHeader { Text = HeaderText.Archive, Width = 87 },
             });
 
             SmallImageList = new ImageList();

@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
+using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.Diagnostics;
 using War3App.MapAdapter.WinForms.Controls;
 
@@ -20,7 +21,7 @@ namespace War3App.MapAdapter.WinForms.Extensions
             var item = new ListViewItem(new[]
             {
                 string.Empty,
-                tag.OriginalFileName ?? "<unknown filename>",
+                tag.OriginalFileName ?? MiscStrings.UnknownFileName,
                 tag.Adapter?.MapFileDescription ?? string.Empty,
                 tag.ArchiveName,
             });
@@ -59,7 +60,7 @@ namespace War3App.MapAdapter.WinForms.Extensions
 
             if (adaptResult is null || adaptResult.Status == MapFileStatus.Removed)
             {
-                item.SubItems[FileNameColumnIndex].Text = tag.OriginalFileName ?? "<unknown filename>";
+                item.SubItems[FileNameColumnIndex].Text = tag.OriginalFileName ?? MiscStrings.UnknownFileName;
             }
             else if (adaptResult.NewFileName is not null)
             {

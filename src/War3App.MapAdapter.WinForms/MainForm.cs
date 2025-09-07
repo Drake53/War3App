@@ -17,6 +17,7 @@ using Microsoft.Extensions.Configuration;
 
 using War3App.Common.WinForms;
 using War3App.Common.WinForms.Extensions;
+using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.Diagnostics;
 using War3App.MapAdapter.Extensions;
 using War3App.MapAdapter.Info;
@@ -33,8 +34,6 @@ namespace War3App.MapAdapter.WinForms
 {
     internal static class MainForm
     {
-        private const string Title = "Map Adapter v{0}";
-
         private static readonly GamePatch _latestPatch = Enum.GetValues<GamePatch>().Max();
 
         private static MpqArchive? _archive;
@@ -70,7 +69,7 @@ namespace War3App.MapAdapter.WinForms
         [STAThread]
         private static void Main(string[] args)
         {
-            if (!File.Exists("appsettings.json"))
+            if (!File.Exists(FileName.AppSettings))
             {
                 var initialSetupDialog = new ConfigureGamePathForm();
 
@@ -100,11 +99,11 @@ namespace War3App.MapAdapter.WinForms
 
                 jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 
-                File.WriteAllText("appsettings.json", JsonSerializer.Serialize(appSettings, jsonSerializerOptions));
+                File.WriteAllText(FileName.AppSettings, JsonSerializer.Serialize(appSettings, jsonSerializerOptions));
             }
 
             _configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json")
+                .AddJsonFile(FileName.AppSettings)
                 .Build();
 
             ReloadSettings();
@@ -117,7 +116,7 @@ namespace War3App.MapAdapter.WinForms
             var form = new Form();
             form.Size = new Size(1280, 720);
             form.MinimumSize = new Size(400, 300);
-            form.Text = string.Format(Title, FileVersionInfo.GetVersionInfo(typeof(MainForm).Assembly.Location).ProductVersion);
+            form.Text = string.Format(TitleText.Main, FileVersionInfo.GetVersionInfo(typeof(MainForm).Assembly.Location).ProductVersion);
 
             var splitContainer = new SplitContainer
             {
@@ -126,12 +125,12 @@ namespace War3App.MapAdapter.WinForms
 
             _archiveInput = new TextBox
             {
-                PlaceholderText = "Input map or campaign...",
+                PlaceholderText = PlaceholderText.Archive,
             };
 
             _openCloseArchiveButton = new Button
             {
-                Text = "Open archive",
+                Text = ButtonText.Open,
                 Enabled = false,
             };
 
@@ -174,7 +173,7 @@ namespace War3App.MapAdapter.WinForms
 
             _adaptAllButton = new Button
             {
-                Text = "Adapt all",
+                Text = ButtonText.AdaptAll,
             };
 
             _adaptAllButton.Size = _adaptAllButton.PreferredSize;
@@ -182,7 +181,7 @@ namespace War3App.MapAdapter.WinForms
 
             _saveAsButton = new Button
             {
-                Text = "Save As...",
+                Text = ButtonText.SaveAs,
             };
 
             _saveAsButton.Size = _saveAsButton.PreferredSize;
@@ -219,7 +218,7 @@ namespace War3App.MapAdapter.WinForms
 
             _getHelpButton = new Button
             {
-                Text = "Get help",
+                Text = ButtonText.GetHelp,
             };
 
             _getHelpButton.Size = _getHelpButton.PreferredSize;
@@ -237,7 +236,7 @@ namespace War3App.MapAdapter.WinForms
 
             _archiveInputBrowseButton = new Button
             {
-                Text = "Browse",
+                Text = ButtonText.Browse,
             };
 
             _archiveInputBrowseButton.Size = _archiveInputBrowseButton.PreferredSize;
@@ -351,7 +350,7 @@ namespace War3App.MapAdapter.WinForms
                 {
                     OverwritePrompt = true,
                     CreatePrompt = false,
-                    FileName = $"{Path.GetFileNameWithoutExtension(_archiveInput.Text)} (adapted){Path.GetExtension(_archiveInput.Text)}",
+                    FileName = $"{Path.GetFileNameWithoutExtension(_archiveInput.Text)}{MiscStrings.AdaptedFileTag}{Path.GetExtension(_archiveInput.Text)}",
                 };
 
                 saveFileDialog.Filter = GetMpqArchiveFileTypeFilter(false);
@@ -382,7 +381,7 @@ namespace War3App.MapAdapter.WinForms
 
             var targetPatchLabel = new Label
             {
-                Text = "Target patch",
+                Text = LabelText.TargetPatch,
                 TextAlign = ContentAlignment.BottomRight,
             };
 
@@ -439,21 +438,21 @@ namespace War3App.MapAdapter.WinForms
         {
             var filters = new List<string>
             {
-                "Warcraft III archive|*.w3m;*.w3x;*.w3n",
-                "Warcraft III map|*.w3m;*.w3x",
-                "Warcraft III campaign|*.w3n",
+                FilterStrings.ArchiveFile,
+                FilterStrings.MapFile,
+                FilterStrings.CampaignFile,
             };
 
 #if USE_KEY_CONTAINER
             if (isOpenFileDialog)
             {
-                filters.Add("Zip archive|*.zip");
+                filters.Add(FilterStrings.ZipArchive);
             }
 #endif
 
-            filters.Add("All files|*.*");
+            filters.Add(FilterStrings.AllFiles);
 
-            return string.Join('|', filters);
+            return string.Join(FilterStrings.Separator, filters);
         }
 
         private static void OnClickOpenCloseMap(object? sender, EventArgs e)
@@ -541,13 +540,13 @@ namespace War3App.MapAdapter.WinForms
                 var extension = Path.GetExtension(saveFileDialog.FileName);
                 if (string.IsNullOrEmpty(extension))
                 {
-                    saveFileDialog.Filter = "All files|*.*";
+                    saveFileDialog.Filter = FilterStrings.AllFiles;
                 }
                 else
                 {
                     var fileTypeDescription = tag.Adapter?.MapFileDescription ?? $"{extension.TrimStart('.').ToUpperInvariant()} file";
 
-                    saveFileDialog.Filter = $"{fileTypeDescription}|*{extension}|All files|*.*";
+                    saveFileDialog.Filter = $"{fileTypeDescription}|*{extension}{FilterStrings.Separator}{FilterStrings.AllFiles}";
                 }
 
                 var saveFileDialogResult = saveFileDialog.ShowDialog();
@@ -749,7 +748,7 @@ namespace War3App.MapAdapter.WinForms
         {
             if (_fileList.SelectedItems.Count == 0)
             {
-                _diagnosticsDisplay.Text = "Select a file to view its diagnostics.";
+                _diagnosticsDisplay.Text = PlaceholderText.Diagnostics;
                 return;
             }
 
@@ -775,7 +774,7 @@ namespace War3App.MapAdapter.WinForms
                     tag.AdaptResult.Diagnostics.Length == 0)
                 {
                     _diagnosticsDisplay.WriteLine();
-                    _diagnosticsDisplay.Write("-- No diagnostics --", Color.Gray);
+                    _diagnosticsDisplay.Write(DiagnosticText.None, Color.Gray);
 
                     continue;
                 }
@@ -792,9 +791,9 @@ namespace War3App.MapAdapter.WinForms
                     }
                 }
 
-                WriteDiagnostics(DiagnosticSeverity.Error, Color.Red, "[ERR] ");
-                WriteDiagnostics(DiagnosticSeverity.Warning, Color.Orange, "[WRN] ");
-                WriteDiagnostics(DiagnosticSeverity.Info, Color.Blue, "[INF] ");
+                WriteDiagnostics(DiagnosticSeverity.Error, Color.Red, DiagnosticText.Error);
+                WriteDiagnostics(DiagnosticSeverity.Warning, Color.Orange, DiagnosticText.Warning);
+                WriteDiagnostics(DiagnosticSeverity.Info, Color.Blue, DiagnosticText.Info);
             }
         }
 
@@ -806,7 +805,7 @@ namespace War3App.MapAdapter.WinForms
                 _archiveInput.Enabled = false;
                 _archiveInputBrowseButton.Enabled = false;
                 _openCloseArchiveButton.Enabled = false;
-                _openCloseArchiveButton.Text = "Close archive";
+                _openCloseArchiveButton.Text = ButtonText.Close;
 
                 _progressBar.Value = 0;
                 _progressBar.Maximum = 1;
@@ -822,12 +821,12 @@ namespace War3App.MapAdapter.WinForms
             var filePath = (string)e.Argument;
 
 #if USE_KEY_CONTAINER
-            if (string.Equals(Path.GetExtension(filePath), ".zip", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(Path.GetExtension(filePath), FileExtension.Zip, StringComparison.OrdinalIgnoreCase))
             {
                 using var stream = File.OpenRead(filePath);
                 using var zipFile = new ZipArchive(stream, ZipArchiveMode.Read);
 
-                var encryptedAesParameters = zipFile.Entries.SingleOrDefault(e => string.Equals(e.FullName, "aes.enc", StringComparison.OrdinalIgnoreCase));
+                var encryptedAesParameters = zipFile.Entries.SingleOrDefault(e => string.Equals(e.FullName, FileName.AesParameters, StringComparison.OrdinalIgnoreCase));
                 if (encryptedAesParameters is null)
                 {
                     var mapEntry = zipFile.Entries.Single(e => Path.GetExtension(e.FullName).StartsWith(".w3", StringComparison.OrdinalIgnoreCase));
@@ -845,7 +844,7 @@ namespace War3App.MapAdapter.WinForms
 
                     var cspParameters = new CspParameters
                     {
-                        KeyContainerName = "War3App.MapAdapter.RsaKeyContainer",
+                        KeyContainerName = MiscStrings.EncryptionKeyContainerName,
                     };
 
                     using var rsaProvider = new RSACryptoServiceProvider(cspParameters)
@@ -863,7 +862,7 @@ namespace War3App.MapAdapter.WinForms
                     using var aes = Aes.Create();
                     aes.Padding = PaddingMode.PKCS7;
 
-                    var encryptedMapEntry = zipFile.Entries.Single(e => string.Equals(Path.GetExtension(e.FullName), ".aes", StringComparison.OrdinalIgnoreCase));
+                    var encryptedMapEntry = zipFile.Entries.Single(e => string.Equals(Path.GetExtension(e.FullName), FileExtension.Aes, StringComparison.OrdinalIgnoreCase));
 
                     using var encryptedMapStream = new MemoryStream();
                     encryptedMapEntry.Extract(encryptedMapStream);
@@ -879,7 +878,7 @@ namespace War3App.MapAdapter.WinForms
                     _archive = MpqArchive.Open(mapStream, true);
                 }
 
-                var gamePatchEntry = zipFile.Entries.SingleOrDefault(e => string.Equals(e.FullName, "patch.txt", StringComparison.OrdinalIgnoreCase));
+                var gamePatchEntry = zipFile.Entries.SingleOrDefault(e => string.Equals(e.FullName, FileName.TargetPatch, StringComparison.OrdinalIgnoreCase));
                 using var gamePatchStream = gamePatchEntry.Open();
 
                 _targetPatchFromZipArchive = new TargetPatch
@@ -1004,7 +1003,7 @@ namespace War3App.MapAdapter.WinForms
         {
             if (e.Error is not null)
             {
-                throw new ApplicationException("Background task 'open archive' did not complete succesfully.", e.Error);
+                throw new ApplicationException(ExceptionText.OpenArchive, e.Error);
             }
             else if (e.Result is List<ListViewItem> listViewItems)
             {
@@ -1042,7 +1041,7 @@ namespace War3App.MapAdapter.WinForms
             _archiveInput.Enabled = true;
             _archiveInputBrowseButton.Enabled = true;
 
-            _openCloseArchiveButton.Text = "Open archive";
+            _openCloseArchiveButton.Text = ButtonText.Open;
             _adaptAllButton.Enabled = false;
             _saveAsButton.Enabled = false;
             _getHelpButton.Enabled = false;
@@ -1107,7 +1106,7 @@ namespace War3App.MapAdapter.WinForms
                 {
                     if (tag.Children.All(child => child.Status == MapFileStatus.Removed))
                     {
-                        throw new InvalidOperationException("Parent tag should have been removed since all child tags are removed, but was " + tag.Status);
+                        throw new InvalidOperationException(string.Format(ExceptionText.ChildrenRemoved, tag.Status));
                     }
                     else if (tag.Children.Any(child => child.IsModified || child.Status == MapFileStatus.Removed))
                     {
@@ -1189,7 +1188,7 @@ namespace War3App.MapAdapter.WinForms
             {
                 if (saveArchiveProgress.Saving)
                 {
-                    _progressBar.CustomText = "Saving...";
+                    _progressBar.CustomText = ProgressText.Saving;
                 }
                 else
                 {
@@ -1204,7 +1203,7 @@ namespace War3App.MapAdapter.WinForms
         {
             if (e.Error is not null)
             {
-                throw new ApplicationException("Background task 'save archive' did not complete succesfully.", e.Error);
+                throw new ApplicationException(ExceptionText.SaveArchive, e.Error);
             }
             else
             {

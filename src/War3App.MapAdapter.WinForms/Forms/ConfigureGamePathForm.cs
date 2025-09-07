@@ -7,6 +7,7 @@ using System.Linq;
 using System.Windows.Forms;
 
 using War3App.Common.WinForms.Extensions;
+using War3App.MapAdapter.Constants;
 
 using War3Net.Build.Common;
 
@@ -24,13 +25,13 @@ namespace War3App.MapAdapter.WinForms.Forms
 
         public ConfigureGamePathForm()
         {
-            Text = "Initial setup";
+            Text = TitleText.Setup;
             Size = new Size(600, 200);
             MinimumSize = new Size(400, 200);
 
             _gameDirectoryInput = new TextBox
             {
-                PlaceholderText = "Input path to warcraft III installation...",
+                PlaceholderText = PlaceholderText.GameDirectory,
                 TabIndex = 2,
                 Width = 360,
             };
@@ -39,7 +40,7 @@ namespace War3App.MapAdapter.WinForms.Forms
 
             _gameDirectoryInputBrowseButton = new Button
             {
-                Text = "Browse",
+                Text = ButtonText.Browse,
                 TabIndex = 0,
             };
 
@@ -59,7 +60,7 @@ namespace War3App.MapAdapter.WinForms.Forms
 
             var targetPatchLabel = new Label
             {
-                Text = "Target patch",
+                Text = LabelText.TargetPatch,
                 TextAlign = ContentAlignment.BottomRight,
             };
 
@@ -93,7 +94,7 @@ namespace War3App.MapAdapter.WinForms.Forms
 
             _saveButton = new Button
             {
-                Text = "Save",
+                Text = ButtonText.Save,
                 Enabled = false,
                 TabIndex = 1,
                 Dock = DockStyle.Bottom,
@@ -105,8 +106,8 @@ namespace War3App.MapAdapter.WinForms.Forms
                 if (missingFiles.Count > 0)
                 {
                     MessageBox.Show(
-                        string.Join(System.Environment.NewLine, missingFiles.Prepend("Directory does not contain all files required for adapting. The following files could not be found:")),
-                        "Missing files",
+                        string.Join(System.Environment.NewLine, missingFiles.Prepend(MessageText.MissingFiles)),
+                        TitleText.MissingFiles,
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
 

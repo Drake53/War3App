@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Windows.Forms;
 
 using War3App.Common.WinForms.Extensions;
+using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.Extensions;
 using War3App.MapAdapter.WinForms.Helpers;
 
@@ -32,17 +33,11 @@ namespace War3App.MapAdapter.WinForms.Forms
 
             Size = new Size(400, 300);
             MinimumSize = new Size(400, 300);
-            Text = "Get help";
-
-            var helpText = @"If you run into an error while trying to adapt a map, please create an issue at https://github.com/Drake53/War3App/issues and include a .zip file, which you can create by clicking the button below.
-This .zip file will contain the map file, the target patch version, and the game files which belong to that patch version in order to reproduce your issue.
-
-If the map belongs to you and you use map protection, try to reproduce the issue on the protected version first.
-If the issue can only be reproduced on the unprotected version, you can enable the 'Encrypt map file' setting, which will encrypt the map file with RSA/AES, so only the author of this tool can open the map.";
+            Text = TitleText.Help;
 
             _helpTextBox = new RichTextBox
             {
-                Text = helpText,
+                Text = MessageText.GetHelp,
                 Width = 380,
                 Height = 200,
                 ReadOnly = true,
@@ -57,7 +52,7 @@ If the issue can only be reproduced on the unprotected version, you can enable t
 
             var encryptMapFileLabel = new Label
             {
-                Text = "Encrypt map file",
+                Text = LabelText.Encrypt,
                 TextAlign = ContentAlignment.BottomRight,
             };
 
@@ -67,12 +62,12 @@ If the issue can only be reproduced on the unprotected version, you can enable t
             _encryptMapFileCheckBox.CheckedChanged += (s, e) =>
             {
                 _savedZipFilePath = null;
-                _saveOrNavigateToZipButton.Text = "Save .zip file";
+                _saveOrNavigateToZipButton.Text = ButtonText.SaveZip;
             };
 
             _saveOrNavigateToZipButton = new Button
             {
-                Text = "Save .zip file",
+                Text = ButtonText.SaveZip,
                 Dock = DockStyle.Bottom,
                 TabIndex = 1,
             };
@@ -90,8 +85,8 @@ If the issue can only be reproduced on the unprotected version, you can enable t
                     OverwritePrompt = true,
                     CreatePrompt = false,
                     AddExtension = true,
-                    DefaultExt = ".zip",
-                    Filter = "Zip file|*.zip|All files|*.*",
+                    DefaultExt = FileExtension.Zip,
+                    Filter = FilterStrings.ZipFileOrAllFiles,
                 };
 
                 var saveFileDialogResult = saveFileDialog.ShowDialog();
@@ -99,7 +94,7 @@ If the issue can only be reproduced on the unprotected version, you can enable t
                 {
                     SaveZipFile(saveFileDialog.FileName);
 
-                    _saveOrNavigateToZipButton.Text = "Show .zip file";
+                    _saveOrNavigateToZipButton.Text = ButtonText.ShowZip;
                     _savedZipFilePath = saveFileDialog.FileName;
                 }
             };
@@ -149,7 +144,7 @@ If the issue can only be reproduced on the unprotected version, you can enable t
                 Array.Copy(aes.IV, 0, aesParameters, aes.Key.Length, aes.IV.Length);
 
                 var encryptedAesParameters = rsa.Encrypt(aesParameters, RSAEncryptionPadding.Pkcs1);
-                zipFile.AddEntry("aes.enc", encryptedAesParameters);
+                zipFile.AddEntry(FileName.AesParameters, encryptedAesParameters);
 
                 using var memoryStream = new MemoryStream();
                 using var aesEncryptor = aes.CreateEncryptor();
@@ -159,15 +154,15 @@ If the issue can only be reproduced on the unprotected version, you can enable t
                 mapFileStream.CopyTo(cryptoStream);
                 cryptoStream.FlushFinalBlock();
 
-                zipFile.AddEntry($"{Path.GetFileNameWithoutExtension(_mapFilePath)}.aes", memoryStream.ToArray());
+                zipFile.AddEntry($"{Path.GetFileNameWithoutExtension(_mapFilePath)}{FileExtension.Aes}", memoryStream.ToArray());
             }
             else
             {
                 zipFile.AddFile(_mapFilePath, string.Empty);
             }
 
-            zipFile.AddEntry("adapter.txt", FileVersionInfo.GetVersionInfo(typeof(GetHelpForm).Assembly.Location).ProductVersion);
-            zipFile.AddEntry("patch.txt", _targetPatch.Patch.ToString());
+            zipFile.AddEntry(FileName.ApplicationVersion, FileVersionInfo.GetVersionInfo(typeof(GetHelpForm).Assembly.Location).ProductVersion);
+            zipFile.AddEntry(FileName.TargetPatch, _targetPatch.Patch.ToString());
 
             foreach (var path in PathConstants.GetAllPaths())
             {

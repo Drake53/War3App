@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
+using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.WinForms.Extensions;
 using War3App.MapAdapter.WinForms.Resources;
 
@@ -32,22 +33,22 @@ namespace War3App.MapAdapter.WinForms.Controls
 
             _fileList = fileList;
 
-            _adaptContextButton = new ToolStripButton("Adapt");
+            _adaptContextButton = new ToolStripButton(ButtonText.Adapt);
             _adaptContextButton.Image = Icons.Lightning;
 
-            _editContextButton = new ToolStripButton("Edit");
+            _editContextButton = new ToolStripButton(ButtonText.Edit);
             _editContextButton.Image = Icons.Modify;
 
-            _saveContextButton = new ToolStripButton("Save file");
+            _saveContextButton = new ToolStripButton(ButtonText.SaveFile);
             _saveContextButton.Image = Icons.Download;
 
-            _diffContextButton = new ToolStripButton("Compare with unmodified");
+            _diffContextButton = new ToolStripButton(ButtonText.Compare);
             _diffContextButton.Image = Icons.Copy;
 
-            _undoContextButton = new ToolStripButton("Undo changes");
+            _undoContextButton = new ToolStripButton(ButtonText.Undo);
             _undoContextButton.Image = Icons.Undo;
 
-            _removeContextButton = new ToolStripButton("Remove");
+            _removeContextButton = new ToolStripButton(ButtonText.Remove);
             _removeContextButton.Image = Icons.Delete;
 
             Items.AddRange(new[]
