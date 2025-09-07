@@ -68,44 +68,9 @@ namespace War3App.MapAdapter.WinForms
         internal static bool TargetPatchSelected => _targetPatchFromZipArchive is not null || _targetPatch.HasValue;
 
         [STAThread]
-        private static void Main(string[] args)
+        internal static void Run(IConfiguration configuration)
         {
-            if (!File.Exists(FileName.AppSettings))
-            {
-                var initialSetupDialog = new ConfigureGamePathForm();
-
-                var initialSetupDialogResult = initialSetupDialog.ShowDialog();
-                if (initialSetupDialogResult != DialogResult.OK)
-                {
-                    return;
-                }
-
-                var appSettings = new AppSettings
-                {
-                    TargetPatches = new List<TargetPatch>()
-                    {
-                        new TargetPatch
-                        {
-                            GameDataPath = initialSetupDialog.GameDirectory,
-                            Patch = initialSetupDialog.GamePatch,
-                            GameDataContainerType = ContainerType.Directory,
-                        },
-                    },
-                };
-
-                var jsonSerializerOptions = new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                };
-
-                jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-
-                File.WriteAllText(FileName.AppSettings, JsonSerializer.Serialize(appSettings, jsonSerializerOptions));
-            }
-
-            _configuration = new ConfigurationBuilder()
-                .AddJsonFile(FileName.AppSettings)
-                .Build();
+            _configuration = configuration;
 
             ReloadSettings();
 
