@@ -58,6 +58,32 @@ namespace War3App.MapAdapter.WinForms.Forms
                 }
             };
 
+            _saveButton = new Button
+            {
+                Text = ButtonText.Save,
+                Enabled = false,
+                TabIndex = 1,
+                Dock = DockStyle.Bottom,
+            };
+
+            _saveButton.Click += (s, e) =>
+            {
+                var missingFiles = GetMissingFiles(_gameDirectoryInput.Text).ToList();
+                if (missingFiles.Count > 0)
+                {
+                    MessageBox.Show(
+                        string.Join(System.Environment.NewLine, missingFiles.Prepend(MessageText.MissingFiles)),
+                        TitleText.MissingFiles,
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+
+                    return;
+                }
+
+                DialogResult = DialogResult.OK;
+                Close();
+            };
+
             var targetPatchLabel = new Label
             {
                 Text = LabelText.TargetPatch,
@@ -92,32 +118,6 @@ namespace War3App.MapAdapter.WinForms.Forms
                 }
             };
 
-            _saveButton = new Button
-            {
-                Text = ButtonText.Save,
-                Enabled = false,
-                TabIndex = 1,
-                Dock = DockStyle.Bottom,
-            };
-
-            _saveButton.Click += (s, e) =>
-            {
-                var missingFiles = GetMissingFiles(_gameDirectoryInput.Text).ToList();
-                if (missingFiles.Count > 0)
-                {
-                    MessageBox.Show(
-                        string.Join(System.Environment.NewLine, missingFiles.Prepend(MessageText.MissingFiles)),
-                        TitleText.MissingFiles,
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
-
-                    return;
-                }
-
-                DialogResult = DialogResult.OK;
-                Close();
-            };
-
             var inputGameDirectoryFlowLayout = new FlowLayoutPanel
             {
                 FlowDirection = FlowDirection.LeftToRight,
@@ -149,7 +149,7 @@ namespace War3App.MapAdapter.WinForms.Forms
 
         public GamePatch GamePatch => (GamePatch)_targetPatchesComboBox.SelectedItem;
 
-        private void OnGameDirectoryInputTextChanged(object sender, EventArgs e)
+        private void OnGameDirectoryInputTextChanged(object? sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(_gameDirectoryInput.Text))
             {

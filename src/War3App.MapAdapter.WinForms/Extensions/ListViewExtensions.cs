@@ -5,7 +5,7 @@ namespace War3App.MapAdapter.WinForms.Extensions
 {
     public static class ListViewExtensions
     {
-        public static bool TryGetSelectedItem(this ListView listView, [NotNullWhen(true)] out ListViewItem item)
+        public static bool TryGetSelectedItem(this ListView listView, [NotNullWhen(true)] out ListViewItem? item)
         {
             if (listView.SelectedItems.Count == 1)
             {
@@ -17,7 +17,7 @@ namespace War3App.MapAdapter.WinForms.Extensions
             return false;
         }
 
-        public static bool TryGetSelectedItemTag(this ListView listView, [NotNullWhen(true)] out ItemTag tag)
+        public static bool TryGetSelectedItemTag(this ListView listView, [NotNullWhen(true)] out ItemTag? tag)
         {
             if (listView.SelectedItems.Count == 1)
             {
