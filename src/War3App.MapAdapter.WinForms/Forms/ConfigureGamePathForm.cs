@@ -8,6 +8,7 @@ using System.Windows.Forms;
 
 using War3App.Common.WinForms.Extensions;
 using War3App.MapAdapter.Constants;
+using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Common;
 
@@ -68,16 +69,32 @@ namespace War3App.MapAdapter.WinForms.Forms
 
             _saveButton.Click += (s, e) =>
             {
-                var missingFiles = GetMissingFiles(_gameDirectoryInput.Text).ToList();
-                if (missingFiles.Count > 0)
+                if (string.IsNullOrWhiteSpace(_gameDirectoryInput.Text))
                 {
-                    MessageBox.Show(
-                        string.Join(System.Environment.NewLine, missingFiles.Prepend(MessageText.MissingFiles)),
-                        TitleText.MissingFiles,
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
+                    var dialogResult = MessageBox.Show(
+                        MessageText.ContinueWithoutGameFiles,
+                        TitleText.ContinueWithoutGameFiles,
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning);
 
-                    return;
+                    if (dialogResult != DialogResult.Yes)
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    var missingFiles = GetMissingFiles(_gameDirectoryInput.Text).ToList();
+                    if (missingFiles.Count > 0)
+                    {
+                        MessageBox.Show(
+                            string.Join(System.Environment.NewLine, missingFiles.Prepend(MessageText.MissingFiles)),
+                            TitleText.MissingFiles,
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+
+                        return;
+                    }
                 }
 
                 DialogResult = DialogResult.OK;
@@ -114,7 +131,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             {
                 if (e.ListItem is GamePatch gamePatch)
                 {
-                    e.Value = gamePatch.ToString().Replace('_', '.');
+                    e.Value = gamePatch.PrettyPrint();
                 }
             };
 
@@ -151,14 +168,23 @@ namespace War3App.MapAdapter.WinForms.Forms
 
         private void OnGameDirectoryInputTextChanged(object? sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(_gameDirectoryInput.Text))
+            UpdateSaveButtonState();
+        }
+
+        private void UpdateSaveButtonState()
+        {
+            if (_targetPatchesComboBox.SelectedItem is null)
             {
                 _saveButton.Enabled = false;
+            }
+            else if (string.IsNullOrWhiteSpace(_gameDirectoryInput.Text))
+            {
+                _saveButton.Enabled = true;
             }
             else
             {
                 var directoryInfo = new DirectoryInfo(_gameDirectoryInput.Text);
-                _saveButton.Enabled = directoryInfo.Exists && _targetPatchesComboBox.SelectedItem is not null;
+                _saveButton.Enabled = directoryInfo.Exists;
             }
         }
 
