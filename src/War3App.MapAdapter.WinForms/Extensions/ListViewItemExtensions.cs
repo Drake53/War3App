@@ -5,6 +5,7 @@ using System.Windows.Forms;
 
 using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.Diagnostics;
+using War3App.MapAdapter.Extensions;
 using War3App.MapAdapter.WinForms.Controls;
 
 namespace War3App.MapAdapter.WinForms.Extensions
@@ -88,9 +89,7 @@ namespace War3App.MapAdapter.WinForms.Extensions
         {
             if (item.ListView is FileListView fileListView)
             {
-                var severity = adaptResult?.Diagnostics is null
-                    ? DiagnosticSeverity.Info
-                    : adaptResult.Diagnostics.Select(d => d.Descriptor.Severity).Append(DiagnosticSeverity.Info).Max();
+                var severity = adaptResult.GetDiagnosticSeverity();
 
                 if (severity == DiagnosticSeverity.Error)
                 {
