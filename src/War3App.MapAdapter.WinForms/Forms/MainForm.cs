@@ -44,7 +44,7 @@ namespace War3App.MapAdapter.WinForms.Forms
         private readonly Button _adaptAllButton;
         private readonly Button _saveAsButton;
         private readonly Button _getHelpButton;
-        private readonly RichTextBox _diagnosticsDisplay;
+        private readonly DiagnosticsDisplay _diagnosticsDisplay;
         private readonly FileListView _fileList;
         private readonly TextProgressBar _progressBar;
 
@@ -80,7 +80,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             _adaptAllButton = ControlFactory.Button(ButtonText.AdaptAll);
             _saveAsButton = ControlFactory.Button(ButtonText.SaveAs);
             _getHelpButton = ControlFactory.Button(ButtonText.GetHelp);
-            _diagnosticsDisplay = ControlFactory.RichTextBox();
+            _diagnosticsDisplay = ControlFactory.DiagnosticsDisplay();
             _fileList = ControlFactory.FileListView();
             _progressBar = ControlFactory.TextProgressBar();
 
@@ -631,55 +631,7 @@ namespace War3App.MapAdapter.WinForms.Forms
 
         private void UpdateDiagnosticsDisplay()
         {
-            if (_fileList.SelectedItems.Count == 0)
-            {
-                _diagnosticsDisplay.Text = PlaceholderText.Diagnostics;
-                return;
-            }
-
-            var isFirstItem = true;
-
-            _diagnosticsDisplay.Text = string.Empty;
-
-            foreach (ListViewItem item in _fileList.SelectedItems)
-            {
-                var mapFile = item.GetMapFile();
-
-                if (!isFirstItem)
-                {
-                    _diagnosticsDisplay.WriteLine();
-                    _diagnosticsDisplay.WriteLine();
-                }
-
-                isFirstItem = false;
-
-                _diagnosticsDisplay.Write($"// {mapFile.CurrentFileName}", Color.Green);
-
-                if (mapFile.AdaptResult?.Diagnostics is null ||
-                    mapFile.AdaptResult.Diagnostics.Length == 0)
-                {
-                    _diagnosticsDisplay.WriteLine();
-                    _diagnosticsDisplay.Write(DiagnosticText.None, Color.Gray);
-
-                    continue;
-                }
-
-                void WriteDiagnostics(DiagnosticSeverity severity, Color color, string prefix)
-                {
-                    foreach (var grouping in mapFile.AdaptResult.Diagnostics.Where(d => d.Descriptor.Severity == severity).Select(d => d.Message).GroupBy(m => m, StringComparer.Ordinal))
-                    {
-                        _diagnosticsDisplay.WriteLine();
-                        _diagnosticsDisplay.Write(prefix, color);
-
-                        var count = grouping.Count();
-                        _diagnosticsDisplay.AppendText(count > 1 ? $"{grouping.Key} ({count}x)" : grouping.Key);
-                    }
-                }
-
-                WriteDiagnostics(DiagnosticSeverity.Error, Color.Red, DiagnosticText.Error);
-                WriteDiagnostics(DiagnosticSeverity.Warning, Color.Orange, DiagnosticText.Warning);
-                WriteDiagnostics(DiagnosticSeverity.Info, Color.Blue, DiagnosticText.Info);
-            }
+            _diagnosticsDisplay.Update(_fileList.SelectedItems);
         }
 
         private TargetPatch? GetTargetPatch(GamePatch? patch)

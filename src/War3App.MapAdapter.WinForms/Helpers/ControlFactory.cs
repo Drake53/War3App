@@ -22,6 +22,11 @@ namespace War3App.MapAdapter.WinForms.Helpers
             return button;
         }
 
+        public static DiagnosticsDisplay DiagnosticsDisplay()
+        {
+            return new DiagnosticsDisplay();
+        }
+
         public static ComboBox DropDownList(int width)
         {
             return new ComboBox
@@ -54,18 +59,6 @@ namespace War3App.MapAdapter.WinForms.Helpers
             {
                 Text = text,
                 TextAlign = ContentAlignment.BottomRight,
-            };
-        }
-
-        public static RichTextBox RichTextBox()
-        {
-            return new RichTextBox
-            {
-                Dock = DockStyle.Fill,
-                Multiline = true,
-                ReadOnly = true,
-                ScrollBars = RichTextBoxScrollBars.Both,
-                WordWrap = false,
             };
         }
 
