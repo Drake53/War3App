@@ -109,12 +109,12 @@ namespace War3App.Common.WinForms
 
             rect.Inflate(-3, -3);
 
-            if (Value > 0)
+            if (Value > Minimum)
             {
                 var clip = new Rectangle(
                     rect.X,
                     rect.Y,
-                    (int)Math.Round(((float)Value / Maximum) * rect.Width),
+                    (int)Math.Round(((float)(Value - Minimum) / (Maximum - Minimum)) * rect.Width),
                     rect.Height);
 
                 g.FillRectangle(_progressColourBrush, clip);
