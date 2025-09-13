@@ -3,6 +3,7 @@ using System.Windows.Forms;
 
 using War3App.Common.WinForms;
 using War3App.Common.WinForms.Extensions;
+using War3App.MapAdapter.WinForms.Controls;
 
 namespace War3App.MapAdapter.WinForms.Helpers
 {
@@ -29,6 +30,11 @@ namespace War3App.MapAdapter.WinForms.Helpers
                 Enabled = false,
                 Width = width,
             };
+        }
+
+        public static FileListView FileListView()
+        {
+            return new FileListView();
         }
 
         public static FlowLayoutPanel HorizontalLayoutPanel(params Control[] controls)
@@ -60,6 +66,14 @@ namespace War3App.MapAdapter.WinForms.Helpers
                 ReadOnly = true,
                 ScrollBars = RichTextBoxScrollBars.Both,
                 WordWrap = false,
+            };
+        }
+
+        public static SplitContainer SplitContainer()
+        {
+            return new SplitContainer
+            {
+                Dock = DockStyle.Fill,
             };
         }
 

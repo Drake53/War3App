@@ -33,37 +33,31 @@ namespace War3App.MapAdapter.WinForms.Forms
     [DesignerCategory("")]
     internal class MainForm : Form
     {
-        private readonly GamePatch _latestPatch = Enum.GetValues<GamePatch>().Max();
-
         private static MainForm _mainForm;
 
-        private MpqArchive? _archive;
-        private bool _isTargetPatchFromZipArchive;
+        private readonly GamePatch _latestPatch = Enum.GetValues<GamePatch>().Max();
+        private readonly IConfiguration _configuration;
+        private readonly BackgroundWorker _openArchiveWorker;
+        private readonly BackgroundWorker _saveArchiveWorker;
+        private readonly FileSystemWatcher _watcher;
 
         private readonly TextBox _archiveInput;
         private readonly Button _archiveInputBrowseButton;
         private readonly Button _openCloseArchiveButton;
-        private readonly FileSystemWatcher _watcher;
-
+        private readonly ComboBox _targetPatchesComboBox;
         private readonly Button _adaptAllButton;
         private readonly Button _saveAsButton;
-        private readonly ComboBox _targetPatchesComboBox;
+        private readonly Button _getHelpButton;
+        private readonly RichTextBox _diagnosticsDisplay;
+        private readonly FileListView _fileList;
+        private readonly TextProgressBar _progressBar;
+
+        private AppSettings _appSettings;
+        private MpqArchive? _archive;
+        private Timer? _fileSelectionChangedEventTimer;
+        private bool _isTargetPatchFromZipArchive;
         private TargetPatch? _targetPatch;
         private GamePatch? _originPatch;
-        private readonly Button _getHelpButton;
-
-        private readonly FileListView _fileList;
-
-        private Timer? _fileSelectionChangedEventTimer;
-
-        private readonly RichTextBox _diagnosticsDisplay;
-
-        private readonly TextProgressBar _progressBar;
-        private readonly BackgroundWorker _openArchiveWorker;
-        private readonly BackgroundWorker _saveArchiveWorker;
-
-        private readonly IConfiguration _configuration;
-        private AppSettings _appSettings;
 
         public MainForm(IConfiguration configuration)
         {
@@ -74,52 +68,27 @@ namespace War3App.MapAdapter.WinForms.Forms
 
             _mainForm = this;
 
-            _configuration = configuration;
-
-            ReloadSettings();
-
-            _watcher = new FileSystemWatcher();
-            _watcher.Created += OnWatchedFileEvent;
-            _watcher.Renamed += OnWatchedFileEvent;
-            _watcher.Deleted += OnWatchedFileEvent;
-
             Size = new Size(1280, 720);
             MinimumSize = new Size(400, 300);
             Text = string.Format(TitleText.Main, typeof(MainForm).Assembly.GetVersionString());
 
-            var splitContainer = new SplitContainer
-            {
-                Dock = DockStyle.Fill,
-            };
+            _configuration = configuration;
+            _openArchiveWorker = CreateOpenArchiveWorker();
+            _saveArchiveWorker = CreateSaveArchiveWorker();
+            _watcher = CreateWatcher();
 
             _archiveInput = ControlFactory.TextBox(PlaceholderText.Archive);
+            _archiveInputBrowseButton = ControlFactory.Button(ButtonText.Browse, enabled: true);
             _openCloseArchiveButton = ControlFactory.Button(ButtonText.Open);
-            _diagnosticsDisplay = ControlFactory.RichTextBox();
-            _progressBar = ControlFactory.TextProgressBar();
-
-            _openArchiveWorker = new BackgroundWorker
-            {
-                WorkerReportsProgress = true,
-                WorkerSupportsCancellation = false,
-            };
-
-            _openArchiveWorker.DoWork += OpenArchiveBackgroundWork;
-            _openArchiveWorker.ProgressChanged += OpenArchiveProgressChanged;
-            _openArchiveWorker.RunWorkerCompleted += OpenArchiveCompleted;
-
-            _saveArchiveWorker = new BackgroundWorker
-            {
-                WorkerReportsProgress = true,
-                WorkerSupportsCancellation = false,
-            };
-
-            _saveArchiveWorker.DoWork += SaveArchiveBackgroundWork;
-            _saveArchiveWorker.ProgressChanged += SaveArchiveProgressChanged;
-            _saveArchiveWorker.RunWorkerCompleted += SaveArchiveCompleted;
-
+            _targetPatchesComboBox = ControlFactory.DropDownList(width: 120);
             _adaptAllButton = ControlFactory.Button(ButtonText.AdaptAll);
             _saveAsButton = ControlFactory.Button(ButtonText.SaveAs);
-            _targetPatchesComboBox = ControlFactory.DropDownList(width: 120);
+            _getHelpButton = ControlFactory.Button(ButtonText.GetHelp);
+            _diagnosticsDisplay = ControlFactory.RichTextBox();
+            _fileList = ControlFactory.FileListView();
+            _progressBar = ControlFactory.TextProgressBar();
+
+            ReloadSettings();
 
             _targetPatchesComboBox.Items.AddRange(_appSettings.TargetPatches.OrderByDescending(targetPatch => targetPatch.Patch).Select(targetPatch => (object)targetPatch.Patch).ToArray());
             if (_targetPatchesComboBox.Items.Count == 1)
@@ -143,8 +112,6 @@ namespace War3App.MapAdapter.WinForms.Forms
                 }
             };
 
-            _getHelpButton = ControlFactory.Button(ButtonText.GetHelp);
-
             _getHelpButton.Click += (s, e) =>
             {
                 if (_targetPatch is not null)
@@ -154,8 +121,6 @@ namespace War3App.MapAdapter.WinForms.Forms
             };
 
             _archiveInput.TextChanged += OnArchiveInputTextChanged;
-
-            _archiveInputBrowseButton = ControlFactory.Button(ButtonText.Browse, enabled: true);
 
             _archiveInputBrowseButton.Click += (s, e) =>
             {
@@ -172,8 +137,6 @@ namespace War3App.MapAdapter.WinForms.Forms
                     _archiveInput.Text = openFileDialog.FileName;
                 }
             };
-
-            _fileList = new FileListView();
 
             var fileListContextMenu = new FileListContextMenuStrip(_fileList);
 
@@ -289,6 +252,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             var buttonsFlowLayout = ControlFactory.HorizontalLayoutPanel(_adaptAllButton, _saveAsButton, targetPatchLabel, _targetPatchesComboBox, _getHelpButton);
             var flowLayout = ControlFactory.VerticalLayoutPanel(width: 640, inputArchiveFlowLayout, buttonsFlowLayout);
 
+            var splitContainer = ControlFactory.SplitContainer();
             splitContainer.Panel1.AddControls(_diagnosticsDisplay, flowLayout);
             splitContainer.Panel2.AddControls(_fileList);
             this.AddControls(splitContainer, _progressBar);
@@ -641,6 +605,17 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
         }
 
+        private FileSystemWatcher CreateWatcher()
+        {
+            var watcher = new FileSystemWatcher();
+
+            watcher.Created += OnWatchedFileEvent;
+            watcher.Renamed += OnWatchedFileEvent;
+            watcher.Deleted += OnWatchedFileEvent;
+
+            return watcher;
+        }
+
         private void OnWatchedFileEvent(object? sender, EventArgs e)
         {
             SetOpenArchiveButtonEnabled(File.Exists(_archiveInput.Text));
@@ -728,6 +703,21 @@ namespace War3App.MapAdapter.WinForms.Forms
 
                 _openArchiveWorker.RunWorkerAsync(fileInfo.FullName);
             }
+        }
+
+        private BackgroundWorker CreateOpenArchiveWorker()
+        {
+            var worker = new BackgroundWorker
+            {
+                WorkerReportsProgress = true,
+                WorkerSupportsCancellation = false,
+            };
+
+            worker.DoWork += OpenArchiveBackgroundWork;
+            worker.ProgressChanged += OpenArchiveProgressChanged;
+            worker.RunWorkerCompleted += OpenArchiveCompleted;
+
+            return worker;
         }
 
         private void OpenArchiveBackgroundWork(object? sender, DoWorkEventArgs e)
@@ -1001,6 +991,21 @@ namespace War3App.MapAdapter.WinForms.Forms
             _progressBar.Visible = true;
 
             _saveArchiveWorker.RunWorkerAsync(fileName);
+        }
+
+        private BackgroundWorker CreateSaveArchiveWorker()
+        {
+            var worker = new BackgroundWorker
+            {
+                WorkerReportsProgress = true,
+                WorkerSupportsCancellation = false,
+            };
+
+            worker.DoWork += SaveArchiveBackgroundWork;
+            worker.ProgressChanged += SaveArchiveProgressChanged;
+            worker.RunWorkerCompleted += SaveArchiveCompleted;
+
+            return worker;
         }
 
         private void SaveArchiveBackgroundWork(object? sender, DoWorkEventArgs e)
