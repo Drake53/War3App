@@ -10,10 +10,10 @@ using War3App.MapAdapter.EtoForms.Helpers;
 
 namespace War3App.MapAdapter.EtoForms.Controls
 {
-    internal class FileListContextMenu : ContextMenu
+    internal class FileTreeContextMenu : ContextMenu
     {
         private readonly MainForm _mainForm;
-        private readonly FileListView _fileList;
+        private readonly FileTreeView _fileTree;
         private readonly ButtonMenuItem _adaptContextButton;
         private readonly ButtonMenuItem _editContextButton;
         private readonly ButtonMenuItem _saveContextButton;
@@ -21,10 +21,10 @@ namespace War3App.MapAdapter.EtoForms.Controls
         private readonly ButtonMenuItem _undoContextButton;
         private readonly ButtonMenuItem _removeContextButton;
 
-        public FileListContextMenu(MainForm mainForm, FileListView fileList)
+        public FileTreeContextMenu(MainForm mainForm, FileTreeView fileTree)
         {
             _mainForm = mainForm;
-            _fileList = fileList;
+            _fileTree = fileTree;
 
             _adaptContextButton = new ButtonMenuItem { Text = ButtonText.Adapt, Enabled = false, Image = Icons.Lightning, Style = Styles.MenuIcons };
             _editContextButton = new ButtonMenuItem { Text = ButtonText.Edit, Enabled = false, Image = Icons.Modify, Style = Styles.MenuIcons };
@@ -43,7 +43,7 @@ namespace War3App.MapAdapter.EtoForms.Controls
                 _removeContextButton,
             });
 
-            Opening += OnOpeningFileListContextMenu;
+            Opening += OnOpeningFileTreeContextMenu;
         }
 
         public event EventHandler<EventArgs> Adapt
@@ -82,7 +82,7 @@ namespace War3App.MapAdapter.EtoForms.Controls
             remove => _removeContextButton.Click -= value;
         }
 
-        private void OnOpeningFileListContextMenu(object? sender, EventArgs e)
+        private void OnOpeningFileTreeContextMenu(object? sender, EventArgs e)
         {
             // Defer the button state update to allow the GridView to update SelectedItems
             Application.Instance.AsyncInvoke(UpdateContextMenuButtonStates);
@@ -92,7 +92,7 @@ namespace War3App.MapAdapter.EtoForms.Controls
         {
             var canAdapt = _mainForm.CanAdapt;
 
-            var mapFiles = _fileList.GetSelectedMapFiles();
+            var mapFiles = _fileTree.GetSelectedMapFiles();
             if (mapFiles.Length == 1)
             {
                 var mapFile = mapFiles[0];

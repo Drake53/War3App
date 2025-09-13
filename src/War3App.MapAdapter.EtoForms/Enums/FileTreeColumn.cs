@@ -1,6 +1,6 @@
 namespace War3App.MapAdapter.EtoForms.Enums
 {
-    public enum FileListColumn
+    public enum FileTreeColumn
     {
         Status = 0,
         FileName = 1,

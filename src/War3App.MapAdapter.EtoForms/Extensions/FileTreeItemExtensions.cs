@@ -6,9 +6,9 @@ using War3App.MapAdapter.EtoForms.Models;
 
 namespace War3App.MapAdapter.EtoForms.Extensions
 {
-    public static class FileListItemExtensions
+    public static class FileTreeItemExtensions
     {
-        public static void Update(this FileListItem item)
+        public static void UpdateStatus(this FileTreeItem item)
         {
             var mapFile = item.MapFile;
             if (mapFile.Children is not null)
@@ -17,7 +17,7 @@ namespace War3App.MapAdapter.EtoForms.Extensions
             }
         }
 
-        public static void UpdateFileName(this FileListItem item, AdaptResult? adaptResult)
+        public static void UpdateFileName(this FileTreeItem item, AdaptResult? adaptResult)
         {
             var mapFile = item.MapFile;
 
@@ -31,14 +31,14 @@ namespace War3App.MapAdapter.EtoForms.Extensions
             }
         }
 
-        public static int CompareTo(this FileListItem item, FileListItem other, FileListColumn column)
+        public static int CompareTo(this FileTreeItem item, FileTreeItem other, FileTreeColumn column)
         {
             return column switch
             {
-                FileListColumn.Status => other.CompareStatus(item),
-                FileListColumn.FileName => CompareText(item.FileName, other.FileName),
-                FileListColumn.FileType => CompareText(item.FileType, other.FileType),
-                FileListColumn.Archive => CompareText(item.Archive, other.Archive),
+                FileTreeColumn.Status => other.CompareStatus(item),
+                FileTreeColumn.FileName => CompareText(item.FileName, other.FileName),
+                FileTreeColumn.FileType => CompareText(item.FileType, other.FileType),
+                FileTreeColumn.Archive => CompareText(item.Archive, other.Archive),
                 _ => item.MapFile.OriginalIndex.CompareTo(other.MapFile.OriginalIndex),
             };
         }
@@ -50,7 +50,7 @@ namespace War3App.MapAdapter.EtoForms.Extensions
                 : string.IsNullOrWhiteSpace(text1) ? 1 : -1;
         }
 
-        private static int CompareStatus(this FileListItem item, FileListItem other)
+        private static int CompareStatus(this FileTreeItem item, FileTreeItem other)
         {
             var mapFile1 = item.MapFile;
             var mapFile2 = other.MapFile;

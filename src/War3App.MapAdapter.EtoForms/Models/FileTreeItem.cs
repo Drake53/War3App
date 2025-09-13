@@ -2,15 +2,16 @@ using System;
 using System.Linq.Expressions;
 
 using Eto.Drawing;
+using Eto.Forms;
 
 using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.EtoForms.Helpers;
 
 namespace War3App.MapAdapter.EtoForms.Models
 {
-    public class FileListItem
+    public class FileTreeItem : TreeGridItem
     {
-        public FileListItem(MapFile mapFile)
+        public FileTreeItem(MapFile mapFile)
         {
             FileName = mapFile.OriginalFileName ?? MiscStrings.UnknownFileName;
             FileType = mapFile.Adapter?.MapFileDescription ?? string.Empty;
@@ -26,12 +27,12 @@ namespace War3App.MapAdapter.EtoForms.Models
 
         public MapFile MapFile { get; }
 
-        public static Expression<Func<FileListItem, string>> GetStatusTextExpression()
+        public static Expression<Func<FileTreeItem, string>> GetStatusTextExpression()
         {
             return item => item.MapFile.Status.ToString();
         }
 
-        public static Expression<Func<FileListItem, Image>> GetStatusImageExpression()
+        public static Expression<Func<FileTreeItem, Image>> GetStatusImageExpression()
         {
             return item => Icons.ForMapFile(item.MapFile);
         }

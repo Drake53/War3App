@@ -20,7 +20,7 @@ namespace War3App.MapAdapter.EtoForms.Controls
             Wrap = false;
         }
 
-        public void Update(FileListItem[] selectedItems)
+        public void Update(FileTreeItem[] selectedItems)
         {
             if (selectedItems.Length == 0)
             {
