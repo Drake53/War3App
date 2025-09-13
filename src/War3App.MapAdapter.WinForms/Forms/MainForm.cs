@@ -3,7 +3,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
@@ -22,7 +21,6 @@ using War3App.MapAdapter.Extensions;
 using War3App.MapAdapter.Info;
 using War3App.MapAdapter.WinForms.Controls;
 using War3App.MapAdapter.WinForms.Extensions;
-using War3App.MapAdapter.WinForms.Forms;
 using War3App.MapAdapter.WinForms.Helpers;
 
 using War3Net.Build.Common;
@@ -30,9 +28,10 @@ using War3Net.Build.Extensions;
 using War3Net.Build.Info;
 using War3Net.IO.Mpq;
 
-namespace War3App.MapAdapter.WinForms
+namespace War3App.MapAdapter.WinForms.Forms
 {
-    internal static class MainForm
+    [DesignerCategory("")]
+    internal class MainForm : Form
     {
         private static readonly GamePatch _latestPatch = Enum.GetValues<GamePatch>().Max();
 
@@ -67,8 +66,7 @@ namespace War3App.MapAdapter.WinForms
         [MemberNotNullWhen(true, nameof(_targetPatch))]
         internal static bool CanAdapt => _targetPatch is not null;
 
-        [STAThread]
-        internal static void Run(IConfiguration configuration)
+        public MainForm(IConfiguration configuration)
         {
             _configuration = configuration;
 
@@ -79,10 +77,9 @@ namespace War3App.MapAdapter.WinForms
             _watcher.Renamed += OnWatchedFileEvent;
             _watcher.Deleted += OnWatchedFileEvent;
 
-            var form = new Form();
-            form.Size = new Size(1280, 720);
-            form.MinimumSize = new Size(400, 300);
-            form.Text = string.Format(TitleText.Main, typeof(MainForm).Assembly.GetVersionString());
+            Size = new Size(1280, 720);
+            MinimumSize = new Size(400, 300);
+            Text = string.Format(TitleText.Main, typeof(MainForm).Assembly.GetVersionString());
 
             var splitContainer = new SplitContainer
             {
@@ -363,7 +360,7 @@ namespace War3App.MapAdapter.WinForms
 
             splitContainer.Panel1.AddControls(_diagnosticsDisplay, flowLayout);
             splitContainer.Panel2.AddControls(_fileList);
-            form.AddControls(splitContainer, _progressBar);
+            this.AddControls(splitContainer, _progressBar);
 
             targetPatchLabel.Size = targetPatchLabel.PreferredSize;
 
@@ -382,15 +379,13 @@ namespace War3App.MapAdapter.WinForms
             splitContainer.SplitterDistance = 640 - splitContainer.SplitterWidth;
             splitContainer.Panel1MinSize = 200;
 
-            form.FormClosing += (s, e) =>
+            FormClosing += (s, e) =>
             {
                 _archive?.Dispose();
                 _openArchiveWorker?.Dispose();
                 _saveArchiveWorker?.Dispose();
                 _fileSelectionChangedEventTimer?.Dispose();
             };
-
-            form.ShowDialog();
         }
 
         private static void ReloadSettings()

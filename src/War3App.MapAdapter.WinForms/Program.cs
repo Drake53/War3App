@@ -52,7 +52,7 @@ namespace War3App.MapAdapter.WinForms
                 .AddJsonFile(FileName.AppSettings, optional: true)
                 .Build();
 
-            MainForm.Run(configuration);
+            new MainForm(configuration).ShowDialog();
         }
     }
 }
