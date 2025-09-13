@@ -324,6 +324,7 @@ namespace War3App.MapAdapter.WinForms.Forms
         [MemberNotNullWhen(true, nameof(_targetPatch))]
         internal bool CanAdapt => _targetPatch is not null;
 
+        [MemberNotNull(nameof(_appSettings))]
         private void ReloadSettings()
         {
             _appSettings = new AppSettings
