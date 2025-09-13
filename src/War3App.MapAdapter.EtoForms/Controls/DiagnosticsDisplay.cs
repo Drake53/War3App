@@ -15,7 +15,6 @@ namespace War3App.MapAdapter.EtoForms.Controls
     {
         public DiagnosticsDisplay()
         {
-            BackgroundColor = SystemColors.ControlBackground;
             Font = new Font(FontFamilies.Monospace, 10);
             ReadOnly = true;
             Wrap = false;
