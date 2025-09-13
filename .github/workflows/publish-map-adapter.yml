@@ -26,7 +26,7 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Publish project
-      run: dotnet publish src/War3App.MapAdapter.WinForms/War3App.MapAdapter.WinForms.csproj -c Release -o ./artifacts/map-adapter
+      run: dotnet publish src/War3App.MapAdapter.WinForms/War3App.MapAdapter.WinForms.csproj -c Release -r win-x64 --self-contained false -o ./artifacts/map-adapter
 
     - name: Create zip
       run: cd ./artifacts/map-adapter && zip -r ../MapAdapter.zip .
