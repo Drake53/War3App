@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using War3App.Common.WinForms.Extensions;
 using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.Extensions;
+using War3App.MapAdapter.WinForms.Constants;
 using War3App.MapAdapter.WinForms.Helpers;
 
 namespace War3App.MapAdapter.WinForms.Forms

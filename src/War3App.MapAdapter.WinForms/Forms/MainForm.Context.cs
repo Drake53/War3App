@@ -2,9 +2,9 @@
 using System.IO;
 using System.Windows.Forms;
 
-using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.Diagnostics;
 using War3App.MapAdapter.Extensions;
+using War3App.MapAdapter.WinForms.Constants;
 using War3App.MapAdapter.WinForms.Extensions;
 
 namespace War3App.MapAdapter.WinForms.Forms
@@ -136,7 +136,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             {
                 var fileTypeDescription = mapFile.Adapter?.MapFileDescription ?? $"{extension.TrimStart('.').ToUpperInvariant()} file";
 
-                saveFileDialog.Filter = $"{fileTypeDescription}|*{extension}{FilterStrings.Separator}{FilterStrings.AllFiles}";
+                saveFileDialog.Filter = FilterStrings.Combine($"{fileTypeDescription}|*{extension}", FilterStrings.AllFiles);
             }
 
             var saveFileDialogResult = saveFileDialog.ShowDialog();

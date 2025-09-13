@@ -15,6 +15,7 @@ using War3App.Common.WinForms;
 using War3App.Common.WinForms.Extensions;
 using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.Extensions;
+using War3App.MapAdapter.WinForms.Constants;
 using War3App.MapAdapter.WinForms.Controls;
 using War3App.MapAdapter.WinForms.Extensions;
 using War3App.MapAdapter.WinForms.Helpers;
@@ -300,7 +301,7 @@ namespace War3App.MapAdapter.WinForms.Forms
 
             filters.Add(FilterStrings.AllFiles);
 
-            return string.Join(FilterStrings.Separator, filters);
+            return FilterStrings.Combine(filters.ToArray());
         }
 
         private void OnClickOpenCloseArchive(object? sender, EventArgs e)
