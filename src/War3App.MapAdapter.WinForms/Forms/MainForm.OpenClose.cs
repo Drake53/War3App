@@ -140,6 +140,23 @@ namespace War3App.MapAdapter.WinForms.Forms
 
             _archive.DiscoverFileNames();
 
+#if true
+            var result = ArchiveProcessor.OpenArchive(_archive, _openArchiveWorker);
+            var listViewItems = new List<ListViewItem>();
+
+            foreach (var mapFile in result.Files)
+            {
+                var item = ListViewItemFactory.Create(mapFile, _fileList);
+                if (mapFile.Parent is not null)
+                {
+                    item.IndentCount = 1;
+                }
+            }
+
+            e.Result = listViewItems;
+
+            _originPatch = result.OriginPatch;
+#else
             var mapsList = new HashSet<string>();
             if (_archive.IsCampaignArchive(out var campaignInfo))
             {
@@ -232,6 +249,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
 
             e.Result = listViewItems;
+#endif
         }
 
         private void OpenArchiveProgressChanged(object? sender, ProgressChangedEventArgs e)

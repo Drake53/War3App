@@ -30,7 +30,6 @@ namespace War3App.MapAdapter.WinForms.Forms
     {
         private static MainForm _mainForm;
 
-        private readonly GamePatch _latestPatch = Enum.GetValues<GamePatch>().Max();
         private readonly IConfiguration _configuration;
         private readonly BackgroundWorker _openArchiveWorker;
         private readonly BackgroundWorker _saveArchiveWorker;
