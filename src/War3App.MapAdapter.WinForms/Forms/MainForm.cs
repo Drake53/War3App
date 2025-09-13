@@ -33,41 +33,47 @@ namespace War3App.MapAdapter.WinForms.Forms
     [DesignerCategory("")]
     internal class MainForm : Form
     {
-        private static readonly GamePatch _latestPatch = Enum.GetValues<GamePatch>().Max();
+        private readonly GamePatch _latestPatch = Enum.GetValues<GamePatch>().Max();
 
-        private static MpqArchive? _archive;
-        private static bool _isTargetPatchFromZipArchive;
+        private static MainForm _mainForm;
 
-        private static TextBox _archiveInput;
-        private static Button _archiveInputBrowseButton;
-        private static Button _openCloseArchiveButton;
-        private static FileSystemWatcher _watcher;
+        private MpqArchive? _archive;
+        private bool _isTargetPatchFromZipArchive;
 
-        private static Button _adaptAllButton;
-        private static Button _saveAsButton;
-        private static ComboBox _targetPatchesComboBox;
-        private static TargetPatch? _targetPatch;
-        private static GamePatch? _originPatch;
-        private static Button _getHelpButton;
+        private readonly TextBox _archiveInput;
+        private readonly Button _archiveInputBrowseButton;
+        private readonly Button _openCloseArchiveButton;
+        private readonly FileSystemWatcher _watcher;
 
-        private static FileListView _fileList;
+        private readonly Button _adaptAllButton;
+        private readonly Button _saveAsButton;
+        private readonly ComboBox _targetPatchesComboBox;
+        private TargetPatch? _targetPatch;
+        private GamePatch? _originPatch;
+        private readonly Button _getHelpButton;
 
-        private static Timer? _fileSelectionChangedEventTimer;
+        private readonly FileListView _fileList;
 
-        private static RichTextBox _diagnosticsDisplay;
+        private Timer? _fileSelectionChangedEventTimer;
 
-        private static TextProgressBar _progressBar;
-        private static BackgroundWorker _openArchiveWorker;
-        private static BackgroundWorker _saveArchiveWorker;
+        private readonly RichTextBox _diagnosticsDisplay;
 
-        private static IConfiguration _configuration;
-        private static AppSettings _appSettings;
+        private readonly TextProgressBar _progressBar;
+        private readonly BackgroundWorker _openArchiveWorker;
+        private readonly BackgroundWorker _saveArchiveWorker;
 
-        [MemberNotNullWhen(true, nameof(_targetPatch))]
-        internal static bool CanAdapt => _targetPatch is not null;
+        private readonly IConfiguration _configuration;
+        private AppSettings _appSettings;
 
         public MainForm(IConfiguration configuration)
         {
+            if (_mainForm is not null)
+            {
+                throw new InvalidOperationException("Cannot create multiple main forms.");
+            }
+
+            _mainForm = this;
+
             _configuration = configuration;
 
             ReloadSettings();
@@ -388,7 +394,12 @@ namespace War3App.MapAdapter.WinForms.Forms
             };
         }
 
-        private static void ReloadSettings()
+        internal static MainForm Instance => _mainForm;
+
+        [MemberNotNullWhen(true, nameof(_targetPatch))]
+        internal bool CanAdapt => _targetPatch is not null;
+
+        private void ReloadSettings()
         {
             _appSettings = new AppSettings
             {
@@ -422,7 +433,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             return string.Join(FilterStrings.Separator, filters);
         }
 
-        private static void OnClickOpenCloseMap(object? sender, EventArgs e)
+        private void OnClickOpenCloseMap(object? sender, EventArgs e)
         {
             if (_archive is null)
             {
@@ -434,7 +445,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
         }
 
-        private static void OnFileSelectionChanged(object? sender, EventArgs e)
+        private void OnFileSelectionChanged(object? sender, EventArgs e)
         {
             if (_fileSelectionChangedEventTimer is null)
             {
@@ -448,14 +459,14 @@ namespace War3App.MapAdapter.WinForms.Forms
             _fileSelectionChangedEventTimer.Enabled = true;
         }
 
-        private static void OnFileSelectionEventTimerTick(object? sender, EventArgs e)
+        private void OnFileSelectionEventTimerTick(object? sender, EventArgs e)
         {
             _fileSelectionChangedEventTimer.Enabled = false;
 
             UpdateDiagnosticsDisplay();
         }
 
-        private static void OnClickEditSelected(object? sender, EventArgs e)
+        private void OnClickEditSelected(object? sender, EventArgs e)
         {
             if (_fileList.TryGetSelectedMapFile(out var mapFile))
             {
@@ -489,7 +500,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
         }
 
-        private static void OnClickSaveSelected(object? sender, EventArgs e)
+        private void OnClickSaveSelected(object? sender, EventArgs e)
         {
             if (_fileList.TryGetSelectedMapFile(out var mapFile))
             {
@@ -528,7 +539,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
         }
 
-        private static void OnClickDiffSelected(object? sender, EventArgs e)
+        private void OnClickDiffSelected(object? sender, EventArgs e)
         {
             if (_fileList.TryGetSelectedMapFile(out var mapFile))
             {
@@ -579,7 +590,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
         }
 
-        private static void OnClickAdaptSelected(object? sender, EventArgs e)
+        private void OnClickAdaptSelected(object? sender, EventArgs e)
         {
             if (!CanAdapt)
             {
@@ -646,7 +657,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             UpdateDiagnosticsDisplay();
         }
 
-        private static void OnClickUndoChangesSelected(object? sender, EventArgs e)
+        private void OnClickUndoChangesSelected(object? sender, EventArgs e)
         {
             for (var i = 0; i < _fileList.SelectedItems.Count; i++)
             {
@@ -667,7 +678,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
         }
 
-        private static void OnClickRemoveSelected(object? sender, EventArgs e)
+        private void OnClickRemoveSelected(object? sender, EventArgs e)
         {
             for (var i = 0; i < _fileList.SelectedItems.Count; i++)
             {
@@ -686,7 +697,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
         }
 
-        private static void OnArchiveInputTextChanged(object? sender, EventArgs e)
+        private void OnArchiveInputTextChanged(object? sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(_archiveInput.Text))
             {
@@ -704,12 +715,12 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
         }
 
-        private static void OnWatchedFileEvent(object? sender, EventArgs e)
+        private void OnWatchedFileEvent(object? sender, EventArgs e)
         {
             SetOpenArchiveButtonEnabled(File.Exists(_archiveInput.Text));
         }
 
-        private static void SetOpenArchiveButtonEnabled(bool enabled)
+        private void SetOpenArchiveButtonEnabled(bool enabled)
         {
             if (_openCloseArchiveButton.InvokeRequired)
             {
@@ -721,7 +732,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
         }
 
-        private static void UpdateDiagnosticsDisplay()
+        private void UpdateDiagnosticsDisplay()
         {
             if (_fileList.SelectedItems.Count == 0)
             {
@@ -774,7 +785,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
         }
 
-        private static void OpenArchive()
+        private void OpenArchive()
         {
             var fileInfo = new FileInfo(_archiveInput.Text);
             if (fileInfo.Exists)
@@ -793,7 +804,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
         }
 
-        private static void OpenArchiveBackgroundWork(object? sender, DoWorkEventArgs e)
+        private void OpenArchiveBackgroundWork(object? sender, DoWorkEventArgs e)
         {
             var filePath = (string)e.Argument;
 
@@ -969,7 +980,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             e.Result = listViewItems;
         }
 
-        private static void OpenArchiveProgressChanged(object? sender, ProgressChangedEventArgs e)
+        private void OpenArchiveProgressChanged(object? sender, ProgressChangedEventArgs e)
         {
             if (e.UserState is OpenArchiveProgress openArchiveProgress)
             {
@@ -979,7 +990,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
         }
 
-        private static void OpenArchiveCompleted(object? sender, RunWorkerCompletedEventArgs e)
+        private void OpenArchiveCompleted(object? sender, RunWorkerCompletedEventArgs e)
         {
             if (e.Error is not null)
             {
@@ -1021,7 +1032,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
         }
 
-        private static void CloseArchive()
+        private void CloseArchive()
         {
             _archive.Dispose();
             _archive = null;
@@ -1046,7 +1057,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             GC.Collect();
         }
 
-        private static void SaveArchive(string fileName)
+        private void SaveArchive(string fileName)
         {
             var itemCount = 0;
             for (var i = 0; i < _fileList.Items.Count; i++)
@@ -1066,7 +1077,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             _saveArchiveWorker.RunWorkerAsync(fileName);
         }
 
-        private static void SaveArchiveBackgroundWork(object? sender, DoWorkEventArgs e)
+        private void SaveArchiveBackgroundWork(object? sender, DoWorkEventArgs e)
         {
             var archiveBuilder = new MpqArchiveBuilder(_archive);
 
@@ -1172,7 +1183,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
         }
 
-        private static void SaveArchiveProgressChanged(object? sender, ProgressChangedEventArgs e)
+        private void SaveArchiveProgressChanged(object? sender, ProgressChangedEventArgs e)
         {
             if (e.UserState is SaveArchiveProgress saveArchiveProgress)
             {
@@ -1189,7 +1200,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
         }
 
-        private static void SaveArchiveCompleted(object? sender, RunWorkerCompletedEventArgs e)
+        private void SaveArchiveCompleted(object? sender, RunWorkerCompletedEventArgs e)
         {
             if (e.Error is not null)
             {
@@ -1201,7 +1212,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             }
         }
 
-        private static TargetPatch? GetTargetPatch(GamePatch? patch)
+        private TargetPatch? GetTargetPatch(GamePatch? patch)
         {
             return patch.HasValue
                 ? _appSettings.TargetPatches.FirstOrDefault(targetPatch => targetPatch.Patch == patch.Value)
