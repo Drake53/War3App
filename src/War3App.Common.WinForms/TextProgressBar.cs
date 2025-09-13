@@ -114,7 +114,7 @@ namespace War3App.Common.WinForms
                 var clip = new Rectangle(
                     rect.X,
                     rect.Y,
-                    (int)Math.Round(((float)(Value - Minimum) / (Maximum - Minimum)) * rect.Width),
+                    (int)Math.Round((float)(Value - Minimum) / (Maximum - Minimum) * rect.Width),
                     rect.Height);
 
                 g.FillRectangle(_progressColourBrush, clip);
