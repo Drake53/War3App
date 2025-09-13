@@ -25,21 +25,13 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Files.resx</DependentUpon>
     </Compile>
-    <Compile Update="Resources\Icons.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Icons.resx</DependentUpon>
-    </Compile>
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="..\..\assets\icons\*.png" Link="Resources/Icons/%(Filename).png" />
     <EmbeddedResource Update="Resources\Files.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Files.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Resources\Icons.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Icons.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
 
