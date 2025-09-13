@@ -82,7 +82,7 @@ namespace War3App.MapAdapter.WinForms
             var form = new Form();
             form.Size = new Size(1280, 720);
             form.MinimumSize = new Size(400, 300);
-            form.Text = string.Format(TitleText.Main, FileVersionInfo.GetVersionInfo(typeof(MainForm).Assembly.Location).ProductVersion);
+            form.Text = string.Format(TitleText.Main, typeof(MainForm).Assembly.GetVersionString());
 
             var splitContainer = new SplitContainer
             {

@@ -161,7 +161,7 @@ namespace War3App.MapAdapter.WinForms.Forms
                 zipFile.AddFile(_mapFilePath, string.Empty);
             }
 
-            zipFile.AddEntry(FileName.ApplicationVersion, FileVersionInfo.GetVersionInfo(typeof(GetHelpForm).Assembly.Location).ProductVersion);
+            zipFile.AddEntry(FileName.ApplicationVersion, typeof(GetHelpForm).Assembly.GetFullVersionString());
             zipFile.AddEntry(FileName.TargetPatch, _targetPatch.Patch.ToString());
 
             foreach (var path in PathConstants.GetAllPaths())
