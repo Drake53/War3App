@@ -145,7 +145,7 @@ namespace War3App.MapAdapter.WinForms.Forms
 
             fileListContextMenu.RegisterClickEvents();
 
-            _openCloseArchiveButton.Click += OnClickOpenCloseMap;
+            _openCloseArchiveButton.Click += OnClickOpenCloseArchive;
 
             _adaptAllButton.Click += (s, e) =>
             {
@@ -303,7 +303,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             return string.Join(FilterStrings.Separator, filters);
         }
 
-        private void OnClickOpenCloseMap(object? sender, EventArgs e)
+        private void OnClickOpenCloseArchive(object? sender, EventArgs e)
         {
             if (_archive is null)
             {
