@@ -92,33 +92,10 @@ namespace War3App.MapAdapter.WinForms.Forms
                 Dock = DockStyle.Fill,
             };
 
-            _archiveInput = new TextBox
-            {
-                PlaceholderText = PlaceholderText.Archive,
-            };
-
-            _openCloseArchiveButton = new Button
-            {
-                Text = ButtonText.Open,
-                Enabled = false,
-            };
-
-            _diagnosticsDisplay = new RichTextBox
-            {
-                Multiline = true,
-                ReadOnly = true,
-                Dock = DockStyle.Fill,
-                ScrollBars = RichTextBoxScrollBars.Both,
-                WordWrap = false,
-            };
-
-            _progressBar = new TextProgressBar
-            {
-                Dock = DockStyle.Bottom,
-                Style = ProgressBarStyle.Continuous,
-                VisualMode = TextProgressBar.ProgressBarDisplayMode.CustomText,
-                Visible = false,
-            };
+            _archiveInput = ControlFactory.TextBox(PlaceholderText.Archive);
+            _openCloseArchiveButton = ControlFactory.Button(ButtonText.Open);
+            _diagnosticsDisplay = ControlFactory.RichTextBox();
+            _progressBar = ControlFactory.TextProgressBar();
 
             _openArchiveWorker = new BackgroundWorker
             {
@@ -140,28 +117,9 @@ namespace War3App.MapAdapter.WinForms.Forms
             _saveArchiveWorker.ProgressChanged += SaveArchiveProgressChanged;
             _saveArchiveWorker.RunWorkerCompleted += SaveArchiveCompleted;
 
-            _adaptAllButton = new Button
-            {
-                Text = ButtonText.AdaptAll,
-            };
-
-            _adaptAllButton.Size = _adaptAllButton.PreferredSize;
-            _adaptAllButton.Enabled = false;
-
-            _saveAsButton = new Button
-            {
-                Text = ButtonText.SaveAs,
-            };
-
-            _saveAsButton.Size = _saveAsButton.PreferredSize;
-            _saveAsButton.Enabled = false;
-
-            _targetPatchesComboBox = new ComboBox
-            {
-                Enabled = false,
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                Width = 120,
-            };
+            _adaptAllButton = ControlFactory.Button(ButtonText.AdaptAll);
+            _saveAsButton = ControlFactory.Button(ButtonText.SaveAs);
+            _targetPatchesComboBox = ControlFactory.DropDownList(width: 120);
 
             _targetPatchesComboBox.Items.AddRange(_appSettings.TargetPatches.OrderByDescending(targetPatch => targetPatch.Patch).Select(targetPatch => (object)targetPatch.Patch).ToArray());
             if (_targetPatchesComboBox.Items.Count == 1)
@@ -185,13 +143,7 @@ namespace War3App.MapAdapter.WinForms.Forms
                 }
             };
 
-            _getHelpButton = new Button
-            {
-                Text = ButtonText.GetHelp,
-            };
-
-            _getHelpButton.Size = _getHelpButton.PreferredSize;
-            _getHelpButton.Enabled = false;
+            _getHelpButton = ControlFactory.Button(ButtonText.GetHelp);
 
             _getHelpButton.Click += (s, e) =>
             {
@@ -203,12 +155,8 @@ namespace War3App.MapAdapter.WinForms.Forms
 
             _archiveInput.TextChanged += OnArchiveInputTextChanged;
 
-            _archiveInputBrowseButton = new Button
-            {
-                Text = ButtonText.Browse,
-            };
+            _archiveInputBrowseButton = ControlFactory.Button(ButtonText.Browse, enabled: true);
 
-            _archiveInputBrowseButton.Size = _archiveInputBrowseButton.PreferredSize;
             _archiveInputBrowseButton.Click += (s, e) =>
             {
                 var openFileDialog = new OpenFileDialog
@@ -240,7 +188,6 @@ namespace War3App.MapAdapter.WinForms.Forms
 
             fileListContextMenu.RegisterClickEvents();
 
-            _openCloseArchiveButton.Size = _openCloseArchiveButton.PreferredSize;
             _openCloseArchiveButton.Click += OnClickOpenCloseMap;
 
             _adaptAllButton.Click += (s, e) =>
@@ -316,7 +263,6 @@ namespace War3App.MapAdapter.WinForms.Forms
             };
 
             _fileList.SelectedIndexChanged += OnFileSelectionChanged;
-
             _fileList.ItemActivate += OnClickEditSelected;
 
             _saveAsButton.Click += (s, e) =>
@@ -337,32 +283,11 @@ namespace War3App.MapAdapter.WinForms.Forms
                 }
             };
 
-            var flowLayout = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Top,
-                FlowDirection = FlowDirection.TopDown,
-                Width = 640,
-            };
+            var targetPatchLabel = ControlFactory.Label(LabelText.TargetPatch);
 
-            var inputArchiveFlowLayout = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-            };
-
-            var buttonsFlowLayout = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-            };
-
-            var targetPatchLabel = new Label
-            {
-                Text = LabelText.TargetPatch,
-                TextAlign = ContentAlignment.BottomRight,
-            };
-
-            inputArchiveFlowLayout.AddControls(_archiveInput, _archiveInputBrowseButton, _openCloseArchiveButton);
-            buttonsFlowLayout.AddControls(_adaptAllButton, _saveAsButton, targetPatchLabel, _targetPatchesComboBox, _getHelpButton);
-            flowLayout.AddControls(inputArchiveFlowLayout, buttonsFlowLayout);
+            var inputArchiveFlowLayout = ControlFactory.HorizontalLayoutPanel(_archiveInput, _archiveInputBrowseButton, _openCloseArchiveButton);
+            var buttonsFlowLayout = ControlFactory.HorizontalLayoutPanel(_adaptAllButton, _saveAsButton, targetPatchLabel, _targetPatchesComboBox, _getHelpButton);
+            var flowLayout = ControlFactory.VerticalLayoutPanel(width: 640, inputArchiveFlowLayout, buttonsFlowLayout);
 
             splitContainer.Panel1.AddControls(_diagnosticsDisplay, flowLayout);
             splitContainer.Panel2.AddControls(_fileList);
