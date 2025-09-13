@@ -80,126 +80,123 @@ namespace War3App.MapAdapter.WinForms.Forms
 
         private void OnClickEditSelected(object? sender, EventArgs e)
         {
-            if (_fileList.TryGetSelectedMapFile(out var mapFile))
+            if (!_fileList.TryGetSelectedMapFile(out var mapFile) ||
+                mapFile.Adapter is null ||
+                !mapFile.Adapter.IsTextFile)
             {
-                if (mapFile.Adapter is null || !mapFile.Adapter.IsTextFile)
+                return;
+            }
+
+            var scriptEditForm = new ScriptEditForm(mapFile.AdaptResult?.Diagnostics ?? Array.Empty<Diagnostic>());
+
+            mapFile.CurrentStream.Position = 0;
+            using (var reader = new StreamReader(mapFile.CurrentStream, leaveOpen: true))
+            {
+                scriptEditForm.Text = reader.ReadToEnd();
+            }
+
+            if (scriptEditForm.Show() == DialogResult.OK)
+            {
+                var memoryStream = new MemoryStream();
+                using (var writer = new StreamWriter(memoryStream, leaveOpen: true))
                 {
-                    return;
+                    writer.Write(scriptEditForm.Text);
                 }
 
-                var scriptEditForm = new ScriptEditForm(mapFile.AdaptResult?.Diagnostics ?? Array.Empty<Diagnostic>());
+                memoryStream.Position = 0;
+                mapFile.AdaptResult = AdaptResult.ModifiedByUser(memoryStream);
+                _fileList.UpdateItemForMapFile(mapFile);
 
-                mapFile.CurrentStream.Position = 0;
-                using (var reader = new StreamReader(mapFile.CurrentStream, leaveOpen: true))
-                {
-                    scriptEditForm.Text = reader.ReadToEnd();
-                }
-
-                if (scriptEditForm.Show() == DialogResult.OK)
-                {
-                    var memoryStream = new MemoryStream();
-                    using (var writer = new StreamWriter(memoryStream, leaveOpen: true))
-                    {
-                        writer.Write(scriptEditForm.Text);
-                    }
-
-                    memoryStream.Position = 0;
-                    mapFile.AdaptResult = AdaptResult.ModifiedByUser(memoryStream);
-                    _fileList.UpdateItemForMapFile(mapFile);
-
-                    _diagnosticsDisplay.Text = string.Empty;
-                }
+                _diagnosticsDisplay.Text = string.Empty;
             }
         }
 
         private void OnClickSaveSelected(object? sender, EventArgs e)
         {
-            if (_fileList.TryGetSelectedMapFile(out var mapFile))
+            if (!_fileList.TryGetSelectedMapFile(out var mapFile) ||
+                mapFile.CurrentStream is null ||
+                mapFile.Children is not null)
             {
-                if (mapFile.CurrentStream is null || mapFile.Children is not null)
-                {
-                    return;
-                }
+                return;
+            }
 
-                var saveFileDialog = new SaveFileDialog
-                {
-                    OverwritePrompt = true,
-                    CreatePrompt = false,
-                    FileName = Path.GetFileName(mapFile.CurrentFileName) ?? mapFile.Adapter?.DefaultFileName,
-                };
+            var saveFileDialog = new SaveFileDialog
+            {
+                OverwritePrompt = true,
+                CreatePrompt = false,
+                FileName = Path.GetFileName(mapFile.CurrentFileName) ?? mapFile.Adapter?.DefaultFileName,
+            };
 
-                var extension = Path.GetExtension(saveFileDialog.FileName);
-                if (string.IsNullOrEmpty(extension))
-                {
-                    saveFileDialog.Filter = FilterStrings.AllFiles;
-                }
-                else
-                {
-                    var fileTypeDescription = mapFile.Adapter?.MapFileDescription ?? $"{extension.TrimStart('.').ToUpperInvariant()} file";
+            var extension = Path.GetExtension(saveFileDialog.FileName);
+            if (string.IsNullOrEmpty(extension))
+            {
+                saveFileDialog.Filter = FilterStrings.AllFiles;
+            }
+            else
+            {
+                var fileTypeDescription = mapFile.Adapter?.MapFileDescription ?? $"{extension.TrimStart('.').ToUpperInvariant()} file";
 
-                    saveFileDialog.Filter = $"{fileTypeDescription}|*{extension}{FilterStrings.Separator}{FilterStrings.AllFiles}";
-                }
+                saveFileDialog.Filter = $"{fileTypeDescription}|*{extension}{FilterStrings.Separator}{FilterStrings.AllFiles}";
+            }
 
-                var saveFileDialogResult = saveFileDialog.ShowDialog();
-                if (saveFileDialogResult == DialogResult.OK)
-                {
-                    using var fileStream = File.Create(saveFileDialog.FileName);
+            var saveFileDialogResult = saveFileDialog.ShowDialog();
+            if (saveFileDialogResult == DialogResult.OK)
+            {
+                using var fileStream = File.Create(saveFileDialog.FileName);
 
-                    mapFile.CurrentStream.Position = 0;
-                    mapFile.CurrentStream.CopyTo(fileStream);
-                }
+                mapFile.CurrentStream.Position = 0;
+                mapFile.CurrentStream.CopyTo(fileStream);
             }
         }
 
         private void OnClickDiffSelected(object? sender, EventArgs e)
         {
-            if (_fileList.TryGetSelectedMapFile(out var mapFile))
+            if (!_fileList.TryGetSelectedMapFile(out var mapFile) ||
+                mapFile.Adapter is null ||
+                mapFile.AdaptResult?.AdaptedFileStream is null)
             {
-                if (mapFile.Adapter is null || mapFile.AdaptResult?.AdaptedFileStream is null)
-                {
-                    return;
-                }
-
-                string oldText, newText;
-                if (mapFile.Adapter.IsTextFile)
-                {
-                    mapFile.OriginalFileStream.Position = 0;
-                    mapFile.AdaptResult.AdaptedFileStream.Position = 0;
-
-                    using var oldStreamReader = new StreamReader(mapFile.OriginalFileStream, leaveOpen: true);
-                    using var newStreamReader = new StreamReader(mapFile.AdaptResult.AdaptedFileStream, leaveOpen: true);
-
-                    oldText = oldStreamReader.ReadToEnd();
-                    newText = newStreamReader.ReadToEnd();
-                }
-                else if (mapFile.Adapter.IsJsonSerializationSupported && _targetPatch is not null)
-                {
-                    mapFile.OriginalFileStream.Position = 0;
-                    mapFile.AdaptResult.AdaptedFileStream.Position = 0;
-
-                    oldText = mapFile.Adapter.GetJson(mapFile.OriginalFileStream, mapFile.GetOriginPatch(_originPatch.Value));
-                    newText = mapFile.Adapter.GetJson(mapFile.AdaptResult.AdaptedFileStream, _targetPatch.Patch);
-                }
-                else
-                {
-                    return;
-                }
-
-                const int CharacterLimit = 25000;
-
-                if (oldText.Length > CharacterLimit + 100)
-                {
-                    oldText = oldText[..CharacterLimit] + $"{System.Environment.NewLine}{System.Environment.NewLine}FILE TOO LARGE: ONLY SHOWING FIRST {CharacterLimit}/{oldText.Length} CHARACTERS";
-                }
-
-                if (newText.Length > CharacterLimit + 100)
-                {
-                    newText = newText[..CharacterLimit] + $"{System.Environment.NewLine}{System.Environment.NewLine}FILE TOO LARGE: ONLY SHOWING FIRST {CharacterLimit}/{newText.Length} CHARACTERS";
-                }
-
-                var diffForm = new DiffForm(oldText, newText);
-                diffForm.ShowDialog();
+                return;
             }
+
+            string oldText, newText;
+            if (mapFile.Adapter.IsTextFile)
+            {
+                mapFile.OriginalFileStream.Position = 0;
+                mapFile.AdaptResult.AdaptedFileStream.Position = 0;
+
+                using var oldStreamReader = new StreamReader(mapFile.OriginalFileStream, leaveOpen: true);
+                using var newStreamReader = new StreamReader(mapFile.AdaptResult.AdaptedFileStream, leaveOpen: true);
+
+                oldText = oldStreamReader.ReadToEnd();
+                newText = newStreamReader.ReadToEnd();
+            }
+            else if (mapFile.Adapter.IsJsonSerializationSupported && _targetPatch is not null)
+            {
+                mapFile.OriginalFileStream.Position = 0;
+                mapFile.AdaptResult.AdaptedFileStream.Position = 0;
+
+                oldText = mapFile.Adapter.GetJson(mapFile.OriginalFileStream, mapFile.GetOriginPatch(_originPatch.Value));
+                newText = mapFile.Adapter.GetJson(mapFile.AdaptResult.AdaptedFileStream, _targetPatch.Patch);
+            }
+            else
+            {
+                return;
+            }
+
+            const int CharacterLimit = 25000;
+
+            if (oldText.Length > CharacterLimit + 100)
+            {
+                oldText = oldText[..CharacterLimit] + $"{System.Environment.NewLine}{System.Environment.NewLine}FILE TOO LARGE: ONLY SHOWING FIRST {CharacterLimit}/{oldText.Length} CHARACTERS";
+            }
+
+            if (newText.Length > CharacterLimit + 100)
+            {
+                newText = newText[..CharacterLimit] + $"{System.Environment.NewLine}{System.Environment.NewLine}FILE TOO LARGE: ONLY SHOWING FIRST {CharacterLimit}/{newText.Length} CHARACTERS";
+            }
+
+            var diffForm = new DiffForm(oldText, newText);
+            diffForm.ShowDialog();
         }
 
         private void OnClickUndoChangesSelected(object? sender, EventArgs e)
