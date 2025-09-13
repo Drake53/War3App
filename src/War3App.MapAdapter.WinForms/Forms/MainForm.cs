@@ -82,7 +82,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             _fileList = ControlFactory.FileListView();
             _progressBar = ControlFactory.TextProgressBar();
 
-            ReloadSettings();
+            _appSettings = _configuration.LoadAppSettings();
 
             _targetPatchesComboBox.Items.AddRange(_appSettings.TargetPatches.OrderByDescending(targetPatch => targetPatch.Patch).Select(targetPatch => (object)targetPatch.Patch).ToArray());
             if (_targetPatchesComboBox.Items.Count == 1)
@@ -281,20 +281,6 @@ namespace War3App.MapAdapter.WinForms.Forms
 
         [MemberNotNullWhen(true, nameof(_targetPatch))]
         internal bool CanAdapt => _targetPatch is not null;
-
-        [MemberNotNull(nameof(_appSettings))]
-        private void ReloadSettings()
-        {
-            _appSettings = new AppSettings
-            {
-                TargetPatches = _configuration.GetSection(nameof(AppSettings.TargetPatches)).GetChildren().Select(targetPatch => new TargetPatch
-                {
-                    Patch = Enum.Parse<GamePatch>(targetPatch.GetSection(nameof(TargetPatch.Patch)).Value),
-                    GameDataPath = targetPatch.GetSection(nameof(TargetPatch.GameDataPath)).Value,
-                    GameDataContainerType = ContainerType.Directory,
-                }).ToList(),
-            };
-        }
 
         private static string GetMpqArchiveFileTypeFilter(bool isOpenFileDialog)
         {
