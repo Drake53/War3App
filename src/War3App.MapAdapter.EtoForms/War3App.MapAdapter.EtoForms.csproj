@@ -4,13 +4,11 @@
     <TargetFramework>net6.0</TargetFramework>
     <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
-    <OutputType>WinExe</OutputType>
-    <Version>1.5.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.7.0" />
-    <PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
+    <PackageReference Include="Eto.Forms" Version="2.9.0" />
     <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
   </ItemGroup>
 

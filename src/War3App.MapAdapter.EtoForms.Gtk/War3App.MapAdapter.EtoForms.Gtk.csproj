@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <OutputType>WinExe</OutputType>
+    <Version>1.5.1</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\War3App.MapAdapter.EtoForms\War3App.MapAdapter.EtoForms.csproj" />
+  </ItemGroup>
+
+</Project>
