@@ -1,21 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Windows.Forms;
 
-using War3App.Common.WinForms.Extensions;
+using Eto.Drawing;
+using Eto.Forms;
+
 using War3App.MapAdapter.Constants;
+using War3App.MapAdapter.EtoForms.Helpers;
 using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Common;
 
-namespace War3App.MapAdapter.WinForms.Forms
+namespace War3App.MapAdapter.EtoForms.Forms
 {
-    [DesignerCategory("")]
-    public sealed class ConfigureGamePathForm : Form
+    public sealed class ConfigureGamePathForm : Dialog<DialogResult>
     {
         private readonly TextBox _gameDirectoryInput;
         private readonly Button _gameDirectoryInputBrowseButton;
@@ -26,15 +25,16 @@ namespace War3App.MapAdapter.WinForms.Forms
 
         public ConfigureGamePathForm()
         {
-            Text = TitleText.Setup;
+            Title = TitleText.Setup;
             Size = new Size(600, 200);
             MinimumSize = new Size(400, 200);
+            Resizable = true;
 
             _gameDirectoryInput = new TextBox
             {
                 PlaceholderText = PlaceholderText.GameDirectory,
                 TabIndex = 2,
-                Width = 360,
+                Size = new Size(360, -1),
             };
 
             _gameDirectoryInput.TextChanged += OnSettingChanged;
@@ -45,17 +45,16 @@ namespace War3App.MapAdapter.WinForms.Forms
                 TabIndex = 0,
             };
 
-            _gameDirectoryInputBrowseButton.Size = _gameDirectoryInputBrowseButton.PreferredSize;
             _gameDirectoryInputBrowseButton.Click += (s, e) =>
             {
-                var openDirectoryDialog = new FolderBrowserDialog
+                var openDirectoryDialog = new SelectFolderDialog
                 {
                 };
 
-                var openDirectoryDialogResult = openDirectoryDialog.ShowDialog();
-                if (openDirectoryDialogResult == DialogResult.OK)
+                var openDirectoryDialogResult = openDirectoryDialog.ShowDialog(this);
+                if (openDirectoryDialogResult == DialogResult.Ok)
                 {
-                    _gameDirectoryInput.Text = openDirectoryDialog.SelectedPath;
+                    _gameDirectoryInput.Text = openDirectoryDialog.Directory;
                 }
             };
 
@@ -64,7 +63,6 @@ namespace War3App.MapAdapter.WinForms.Forms
                 Text = ButtonText.Save,
                 Enabled = false,
                 TabIndex = 1,
-                Dock = DockStyle.Bottom,
             };
 
             _saveButton.Click += (s, e) =>
@@ -72,10 +70,11 @@ namespace War3App.MapAdapter.WinForms.Forms
                 if (string.IsNullOrWhiteSpace(_gameDirectoryInput.Text))
                 {
                     var dialogResult = MessageBox.Show(
+                        this,
                         MessageText.ContinueWithoutGameFiles,
                         TitleText.ContinueWithoutGameFiles,
                         MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Warning);
+                        MessageBoxType.Warning);
 
                     if (dialogResult != DialogResult.Yes)
                     {
@@ -88,76 +87,67 @@ namespace War3App.MapAdapter.WinForms.Forms
                     if (missingFiles.Count > 0)
                     {
                         MessageBox.Show(
+                            this,
                             string.Join(System.Environment.NewLine, missingFiles.Prepend(MessageText.MissingFiles)),
                             TitleText.MissingFiles,
                             MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
+                            MessageBoxType.Error);
 
                         return;
                     }
                 }
 
-                DialogResult = DialogResult.OK;
-                Close();
+                Close(DialogResult.Ok);
             };
 
             var targetPatchLabel = new Label
             {
                 Text = LabelText.TargetPatch,
-                TextAlign = ContentAlignment.BottomRight,
+                TextAlignment = TextAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Bottom,
             };
-
-            targetPatchLabel.Size = targetPatchLabel.PreferredSize;
 
             _targetPatchesComboBox = new ComboBox
             {
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                Width = 120,
+                ReadOnly = true,
+                Size = new Size(120, -1),
             };
 
-            _targetPatchesComboBox.Items.AddRange(Enum.GetValues<GamePatch>().OrderByDescending(patch => patch).Cast<object>().ToArray());
+            foreach (var patch in Enum.GetValues<GamePatch>().OrderByDescending(patch => patch))
+            {
+                _targetPatchesComboBox.Items.Add(patch.PrettyPrint(), patch.ToString());
+            }
 
             _targetPatchesComboBox.SelectedIndexChanged += OnSettingChanged;
 
-            _targetPatchesComboBox.FormattingEnabled = true;
-            _targetPatchesComboBox.Format += (s, e) =>
+            var inputGameDirectoryLayout = ControlFactory.HorizontalStackLayout(
+                _gameDirectoryInput,
+                _gameDirectoryInputBrowseButton);
+
+            var targetPatchLayout = ControlFactory.HorizontalStackLayout(
+                targetPatchLabel,
+                _targetPatchesComboBox);
+
+            var mainLayout = new StackLayout
             {
-                if (e.ListItem is GamePatch gamePatch)
+                Orientation = Orientation.Vertical,
+                Padding = 10,
+                Spacing = 10,
+                Items =
                 {
-                    e.Value = gamePatch.PrettyPrint();
-                }
+                    inputGameDirectoryLayout,
+                    targetPatchLayout,
+                    new StackLayoutItem(_saveButton, HorizontalAlignment.Right),
+                },
             };
 
-            var inputGameDirectoryFlowLayout = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-            };
-
-            var targetPatchFlowLayout = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-            };
-
-            var flowLayout = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.TopDown,
-                Dock = DockStyle.Fill,
-            };
-
-            inputGameDirectoryFlowLayout.AddControls(_gameDirectoryInput, _gameDirectoryInputBrowseButton);
-            targetPatchFlowLayout.AddControls(targetPatchLabel, _targetPatchesComboBox);
-
-            inputGameDirectoryFlowLayout.Size = inputGameDirectoryFlowLayout.PreferredSize;
-            targetPatchFlowLayout.Size = targetPatchFlowLayout.PreferredSize;
-
-            flowLayout.AddControls(inputGameDirectoryFlowLayout, targetPatchFlowLayout);
-
-            this.AddControls(flowLayout, _saveButton);
+            Content = mainLayout;
+            DefaultButton = _saveButton;
         }
 
         public string GameDirectory => _gameDirectoryInput.Text;
 
-        public GamePatch GamePatch => (GamePatch)_targetPatchesComboBox.SelectedItem;
+        public GamePatch GamePatch =>  Enum.Parse<GamePatch>(_targetPatchesComboBox.SelectedKey);
 
         private void OnSettingChanged(object? sender, EventArgs e)
         {
@@ -166,7 +156,7 @@ namespace War3App.MapAdapter.WinForms.Forms
 
         private void UpdateSaveButtonState()
         {
-            if (_targetPatchesComboBox.SelectedItem is null)
+            if (_targetPatchesComboBox.SelectedIndex == -1)
             {
                 _saveButton.Enabled = false;
             }
