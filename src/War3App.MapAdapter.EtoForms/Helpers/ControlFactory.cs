@@ -1,5 +1,6 @@
 using Eto.Drawing;
 using Eto.Forms;
+using War3App.Common.EtoForms;
 using War3App.MapAdapter.EtoForms.Controls;
 using War3App.MapAdapter.EtoForms.Forms;
 
@@ -54,12 +55,42 @@ namespace War3App.MapAdapter.EtoForms.Helpers
             return stackLayout;
         }
 
+        public static Label Label(string text)
+        {
+            return new Label
+            {
+                Text = text,
+                TextAlignment = TextAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Bottom,
+            };
+        }
+
+        public static Splitter Splitter(int position, int panel1MinimumSize)
+        {
+            return new Splitter
+            {
+                Orientation = Orientation.Horizontal,
+                FixedPanel = SplitterFixedPanel.Panel1,
+                Position = position,
+                Panel1MinimumSize = panel1MinimumSize,
+            };
+        }
+
         public static TextBox TextBox(string placeholderText, int width)
         {
             return new TextBox
             {
                 PlaceholderText = placeholderText,
                 Size = new Size(width, -1),
+            };
+        }
+
+        public static TextProgressBar TextProgressBar()
+        {
+            return new TextProgressBar
+            {
+                Visible = false,
+                VisualMode = Common.EtoForms.TextProgressBar.ProgressBarDisplayMode.CustomText,
             };
         }
     }
