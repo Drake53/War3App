@@ -39,17 +39,17 @@ namespace War3App.MapAdapter.EtoForms.Helpers
             return new FileTreeView(mainForm);
         }
 
-        public static StackLayout HorizontalStackLayout(params Control[] controls)
+        public static FlowLayoutPanel HorizontalFlowLayout(params FlowLayoutItem[] items)
         {
-            var stackLayout = new StackLayout
+            var stackLayout = new FlowLayoutPanel
             {
-                Orientation = Orientation.Horizontal,
-                Spacing = 5,
+                Padding = new Padding(15),
+                Spacing = new Size(5, 5),
             };
 
-            foreach (var control in controls)
+            foreach (var item in items)
             {
-                stackLayout.Items.Add(control);
+                stackLayout.Items.Add(item);
             }
 
             return stackLayout;
