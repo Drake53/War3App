@@ -53,9 +53,11 @@ namespace War3App.MapAdapter
                 {
                     var mapName = file.FileName;
 
-                    using var nestedArchiveStream = archive.OpenFile(mapName);
-                    using var nestedArchive = MpqArchive.Open(nestedArchiveStream, true);
+                    var nestedArchiveStream = archive.OpenFile(mapName);
+                    var nestedArchive = MpqArchive.Open(nestedArchiveStream, true);
                     nestedArchive.DiscoverFileNames();
+
+                    result.NestedArchives.Add(nestedArchive);
 
                     var nestedFiles = nestedArchive.ToArray();
                     var nestedMapFiles = new MapFile[nestedFiles.Length];

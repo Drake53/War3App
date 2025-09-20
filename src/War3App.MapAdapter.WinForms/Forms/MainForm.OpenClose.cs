@@ -155,6 +155,7 @@ namespace War3App.MapAdapter.WinForms.Forms
 
             e.Result = listViewItems;
 
+            _nestedArchives = result.NestedArchives;
             _originPatch = result.OriginPatch;
 #else
             var mapsList = new HashSet<string>();
@@ -306,6 +307,22 @@ namespace War3App.MapAdapter.WinForms.Forms
 
         private void CloseArchive()
         {
+            if (_archive is null)
+            {
+                return;
+            }
+
+            if (_nestedArchives is not null)
+            {
+                foreach (var nestedArchive in _nestedArchives)
+                {
+                    nestedArchive.Dispose();
+                }
+
+                _nestedArchives.Clear();
+                _nestedArchives = null;
+            }
+
             _archive.Dispose();
             _archive = null;
             _isTargetPatchFromZipArchive = false;

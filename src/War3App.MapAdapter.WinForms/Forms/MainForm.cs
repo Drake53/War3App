@@ -48,6 +48,7 @@ namespace War3App.MapAdapter.WinForms.Forms
 
         private AppSettings _appSettings;
         private MpqArchive? _archive;
+        private List<MpqArchive>? _nestedArchives;
         private Timer? _fileSelectionChangedEventTimer;
         private bool _isTargetPatchFromZipArchive;
         private TargetPatch? _targetPatch;
@@ -270,9 +271,18 @@ namespace War3App.MapAdapter.WinForms.Forms
 
             FormClosing += (s, e) =>
             {
+                if (_nestedArchives is not null)
+                {
+                    foreach (var nestedArchive in _nestedArchives)
+                    {
+                        nestedArchive.Dispose();
+                    }
+                }
+
                 _archive?.Dispose();
                 _openArchiveWorker?.Dispose();
                 _saveArchiveWorker?.Dispose();
+                _watcher?.Dispose();
                 _fileSelectionChangedEventTimer?.Dispose();
             };
         }
