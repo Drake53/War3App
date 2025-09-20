@@ -4,6 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
+    <Version>1.5.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
