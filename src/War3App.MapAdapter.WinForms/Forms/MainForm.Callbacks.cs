@@ -40,7 +40,7 @@ namespace War3App.MapAdapter.WinForms.Forms
                 CheckFileExists = false,
             };
 
-            openFileDialog.Filter = GetMpqArchiveFileTypeFilter(true);
+            openFileDialog.Filter = GetMpqArchiveFileTypeFilter(isOpenFileDialog: true);
 
             var openFileDialogResult = openFileDialog.ShowDialog();
             if (openFileDialogResult == DialogResult.OK)
@@ -149,7 +149,7 @@ namespace War3App.MapAdapter.WinForms.Forms
                 FileName = $"{Path.GetFileNameWithoutExtension(_archiveInput.Text)}{MiscStrings.AdaptedFileTag}{Path.GetExtension(_archiveInput.Text)}",
             };
 
-            saveFileDialog.Filter = GetMpqArchiveFileTypeFilter(false);
+            saveFileDialog.Filter = GetMpqArchiveFileTypeFilter(isOpenFileDialog: false);
 
             var saveFileDialogResult = saveFileDialog.ShowDialog();
             if (saveFileDialogResult == DialogResult.OK)
