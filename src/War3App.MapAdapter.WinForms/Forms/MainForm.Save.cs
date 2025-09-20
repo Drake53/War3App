@@ -10,7 +10,7 @@ namespace War3App.MapAdapter.WinForms.Forms
 {
     partial class MainForm
     {
-        private void SaveArchive(string fileName)
+        private void SaveArchive(string outputFilePath)
         {
             var itemCount = 0;
             for (var i = 0; i < _fileList.Items.Count; i++)
@@ -27,7 +27,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             _progressBar.CustomText = string.Empty;
             _progressBar.Visible = true;
 
-            _saveArchiveWorker.RunWorkerAsync(fileName);
+            _saveArchiveWorker.RunWorkerAsync(outputFilePath);
         }
 
         private BackgroundWorker CreateSaveArchiveWorker()
