@@ -83,32 +83,32 @@ namespace War3App.MapAdapter.WinForms.Forms
                     else if (mapFile.Children.Any(child => child.IsModified || child.Status == MapFileStatus.Removed))
                     {
                         // Assume at most one nested archive (for campaign archives), so no recursion.
-                        using var subArchive = MpqArchive.Open(_archive.OpenFile(mapFile.OriginalFileName));
+                        using var nestedArchive = MpqArchive.Open(_archive.OpenFile(mapFile.OriginalFileName));
                         foreach (var child in mapFile.Children)
                         {
                             if (child.OriginalFileName is not null)
                             {
-                                subArchive.AddFileName(child.OriginalFileName);
+                                nestedArchive.AddFileName(child.OriginalFileName);
                             }
                         }
 
-                        var subArchiveBuilder = new MpqArchiveBuilder(subArchive);
+                        var nestedArchiveBuilder = new MpqArchiveBuilder(nestedArchive);
                         foreach (var child in mapFile.Children)
                         {
                             if (child.Status == MapFileStatus.Removed)
                             {
                                 if (child.TryGetHashedFileName(out var hashedFileName))
                                 {
-                                    subArchiveBuilder.RemoveFile(hashedFileName);
+                                    nestedArchiveBuilder.RemoveFile(hashedFileName);
                                 }
                                 else
                                 {
-                                    subArchiveBuilder.RemoveFile(subArchive, child.MpqEntry);
+                                    nestedArchiveBuilder.RemoveFile(nestedArchive, child.MpqEntry);
                                 }
                             }
-                            else if (child.TryGetModifiedMpqFile(out var subArchiveAdaptedFile))
+                            else if (child.TryGetModifiedMpqFile(out var nestedArchiveAdaptedFile))
                             {
-                                subArchiveBuilder.AddFile(subArchiveAdaptedFile);
+                                nestedArchiveBuilder.AddFile(nestedArchiveAdaptedFile);
 
                                 _saveArchiveWorker.ReportProgress(0, progress);
                             }
@@ -118,11 +118,11 @@ namespace War3App.MapAdapter.WinForms.Forms
                             }
                         }
 
-                        var adaptedSubArchiveStream = new MemoryStream();
-                        subArchiveBuilder.SaveWithPreArchiveData(adaptedSubArchiveStream, true);
+                        var adaptedNestedArchiveStream = new MemoryStream();
+                        nestedArchiveBuilder.SaveWithPreArchiveData(adaptedNestedArchiveStream, true);
 
-                        adaptedSubArchiveStream.Position = 0;
-                        var adaptedFile = MpqFile.New(adaptedSubArchiveStream, mapFile.CurrentFileName, false);
+                        adaptedNestedArchiveStream.Position = 0;
+                        var adaptedFile = MpqFile.New(adaptedNestedArchiveStream, mapFile.CurrentFileName, false);
                         adaptedFile.TargetFlags = mapFile.MpqEntry.Flags;
                         archiveBuilder.AddFile(adaptedFile);
 
