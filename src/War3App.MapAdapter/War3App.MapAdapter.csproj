@@ -9,7 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
     <PackageReference Include="War3Api.Blizzard" Version="1.33.0" />
-    <PackageReference Include="War3Net.Build.Core" Version="5.8.0" />
+    <PackageReference Include="War3Net.Build.Core" Version="5.8.1" />
   </ItemGroup>
 
 </Project>
