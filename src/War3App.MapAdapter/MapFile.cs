@@ -104,7 +104,7 @@ namespace War3App.MapAdapter
             if (IsModified)
             {
                 AdaptResult.AdaptedFileStream.Position = 0;
-                mpqFile = MpqFile.New(AdaptResult.AdaptedFileStream, CurrentFileName, true);
+                mpqFile = MpqFile.New(AdaptResult.AdaptedFileStream, CurrentFileName, leaveOpen: true);
                 mpqFile.TargetFlags = MpqEntry.Flags;
 
                 return true;
