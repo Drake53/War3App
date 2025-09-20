@@ -1,18 +1,17 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
-using System.Windows.Forms;
 
 using War3App.MapAdapter.Constants;
-using War3App.MapAdapter.WinForms.Extensions;
-using War3App.MapAdapter.WinForms.Helpers;
+using War3App.MapAdapter.EtoForms.Extensions;
+using War3App.MapAdapter.EtoForms.Models;
 
 using War3Net.Build.Common;
 using War3Net.Build.Extensions;
 using War3Net.IO.Mpq;
 
-namespace War3App.MapAdapter.WinForms.Forms
+namespace War3App.MapAdapter.EtoForms.Forms
 {
     partial class MainForm
     {
@@ -71,18 +70,36 @@ namespace War3App.MapAdapter.WinForms.Forms
 
             var result = ArchiveProcessor.OpenArchive(_archive, _openArchiveWorker);
 
-            var listViewItems = new List<ListViewItem>();
+            var fileTreeItems = new List<FileTreeItem>();
+            var mapping = new Dictionary<MapFile, FileTreeItem>();
 
             foreach (var mapFile in result.Files)
             {
-                var item = ListViewItemFactory.Create(mapFile, _fileList);
-                if (mapFile.Parent is not null)
+                var item = new FileTreeItem(mapFile);
+                mapping.Add(mapFile, item);
+
+                if (mapFile.Parent is null)
                 {
-                    item.IndentCount = 1;
+                    fileTreeItems.Add(item);
                 }
             }
 
-            e.Result = listViewItems;
+            foreach (var item in fileTreeItems)
+            {
+                if (item.MapFile.Children is null)
+                {
+                    continue;
+                }
+
+                foreach (var childMapFile in item.MapFile.Children)
+                {
+                    item.Children.Add(mapping[childMapFile]);
+                }
+
+                item.UpdateStatus();
+            }
+
+            e.Result = fileTreeItems;
 
             _nestedArchives = result.NestedArchives;
             _originPatch = result.OriginPatch;
@@ -104,17 +121,11 @@ namespace War3App.MapAdapter.WinForms.Forms
             {
                 throw new ApplicationException(ExceptionText.OpenArchive, e.Error);
             }
-            else if (e.Result is List<ListViewItem> listViewItems)
+            else if (e.Result is List<FileTreeItem> fileTreeItems)
             {
-                _fileList.BeginUpdate();
-                _fileList.Items.AddRange(listViewItems.ToArray());
-
-                foreach (ListViewItem item in _fileList.Items)
-                {
-                    item.Update();
-                }
-
-                _fileList.EndUpdate();
+                _fileTree.BeginUpdate();
+                _fileTree.AddItems(fileTreeItems);
+                _fileTree.EndUpdate();
 
                 if (!_isTargetPatchFromZipArchive)
                 {
@@ -124,11 +135,11 @@ namespace War3App.MapAdapter.WinForms.Forms
                     }
                     else
                     {
-                        _targetPatch = GetTargetPatch((GamePatch?)_targetPatchesComboBox.SelectedItem);
+                        _targetPatch = GetTargetPatch(Enum.Parse<GamePatch>(_targetPatchesComboBox.Text.Replace('.', '_')));
                     }
                 }
 
-                _adaptAllButton.Enabled = CanAdapt && _fileList.Items.Count > 0;
+                _adaptAllButton.Enabled = CanAdapt && _fileTree.HasItems;
                 _getHelpButton.Enabled = _targetPatch is not null;
 
                 _openCloseArchiveButton.Enabled = true;
@@ -174,7 +185,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             _targetPatch = null;
             _originPatch = null;
 
-            _fileList.Reset();
+            _fileTree.Reset();
 
             _diagnosticsDisplay.Text = string.Empty;
 
