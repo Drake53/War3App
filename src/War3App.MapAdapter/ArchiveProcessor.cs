@@ -191,7 +191,7 @@ namespace War3App.MapAdapter
 
         public static void SaveArchive(
             MpqArchive originalArchive,
-            IEnumerable<MapFile> mapFiles,
+            IEnumerable<MapFile> rootMapFiles,
             string outputFilePath,
             BackgroundWorker progressReporter)
         {
@@ -200,7 +200,7 @@ namespace War3App.MapAdapter
             var progress = new SaveArchiveProgress();
             progress.Saving = false;
 
-            foreach (var mapFile in mapFiles)
+            foreach (var mapFile in rootMapFiles)
             {
                 if (mapFile.Parent is not null)
                 {
