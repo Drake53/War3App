@@ -17,7 +17,6 @@ using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.Extensions;
 using War3App.MapAdapter.WinForms.Constants;
 using War3App.MapAdapter.WinForms.Controls;
-using War3App.MapAdapter.WinForms.Extensions;
 using War3App.MapAdapter.WinForms.Helpers;
 
 using War3Net.Build.Common;
@@ -85,57 +84,27 @@ namespace War3App.MapAdapter.WinForms.Forms
 
             _appSettings = _configuration.LoadAppSettings();
 
+            _targetPatchesComboBox.FormattingEnabled = true;
             _targetPatchesComboBox.Items.AddRange(_appSettings.TargetPatches.OrderByDescending(targetPatch => targetPatch.Patch).Select(targetPatch => (object)targetPatch.Patch).ToArray());
             if (_targetPatchesComboBox.Items.Count == 1)
             {
                 _targetPatchesComboBox.SelectedIndex = 0;
             }
 
-            _targetPatchesComboBox.SelectedIndexChanged += (s, e) =>
-            {
-                _targetPatch = GetTargetPatch((GamePatch?)_targetPatchesComboBox.SelectedItem);
-                _adaptAllButton.Enabled = CanAdapt && _fileList.Items.Count > 0;
-                _getHelpButton.Enabled = _targetPatch is not null;
-            };
-
-            _targetPatchesComboBox.FormattingEnabled = true;
-            _targetPatchesComboBox.Format += (s, e) =>
-            {
-                if (e.ListItem is GamePatch gamePatch)
-                {
-                    e.Value = gamePatch.PrettyPrint();
-                }
-            };
-
-            _getHelpButton.Click += (s, e) =>
-            {
-                if (_targetPatch is not null)
-                {
-                    _ = new GetHelpForm(_archiveInput.Text, _targetPatch).ShowDialog();
-                }
-            };
+            var fileListContextMenu = new FileListContextMenuStrip(_fileList);
+            _fileList.ContextMenuStrip = fileListContextMenu;
 
             _archiveInput.TextChanged += OnArchiveInputTextChanged;
-
-            _archiveInputBrowseButton.Click += (s, e) =>
-            {
-                var openFileDialog = new OpenFileDialog
-                {
-                    CheckFileExists = false,
-                };
-
-                openFileDialog.Filter = GetMpqArchiveFileTypeFilter(true);
-
-                var openFileDialogResult = openFileDialog.ShowDialog();
-                if (openFileDialogResult == DialogResult.OK)
-                {
-                    _archiveInput.Text = openFileDialog.FileName;
-                }
-            };
-
-            var fileListContextMenu = new FileListContextMenuStrip(_fileList);
-
-            _fileList.ContextMenuStrip = fileListContextMenu;
+            _archiveInputBrowseButton.Click += OnClickBrowseInputArchive;
+            _openCloseArchiveButton.Click += OnClickOpenCloseArchive;
+            _targetPatchesComboBox.Format += FormatTargetPatch;
+            _targetPatchesComboBox.SelectedIndexChanged += OnSelectedTargetPatchChanged;
+            _adaptAllButton.Click += OnClickAdaptAll;
+            _saveAsButton.Click += OnClickSaveAs;
+            _getHelpButton.Click += OnClickGetHelp;
+            _fileList.ItemActivate += OnClickEditSelected;
+            _fileList.KeyDown += OnFileKeyDown;
+            _fileList.SelectedIndexChanged += OnFileSelectionChanged;
 
             fileListContextMenu.Adapt += OnClickAdaptSelected;
             fileListContextMenu.Edit += OnClickEditSelected;
@@ -143,103 +112,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             fileListContextMenu.Diff += OnClickDiffSelected;
             fileListContextMenu.Undo += OnClickUndoChangesSelected;
             fileListContextMenu.Remove += OnClickRemoveSelected;
-
             fileListContextMenu.RegisterClickEvents();
-
-            _openCloseArchiveButton.Click += OnClickOpenCloseArchive;
-
-            _adaptAllButton.Click += (s, e) =>
-            {
-                if (!CanAdapt)
-                {
-                    return;
-                }
-
-                var adaptedItemIndices = new List<int>();
-
-                _targetPatchesComboBox.Enabled = false;
-                var parentsToUpdate = new HashSet<MapFile>();
-                for (var i = 0; i < _fileList.Items.Count; i++)
-                {
-                    var item = _fileList.Items[i];
-                    var mapFile = item.GetMapFile();
-
-                    var adapter = mapFile.Adapter;
-                    if (adapter is not null && mapFile.Status == MapFileStatus.Pending)
-                    {
-                        var context = new AdaptFileContext
-                        {
-                            FileName = mapFile.CurrentFileName,
-                            Archive = mapFile.MpqArchive,
-                            TargetPatch = _targetPatch,
-                            OriginPatch = mapFile.GetOriginPatch(_originPatch.Value),
-                        };
-
-                        mapFile.CurrentStream.Position = 0;
-                        var adaptResult = adapter.Run(mapFile.CurrentStream, context);
-                        mapFile.UpdateAdaptResult(adaptResult);
-                        _fileList.UpdateItemForMapFile(mapFile);
-
-                        if (mapFile.Parent is not null)
-                        {
-                            parentsToUpdate.Add(mapFile.Parent);
-                        }
-
-                        if (adaptResult.Diagnostics is not null &&
-                            adaptResult.Diagnostics.Length > 0)
-                        {
-                            adaptedItemIndices.Add(i);
-                        }
-                    }
-                }
-
-                foreach (var parent in parentsToUpdate)
-                {
-                    _fileList.GetItemByMapFile(parent).Update();
-                }
-
-                if (_fileList.SelectedItems.Count == 0)
-                {
-                    _fileList.BeginUpdate();
-                    foreach (var itemIndex in adaptedItemIndices)
-                    {
-                        _fileList.SelectedIndices.Add(itemIndex);
-                    }
-
-                    _fileList.EndUpdate();
-                }
-
-                UpdateDiagnosticsDisplay();
-            };
-
-            _fileList.KeyDown += (s, e) =>
-            {
-                if (e.KeyCode == Keys.Delete)
-                {
-                    OnClickRemoveSelected(s, e);
-                }
-            };
-
-            _fileList.SelectedIndexChanged += OnFileSelectionChanged;
-            _fileList.ItemActivate += OnClickEditSelected;
-
-            _saveAsButton.Click += (s, e) =>
-            {
-                var saveFileDialog = new SaveFileDialog
-                {
-                    OverwritePrompt = true,
-                    CreatePrompt = false,
-                    FileName = $"{Path.GetFileNameWithoutExtension(_archiveInput.Text)}{MiscStrings.AdaptedFileTag}{Path.GetExtension(_archiveInput.Text)}",
-                };
-
-                saveFileDialog.Filter = GetMpqArchiveFileTypeFilter(false);
-
-                var saveFileDialogResult = saveFileDialog.ShowDialog();
-                if (saveFileDialogResult == DialogResult.OK)
-                {
-                    SaveArchive(saveFileDialog.FileName);
-                }
-            };
 
             var targetPatchLabel = ControlFactory.Label(LabelText.TargetPatch);
 
@@ -269,22 +142,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             splitContainer.SplitterDistance = 640 - splitContainer.SplitterWidth;
             splitContainer.Panel1MinSize = 200;
 
-            FormClosing += (s, e) =>
-            {
-                if (_nestedArchives is not null)
-                {
-                    foreach (var nestedArchive in _nestedArchives)
-                    {
-                        nestedArchive.Dispose();
-                    }
-                }
-
-                _archive?.Dispose();
-                _openArchiveWorker?.Dispose();
-                _saveArchiveWorker?.Dispose();
-                _watcher?.Dispose();
-                _fileSelectionChangedEventTimer?.Dispose();
-            };
+            FormClosing += DisposeOnClosing;
         }
 
         internal static MainForm Instance => _mainForm;
@@ -311,57 +169,6 @@ namespace War3App.MapAdapter.WinForms.Forms
             filters.Add(FilterStrings.AllFiles);
 
             return FilterStrings.Combine(filters.ToArray());
-        }
-
-        private void OnClickOpenCloseArchive(object? sender, EventArgs e)
-        {
-            if (_archive is null)
-            {
-                OpenArchive();
-            }
-            else
-            {
-                CloseArchive();
-            }
-        }
-
-        private void OnFileSelectionChanged(object? sender, EventArgs e)
-        {
-            if (_fileSelectionChangedEventTimer is null)
-            {
-                _fileSelectionChangedEventTimer = new Timer();
-                _fileSelectionChangedEventTimer.Tick += OnFileSelectionEventTimerTick;
-                _fileSelectionChangedEventTimer.Interval = 50;
-            }
-
-            // Start/reset the timer
-            _fileSelectionChangedEventTimer.Enabled = false;
-            _fileSelectionChangedEventTimer.Enabled = true;
-        }
-
-        private void OnFileSelectionEventTimerTick(object? sender, EventArgs e)
-        {
-            _fileSelectionChangedEventTimer.Enabled = false;
-
-            UpdateDiagnosticsDisplay();
-        }
-
-        private void OnArchiveInputTextChanged(object? sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(_archiveInput.Text))
-            {
-                _watcher.EnableRaisingEvents = false;
-                _openCloseArchiveButton.Enabled = false;
-            }
-            else
-            {
-                var fileInfo = new FileInfo(_archiveInput.Text);
-                _watcher.Path = fileInfo.DirectoryName;
-                _watcher.Filter = fileInfo.Name;
-                _watcher.EnableRaisingEvents = true;
-
-                SetOpenArchiveButtonEnabled(fileInfo.Exists);
-            }
         }
 
         private FileSystemWatcher CreateWatcher()
