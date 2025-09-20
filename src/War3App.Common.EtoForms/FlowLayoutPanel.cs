@@ -221,6 +221,18 @@ namespace War3App.Common.EtoForms
             // Group items into rows
             foreach (var item in _items)
             {
+                if (item.Control is null && item.MinimumSize < 0)
+                {
+                    if (currentRow is not null)
+                    {
+                        rows.Add(currentRow);
+                        currentRow = null;
+                    }
+
+                    sizes.Add(Size.Empty);
+                    continue;
+                }
+
                 var preferredSize = item.Control is not null
                     ? GetControlSize(item.Control)
                     : Size.Empty;
@@ -244,7 +256,7 @@ namespace War3App.Common.EtoForms
                         requiredWidth += _spacing.Width;
                     }
 
-                    if (!WrapContents || currentRow.ReservedSize + requiredWidth <= availableWidth)
+                    if (!_wrapContents || currentRow.ReservedSize + requiredWidth <= availableWidth)
                     {
                         currentRow.IncludeItem(item, requiredWidth);
                     }
@@ -300,6 +312,11 @@ namespace War3App.Common.EtoForms
 
                     if (item.Control is null)
                     {
+                        if (item.MinimumSize < 0)
+                        {
+                            col--;
+                        }
+
                         x += item.MinimumSize;
                         x += expandSizePerSpacer;
                         continue;
@@ -339,6 +356,18 @@ namespace War3App.Common.EtoForms
             // Group items into columns
             foreach (var item in _items)
             {
+                if (item.Control is null && item.MinimumSize < 0)
+                {
+                    if (currentColumn is not null)
+                    {
+                        columns.Add(currentColumn);
+                        currentColumn = null;
+                    }
+
+                    sizes.Add(Size.Empty);
+                    continue;
+                }
+
                 var preferredSize = item.Control is not null
                     ? GetControlSize(item.Control)
                     : Size.Empty;
@@ -362,7 +391,7 @@ namespace War3App.Common.EtoForms
                         requiredHeight += _spacing.Height;
                     }
 
-                    if (!WrapContents || currentColumn.ReservedSize + requiredHeight <= availableHeight)
+                    if (!_wrapContents || currentColumn.ReservedSize + requiredHeight <= availableHeight)
                     {
                         currentColumn.IncludeItem(item, requiredHeight);
                     }
@@ -418,6 +447,11 @@ namespace War3App.Common.EtoForms
 
                     if (item.Control is null)
                     {
+                        if (item.MinimumSize < 0)
+                        {
+                            row--;
+                        }
+
                         y += item.MinimumSize;
                         y += expandSizePerSpacer;
                         continue;

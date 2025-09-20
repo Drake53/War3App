@@ -28,11 +28,6 @@ namespace War3App.Common.EtoForms
         /// <param name="minimumSize">The minimum size for the control in the direction of the layout. Use -1 for no expansion.</param>
         public FlowLayoutItem(Control? control, int minimumSize = -1)
         {
-            if (control is null && minimumSize < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(minimumSize), "Spacers must have non-negative minimum size.");
-            }
-
             Control = control;
             MinimumSize = minimumSize;
         }
