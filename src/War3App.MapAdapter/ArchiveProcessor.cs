@@ -2,9 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Security.Cryptography;
 
 using War3App.MapAdapter.Constants;
+using War3App.MapAdapter.Extensions;
 using War3App.MapAdapter.Info;
 
 using War3Net.Build.Common;
@@ -17,6 +20,82 @@ namespace War3App.MapAdapter
     public static class ArchiveProcessor
     {
         private static readonly GamePatch _latestPatch = Enum.GetValues<GamePatch>().Max();
+
+        public static OpenZipArchiveResult OpenZipArchive(string filePath)
+        {
+            var result = new OpenZipArchiveResult();
+
+            using var stream = File.OpenRead(filePath);
+            using var zipFile = new ZipArchive(stream, ZipArchiveMode.Read);
+
+            var encryptedAesParameters = zipFile.Entries.SingleOrDefault(e => string.Equals(e.FullName, FileName.AesParameters, StringComparison.OrdinalIgnoreCase));
+            if (encryptedAesParameters is null)
+            {
+                var mapEntry = zipFile.Entries.Single(e => Path.GetExtension(e.FullName).StartsWith(".w3", StringComparison.OrdinalIgnoreCase));
+
+                var mapStream = new MemoryStream();
+                mapEntry.Extract(mapStream);
+                mapStream.Position = 0;
+
+                result.Archive = MpqArchive.Open(mapStream, true);
+            }
+            else if (OperatingSystem.IsWindows())
+            {
+                using var encryptedAesStream = new MemoryStream();
+                encryptedAesParameters.Extract(encryptedAesStream);
+
+                var cspParameters = new CspParameters
+                {
+                    KeyContainerName = MiscStrings.EncryptionKeyContainerName,
+                };
+
+                using var rsaProvider = new RSACryptoServiceProvider(cspParameters)
+                {
+                    PersistKeyInCsp = true,
+                };
+
+                var aesParameters = rsaProvider.Decrypt(encryptedAesStream.ToArray(), RSAEncryptionPadding.Pkcs1);
+                var aesKey = new byte[32];
+                var aesIV = new byte[16];
+
+                Array.Copy(aesParameters, aesKey, aesKey.Length);
+                Array.Copy(aesParameters, aesKey.Length, aesIV, 0, aesIV.Length);
+
+                using var aes = Aes.Create();
+                aes.Padding = PaddingMode.PKCS7;
+
+                var encryptedMapEntry = zipFile.Entries.Single(e => string.Equals(Path.GetExtension(e.FullName), FileExtension.Aes, StringComparison.OrdinalIgnoreCase));
+
+                using var encryptedMapStream = new MemoryStream();
+                encryptedMapEntry.Extract(encryptedMapStream);
+                encryptedMapStream.Position = 0;
+
+                using var aesDecryptor = aes.CreateDecryptor(aesKey, aesIV);
+                using var cryptoStream = new CryptoStream(encryptedMapStream, aesDecryptor, CryptoStreamMode.Read);
+
+                var mapStream = new MemoryStream();
+                cryptoStream.CopyTo(mapStream);
+                mapStream.Position = 0;
+
+                result.Archive = MpqArchive.Open(mapStream, true);
+            }
+            else
+            {
+                throw new PlatformNotSupportedException("Decrypting MPQ archive is only supported on windows.");
+            }
+
+            var gamePatchEntry = zipFile.Entries.SingleOrDefault(e => string.Equals(e.FullName, FileName.TargetPatch, StringComparison.OrdinalIgnoreCase));
+            using var gamePatchStream = gamePatchEntry.Open();
+
+            result.TargetPatch = new TargetPatch
+            {
+                Patch = Enum.Parse<GamePatch>(gamePatchStream.ReadAllText()),
+                GameDataPath = filePath,
+                GameDataContainerType = ContainerType.ZipArchive,
+            };
+
+            return result;
+        }
 
         public static OpenArchiveResult OpenArchive(
             MpqArchive archive,
