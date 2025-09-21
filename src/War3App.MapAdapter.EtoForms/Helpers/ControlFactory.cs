@@ -8,7 +8,7 @@ namespace War3App.MapAdapter.EtoForms.Helpers
 {
     public static class ControlFactory
     {
-        public static Button Button(string text, int width, Image? image = null, bool enabled = false)
+        public static Button Button(string text, int width = -1, Image? image = null, bool enabled = false)
         {
             return new Button
             {
@@ -76,7 +76,7 @@ namespace War3App.MapAdapter.EtoForms.Helpers
             };
         }
 
-        public static TextBox TextBox(string placeholderText, int width)
+        public static TextBox TextBox(string placeholderText, int width = -1)
         {
             return new TextBox
             {

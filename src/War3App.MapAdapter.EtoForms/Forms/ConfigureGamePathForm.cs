@@ -120,11 +120,11 @@ namespace War3App.MapAdapter.EtoForms.Forms
 
             _targetPatchesComboBox.SelectedIndexChanged += OnSettingChanged;
 
-            var inputGameDirectoryLayout = ControlFactory.HorizontalStackLayout(
+            var inputGameDirectoryLayout = ControlFactory.HorizontalFlowLayout(
                 _gameDirectoryInput,
                 _gameDirectoryInputBrowseButton);
 
-            var targetPatchLayout = ControlFactory.HorizontalStackLayout(
+            var targetPatchLayout = ControlFactory.HorizontalFlowLayout(
                 targetPatchLabel,
                 _targetPatchesComboBox);
 

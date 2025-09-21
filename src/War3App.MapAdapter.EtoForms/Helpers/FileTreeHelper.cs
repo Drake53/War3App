@@ -46,8 +46,9 @@ namespace War3App.MapAdapter.EtoForms.Helpers
             return selection;
         }
 
-        public static IEnumerable<int> GetSelectedRows(FileTreeView fileTree, HashSet<FileTreeItem> selectedItems)
+        public static IEnumerable<int> GetSelectedRows(FileTreeView fileTree, IEnumerable<FileTreeItem> selection)
         {
+            var selectedItems = selection is HashSet<FileTreeItem> hashSet ? hashSet : new HashSet<FileTreeItem>(selection);
             var selectedRows = new List<int>();
 
             var row = 0;

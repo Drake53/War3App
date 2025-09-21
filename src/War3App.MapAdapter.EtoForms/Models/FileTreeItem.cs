@@ -6,6 +6,7 @@ using Eto.Forms;
 
 using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.EtoForms.Helpers;
+using War3App.MapAdapter.Extensions;
 
 namespace War3App.MapAdapter.EtoForms.Models
 {
@@ -35,6 +36,11 @@ namespace War3App.MapAdapter.EtoForms.Models
         public static Expression<Func<FileTreeItem, Image>> GetStatusImageExpression()
         {
             return item => Icons.ForMapFile(item.MapFile);
+        }
+
+        public static Expression<Func<FileTreeItem, string>> GetFileNameExpression()
+        {
+            return item => item.MapFile.AdaptResult.GetNewFileName() ?? item.FileName;
         }
 
         public override string ToString() => FileName;
