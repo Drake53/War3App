@@ -224,7 +224,7 @@ namespace War3App.MapAdapter.WinForms.Forms
                                 OriginPatch = childMapFile.GetOriginPatch(_originPatch.Value),
                             };
 
-                            mapFile.CurrentStream.Position = 0;
+                            childMapFile.CurrentStream.Position = 0;
                             var adaptResult = adapter.Run(childMapFile.CurrentStream, context);
                             childMapFile.UpdateAdaptResult(adaptResult);
                             _fileList.UpdateItemForMapFile(childMapFile);
