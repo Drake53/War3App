@@ -350,7 +350,7 @@ namespace War3App.MapAdapter.WinForms.Forms
                 {
                     mapFile.AdaptResult.Dispose();
                 }
-                else if (mapFile.Status != MapFileStatus.Removed)
+                else if (mapFile.Status != MapFileStatus.Removed && mapFile.AdaptResult?.NewFileName is null)
                 {
                     continue;
                 }

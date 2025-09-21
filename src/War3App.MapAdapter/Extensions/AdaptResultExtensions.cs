@@ -35,5 +35,18 @@ namespace War3App.MapAdapter.Extensions
                 ? DiagnosticSeverity.Info
                 : adaptResult.Diagnostics.Select(d => d.Descriptor.Severity).Max();
         }
+
+        public static string? GetNewFileName(this AdaptResult? adaptResult)
+        {
+            return adaptResult is not null && adaptResult.Status != MapFileStatus.Removed
+                ? adaptResult.NewFileName
+                : null;
+        }
+
+        public static bool CanUndoChanges(this AdaptResult? adaptResult)
+        {
+            return adaptResult is not null
+                && (adaptResult.AdaptedFileStream is not null || adaptResult.NewFileName is not null);
+        }
     }
 }

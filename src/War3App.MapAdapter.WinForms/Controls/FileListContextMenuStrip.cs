@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows.Forms;
 
 using War3App.MapAdapter.Constants;
+using War3App.MapAdapter.Extensions;
 using War3App.MapAdapter.WinForms.Extensions;
 using War3App.MapAdapter.WinForms.Forms;
 using War3App.MapAdapter.WinForms.Resources;
@@ -98,7 +99,7 @@ namespace War3App.MapAdapter.WinForms.Controls
                 _editContextButton.Enabled = mapFile.Adapter?.IsTextFile == true;
                 _saveContextButton.Enabled = mapFile.CurrentStream is not null && mapFile.Children is null;
                 _diffContextButton.Enabled = mapFile.Adapter is not null && mapFile.AdaptResult?.AdaptedFileStream is not null && (mapFile.Adapter.IsTextFile || mapFile.Adapter.IsJsonSerializationSupported);
-                _undoContextButton.Enabled = mapFile.Status == MapFileStatus.Removed || mapFile.AdaptResult?.AdaptedFileStream is not null;
+                _undoContextButton.Enabled = mapFile.CanUndoChanges();
                 _removeContextButton.Enabled = mapFile.Status != MapFileStatus.Removed;
             }
             else
@@ -109,7 +110,7 @@ namespace War3App.MapAdapter.WinForms.Controls
                 _editContextButton.Enabled = false;
                 _saveContextButton.Enabled = false;
                 _diffContextButton.Enabled = false;
-                _undoContextButton.Enabled = mapFiles.Any(mapFile => mapFile.Status == MapFileStatus.Removed || mapFile.AdaptResult?.AdaptedFileStream is not null);
+                _undoContextButton.Enabled = mapFiles.Any(MapFileExtensions.CanUndoChanges);
                 _removeContextButton.Enabled = mapFiles.Any(mapFile => mapFile.Status != MapFileStatus.Removed);
             }
         }
