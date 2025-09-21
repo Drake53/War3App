@@ -6,6 +6,7 @@ using System.Linq;
 using Eto.Drawing;
 using Eto.Forms;
 
+using War3App.Common.EtoForms;
 using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.EtoForms.Helpers;
 using War3App.MapAdapter.Extensions;
@@ -120,26 +121,15 @@ namespace War3App.MapAdapter.EtoForms.Forms
 
             _targetPatchesComboBox.SelectedIndexChanged += OnSettingChanged;
 
-            var inputGameDirectoryLayout = ControlFactory.HorizontalFlowLayout(
+            var mainLayout = ControlFactory.HorizontalFlowLayout(
                 _gameDirectoryInput,
-                _gameDirectoryInputBrowseButton);
-
-            var targetPatchLayout = ControlFactory.HorizontalFlowLayout(
+                _gameDirectoryInputBrowseButton,
+                new FlowLayoutItem(null),
                 targetPatchLabel,
-                _targetPatchesComboBox);
-
-            var mainLayout = new StackLayout
-            {
-                Orientation = Orientation.Vertical,
-                Padding = 10,
-                Spacing = 10,
-                Items =
-                {
-                    inputGameDirectoryLayout,
-                    targetPatchLayout,
-                    new StackLayoutItem(_saveButton, HorizontalAlignment.Right),
-                },
-            };
+                _targetPatchesComboBox,
+                new FlowLayoutItem(null),
+                new FlowLayoutItem(null, 0),
+                _saveButton);
 
             Content = mainLayout;
             DefaultButton = _saveButton;
@@ -147,7 +137,7 @@ namespace War3App.MapAdapter.EtoForms.Forms
 
         public string GameDirectory => _gameDirectoryInput.Text;
 
-        public GamePatch GamePatch =>  Enum.Parse<GamePatch>(_targetPatchesComboBox.SelectedKey);
+        public GamePatch GamePatch => Enum.Parse<GamePatch>(_targetPatchesComboBox.SelectedKey);
 
         private void OnSettingChanged(object? sender, EventArgs e)
         {

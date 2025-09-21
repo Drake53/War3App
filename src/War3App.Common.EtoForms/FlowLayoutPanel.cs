@@ -223,11 +223,10 @@ namespace War3App.Common.EtoForms
             {
                 if (item.Control is null && item.MinimumSize < 0)
                 {
-                    if (currentRow is not null)
-                    {
-                        rows.Add(currentRow);
-                        currentRow = null;
-                    }
+                    currentRow ??= new();
+                    currentRow.IncludeItem(item, 0);
+                    rows.Add(currentRow);
+                    currentRow = null;
 
                     sizes.Add(Size.Empty);
                     continue;
@@ -312,13 +311,12 @@ namespace War3App.Common.EtoForms
 
                     if (item.Control is null)
                     {
-                        if (item.MinimumSize < 0)
+                        if (item.MinimumSize >= 0)
                         {
-                            col--;
+                            x += item.MinimumSize;
+                            x += expandSizePerSpacer;
                         }
 
-                        x += item.MinimumSize;
-                        x += expandSizePerSpacer;
                         continue;
                     }
 
@@ -358,11 +356,10 @@ namespace War3App.Common.EtoForms
             {
                 if (item.Control is null && item.MinimumSize < 0)
                 {
-                    if (currentColumn is not null)
-                    {
-                        columns.Add(currentColumn);
-                        currentColumn = null;
-                    }
+                    currentColumn ??= new();
+                    currentColumn.IncludeItem(item, 0);
+                    columns.Add(currentColumn);
+                    currentColumn = null;
 
                     sizes.Add(Size.Empty);
                     continue;
@@ -447,13 +444,12 @@ namespace War3App.Common.EtoForms
 
                     if (item.Control is null)
                     {
-                        if (item.MinimumSize < 0)
+                        if (item.MinimumSize >= 0)
                         {
-                            row--;
+                            y += item.MinimumSize;
+                            y += expandSizePerSpacer;
                         }
 
-                        y += item.MinimumSize;
-                        y += expandSizePerSpacer;
                         continue;
                     }
 
@@ -500,13 +496,16 @@ namespace War3App.Common.EtoForms
 
             public void IncludeItem(FlowLayoutItem item, int size)
             {
-                if (item.Control is null)
+                if (item.MinimumSize >= 0)
                 {
-                    SpacerCount++;
-                }
-                else if (item.MinimumSize >= 0)
-                {
-                    ExpandableControlCount++;
+                    if (item.Control is not null)
+                    {
+                        ExpandableControlCount++;
+                    }
+                    else
+                    {
+                        SpacerCount++;
+                    }
                 }
 
                 TotalCount++;
