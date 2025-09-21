@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using War3App.MapAdapter.EtoForms.Controls;
 using War3App.MapAdapter.EtoForms.Models;
 
 namespace War3App.MapAdapter.EtoForms.Helpers
@@ -27,27 +28,67 @@ namespace War3App.MapAdapter.EtoForms.Helpers
 
         public static FileTreeSelection GetSelection(IEnumerable<FileTreeItem> selectedItems)
         {
-            var parents = new HashSet<FileTreeItem>();
-            var leafs = new HashSet<FileTreeItem>();
+            var selection = new FileTreeSelection();
 
             foreach (var selectedItem in selectedItems)
             {
                 if (selectedItem.Count == 0)
                 {
-                    leafs.Add(selectedItem);
+                    selection.Leafs.Add(selectedItem);
                 }
                 else
                 {
-                    parents.Add(selectedItem);
-                    leafs.UnionWith(selectedItem.Children.Cast<FileTreeItem>());
+                    selection.Parents.Add(selectedItem);
+                    selection.Leafs.UnionWith(selectedItem.Children.Cast<FileTreeItem>());
                 }
             }
 
-            return new FileTreeSelection
+            return selection;
+        }
+
+        public static IEnumerable<int> GetSelectedRows(FileTreeView fileTree, HashSet<FileTreeItem> selectedItems)
+        {
+            var selectedRows = new List<int>();
+
+            var row = 0;
+            foreach (var item in fileTree)
             {
-                Parents = parents,
-                Leafs = leafs,
-            };
+                if (item.Expandable)
+                {
+                    if (item.Expanded)
+                    {
+                        foreach (var childItem in item.Children.Cast<FileTreeItem>())
+                        {
+                            row++;
+
+                            if (selectedItems.Remove(childItem))
+                            {
+                                selectedRows.Add(row);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var count = selectedItems.Count;
+                        selectedItems.ExceptWith(item.Children.Cast<FileTreeItem>());
+                        if (selectedItems.Count < count)
+                        {
+                            selectedRows.Add(row);
+                        }
+                    }
+                }
+                else
+                {
+                    if (selectedItems.Remove(item))
+                    {
+                        selectedRows.Add(row);
+                    }
+                }
+
+                row++;
+            }
+
+            return selectedRows;
         }
     }
 }
