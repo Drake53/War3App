@@ -210,5 +210,29 @@ namespace War3App.MapAdapter.WinForms.Forms
                 ? _appSettings.TargetPatches.FirstOrDefault(targetPatch => targetPatch.Patch == patch.Value)
                 : null;
         }
+
+        private AdaptResult? AdaptMapFile(MapFile mapFile)
+        {
+            var adapter = mapFile.Adapter;
+            if (adapter is not null && mapFile.Status == MapFileStatus.Pending)
+            {
+                var context = new AdaptFileContext
+                {
+                    FileName = mapFile.CurrentFileName,
+                    Archive = mapFile.MpqArchive,
+                    TargetPatch = _targetPatch,
+                    OriginPatch = mapFile.GetOriginPatch(_originPatch.Value),
+                };
+
+                mapFile.CurrentStream.Position = 0;
+                var adaptResult = adapter.Run(mapFile.CurrentStream, context);
+                mapFile.UpdateAdaptResult(adaptResult);
+                _fileList.UpdateItemForMapFile(mapFile);
+
+                return adaptResult;
+            }
+
+            return null;
+        }
     }
 }

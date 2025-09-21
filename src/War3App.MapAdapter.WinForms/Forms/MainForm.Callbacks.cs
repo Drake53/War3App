@@ -92,22 +92,9 @@ namespace War3App.MapAdapter.WinForms.Forms
                 var item = _fileList.Items[i];
                 var mapFile = item.GetMapFile();
 
-                var adapter = mapFile.Adapter;
-                if (adapter is not null && mapFile.Status == MapFileStatus.Pending)
+                var adaptResult = AdaptMapFile(mapFile);
+                if (adaptResult is not null)
                 {
-                    var context = new AdaptFileContext
-                    {
-                        FileName = mapFile.CurrentFileName,
-                        Archive = mapFile.MpqArchive,
-                        TargetPatch = _targetPatch,
-                        OriginPatch = mapFile.GetOriginPatch(_originPatch.Value),
-                    };
-
-                    mapFile.CurrentStream.Position = 0;
-                    var adaptResult = adapter.Run(mapFile.CurrentStream, context);
-                    mapFile.UpdateAdaptResult(adaptResult);
-                    _fileList.UpdateItemForMapFile(mapFile);
-
                     if (mapFile.Parent is not null)
                     {
                         parentsToUpdate.Add(mapFile.Parent);
@@ -213,48 +200,17 @@ namespace War3App.MapAdapter.WinForms.Forms
                 {
                     foreach (var childMapFile in mapFile.Children)
                     {
-                        var adapter = childMapFile.Adapter;
-                        if (adapter is not null && childMapFile.Status == MapFileStatus.Pending)
-                        {
-                            var context = new AdaptFileContext
-                            {
-                                FileName = childMapFile.CurrentFileName,
-                                Archive = childMapFile.MpqArchive,
-                                TargetPatch = _targetPatch,
-                                OriginPatch = childMapFile.GetOriginPatch(_originPatch.Value),
-                            };
-
-                            childMapFile.CurrentStream.Position = 0;
-                            var adaptResult = adapter.Run(childMapFile.CurrentStream, context);
-                            childMapFile.UpdateAdaptResult(adaptResult);
-                            _fileList.UpdateItemForMapFile(childMapFile);
-                        }
+                        _ = AdaptMapFile(childMapFile);
                     }
 
                     item.Update();
                 }
                 else
                 {
-                    var adapter = mapFile.Adapter;
-                    if (adapter is not null && mapFile.Status == MapFileStatus.Pending)
+                    var adaptResult = AdaptMapFile(mapFile);
+                    if (adaptResult is not null && mapFile.Parent is not null)
                     {
-                        var context = new AdaptFileContext
-                        {
-                            FileName = mapFile.CurrentFileName,
-                            Archive = mapFile.MpqArchive,
-                            TargetPatch = _targetPatch,
-                            OriginPatch = mapFile.GetOriginPatch(_originPatch.Value),
-                        };
-
-                        mapFile.CurrentStream.Position = 0;
-                        var adaptResult = adapter.Run(mapFile.CurrentStream, context);
-                        mapFile.UpdateAdaptResult(adaptResult);
-                        _fileList.UpdateItemForMapFile(mapFile);
-
-                        if (mapFile.Parent is not null)
-                        {
-                            _fileList.GetItemByMapFile(mapFile.Parent).Update();
-                        }
+                        _fileList.GetItemByMapFile(mapFile.Parent).Update();
                     }
                 }
             }
