@@ -103,7 +103,7 @@ namespace War3App.MapAdapter
         {
             var result = new OpenArchiveResult();
 
-            var mapsList = new HashSet<string>();
+            var mapsList = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             if (archive.IsCampaignArchive(out var campaignInfo))
             {
