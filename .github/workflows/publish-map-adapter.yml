@@ -29,6 +29,12 @@ jobs:
       run: |
         VERSION=$(grep '<Version>' src/War3App.MapAdapter/War3App.MapAdapter.csproj | cut -d'>' -f2 | cut -d'<' -f1)
         echo "VERSION=$VERSION" >> $GITHUB_ENV
+        if [ "${{ github.ref_name }}" != "master" ]; then
+          VERSION_SUFFIX="-${{ github.ref_name }}"
+        else
+          VERSION_SUFFIX=""
+        fi
+        echo "VERSION_SUFFIX=$VERSION_SUFFIX" >> $GITHUB_ENV
 
     - name: Publish project (windows forms)
       run: dotnet publish src/War3App.MapAdapter.WinForms/War3App.MapAdapter.WinForms.csproj -c Release -r win-x64 --self-contained false -o ./artifacts/map-adapter-winforms
@@ -45,8 +51,8 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2.3.2
       with:
-        name: War3App.MapAdapter v${{ env.VERSION }}
-        tag_name: mapadapter-v${{ env.VERSION }}
+        name: War3App.MapAdapter v${{ env.VERSION }}${{ env.VERSION_SUFFIX }}
+        tag_name: mapadapter-v${{ env.VERSION }}${{ env.VERSION_SUFFIX }}
         files: |
           ./artifacts/MapAdapter-Windows-v${{ env.VERSION }}.zip
           ./artifacts/MapAdapter-Linux-v${{ env.VERSION }}.zip
