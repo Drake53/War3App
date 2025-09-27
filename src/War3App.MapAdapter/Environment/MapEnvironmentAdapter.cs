@@ -6,6 +6,7 @@ using System.Text.Json;
 using War3Net.Build.Common;
 using War3Net.Build.Environment;
 using War3Net.Build.Extensions;
+using War3Net.Common.Providers;
 
 namespace War3App.MapAdapter.Environment
 {
@@ -40,7 +41,24 @@ namespace War3App.MapAdapter.Environment
                 return context.ReportParseError(e);
             }
 
-            return MapFileStatus.Compatible;
+            if (!mapEnvironment.Adapt(context, out var status))
+            {
+                return status;
+            }
+
+            try
+            {
+                var memoryStream = new MemoryStream();
+
+                using var writer = new BinaryWriter(memoryStream, UTF8EncodingProvider.StrictUTF8, true);
+                writer.Write(mapEnvironment);
+
+                return AdaptResult.Create(memoryStream, status);
+            }
+            catch (Exception e)
+            {
+                return context.ReportSerializeError(e);
+            }
         }
 
         public string SerializeFileToJson(Stream stream, GamePatch gamePatch, JsonSerializerOptions options)
