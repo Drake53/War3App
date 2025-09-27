@@ -158,6 +158,7 @@ namespace War3App.MapAdapter.WinForms.Forms
             if (e.KeyCode == Keys.Delete)
             {
                 OnClickRemoveSelected(sender, e);
+                e.Handled = true;
             }
         }
 

@@ -10,6 +10,6 @@ namespace War3App.MapAdapter.Constants
 
         // Script diagnostics
         public const string Diagnostic = "Diagnostic";
-        public const string Occurences = "Occurences";
+        public const string Occurrences = "Occurrences";
     }
 }
