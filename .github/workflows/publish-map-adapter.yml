@@ -40,7 +40,7 @@ jobs:
       run: dotnet publish src/War3App.MapAdapter.EtoForms.Gtk/War3App.MapAdapter.EtoForms.Gtk.csproj -c Release -o ./artifacts/map-adapter-etoforms-gtk
 
     - name: Create zip (eto forms gtk)
-      run: cd ./artifacts/map-adapter-etoforms-gtk && zip -r ../MapAdapter-Linux-v${{ env.VERSION }}.zip
+      run: cd ./artifacts/map-adapter-etoforms-gtk && zip -r ../MapAdapter-Linux-v${{ env.VERSION }}.zip .
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2.3.2
