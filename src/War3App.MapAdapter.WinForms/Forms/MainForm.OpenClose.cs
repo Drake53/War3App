@@ -80,6 +80,8 @@ namespace War3App.MapAdapter.WinForms.Forms
                 {
                     item.IndentCount = 1;
                 }
+
+                listViewItems.Add(item);
             }
 
             e.Result = listViewItems;
