@@ -123,9 +123,7 @@ namespace War3App.MapAdapter.EtoForms.Forms
             }
             else if (e.Result is List<FileTreeItem> fileTreeItems)
             {
-                _fileTree.SuspendLayout();
-                _fileTree.AddItems(fileTreeItems);
-                _fileTree.ResumeLayout();
+                _fileTree.SetItems(fileTreeItems);
 
                 if (!_isTargetPatchFromZipArchive)
                 {

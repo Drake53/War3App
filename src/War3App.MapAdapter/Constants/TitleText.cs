@@ -7,5 +7,7 @@ namespace War3App.MapAdapter.Constants
         public const string ContinueWithoutGameFiles = "Continue without game files";
         public const string Help = "Get help";
         public const string MissingFiles = "Missing files";
+        public const string OpenFileOrFolderDialog = "Open";
+        public const string SaveFileDialog = "Save As";
     }
 }
