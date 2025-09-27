@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using War3App.MapAdapter.EtoForms.Controls;
+using War3App.MapAdapter.EtoForms.Enums;
 using War3App.MapAdapter.EtoForms.Models;
 
 namespace War3App.MapAdapter.EtoForms.Helpers
@@ -24,6 +25,30 @@ namespace War3App.MapAdapter.EtoForms.Helpers
             }
 
             return leafs;
+        }
+
+        public static IEnumerable<SelectedFileTreeItem> GetSelectedFileTreeItems(IEnumerable<FileTreeItem> selectedItems)
+        {
+            var result = new Dictionary<FileTreeItem, SelectionType>();
+
+            foreach (var selectedItem in selectedItems)
+            {
+                if (selectedItem.Count == 0)
+                {
+                    result[selectedItem] = SelectionType.DirectLeaf;
+                }
+                else
+                {
+                    result[selectedItem] = SelectionType.Parent;
+
+                    foreach (FileTreeItem childItem in selectedItem.Children)
+                    {
+                        result.TryAdd(childItem, SelectionType.IndirectLeaf);
+                    }
+                }
+            }
+
+            return result.Select(kvp => new SelectedFileTreeItem(kvp));
         }
 
         public static FileTreeSelection GetSelection(IEnumerable<FileTreeItem> selectedItems)

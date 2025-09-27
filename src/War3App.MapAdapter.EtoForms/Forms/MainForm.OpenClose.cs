@@ -187,7 +187,7 @@ namespace War3App.MapAdapter.EtoForms.Forms
 
             _fileTree.Reset();
 
-            _diagnosticsDisplay.Text = string.Empty;
+            _diagnosticsDisplay.Clear();
 
             GC.Collect();
         }
