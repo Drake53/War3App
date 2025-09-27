@@ -1,6 +1,8 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows.Forms;
 
+using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.WinForms.Extensions;
 using War3App.MapAdapter.WinForms.Resources;
 
@@ -10,6 +12,7 @@ namespace War3App.MapAdapter.WinForms.Controls
     public class FileListView : ListView
     {
         private readonly FileListSorter _fileListSorter;
+        private readonly Dictionary<MapFile, ListViewItem> _fileMapping;
 
         private readonly int _bubbleImageIndex;
         private readonly int _errorImageIndex;
@@ -28,16 +31,17 @@ namespace War3App.MapAdapter.WinForms.Controls
             MultiSelect = true;
 
             _fileListSorter = new FileListSorter(this);
+            _fileMapping = new();
 
             ListViewItemSorter = _fileListSorter;
             ColumnClick += _fileListSorter.Sort;
 
             Columns.AddRange(new[]
             {
-                new ColumnHeader { Text = "Status", Width = 102 },
-                new ColumnHeader { Text = "FileName", Width = 300 },
-                new ColumnHeader { Text = "FileType", Width = 130 },
-                new ColumnHeader { Text = "Archive", Width = 87 },
+                new ColumnHeader { Text = HeaderText.Status, Width = 102 },
+                new ColumnHeader { Text = HeaderText.FileName, Width = 300 },
+                new ColumnHeader { Text = HeaderText.FileType, Width = 130 },
+                new ColumnHeader { Text = HeaderText.Archive, Width = 87 },
             });
 
             SmallImageList = new ImageList();
@@ -56,6 +60,21 @@ namespace War3App.MapAdapter.WinForms.Controls
         public int ErrorImageIndex => _errorImageIndex;
 
         public int WarningImageIndex => _warningImageIndex;
+
+        public void AddMapping(MapFile mapFile, ListViewItem listViewItem)
+        {
+            _fileMapping.Add(mapFile, listViewItem);
+        }
+
+        public ListViewItem GetItemByMapFile(MapFile mapFile)
+        {
+            return _fileMapping[mapFile];
+        }
+
+        public void UpdateItemForMapFile(MapFile mapFile)
+        {
+            GetItemByMapFile(mapFile).Update(mapFile.AdaptResult);
+        }
 
         public int GetImageIndexForStatus(MapFileStatus mapFileStatus)
         {
@@ -78,7 +97,7 @@ namespace War3App.MapAdapter.WinForms.Controls
 
             for (var i = 0; i < Items.Count; i++)
             {
-                Items[i].GetTag().Dispose();
+                Items[i].GetMapFile().Dispose();
             }
 
             Items.Clear();

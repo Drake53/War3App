@@ -25,16 +25,22 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Publish project
-      run: dotnet publish src/War3App.MapAdapter.WinForms/War3App.MapAdapter.WinForms.csproj -c Release -r win-x64 --self-contained false -o ./artifacts/map-adapter
-
-    - name: Create zip
-      run: cd ./artifacts/map-adapter && zip -r ../MapAdapter.zip .
-
     - name: Get version from csproj
       run: |
-        VERSION=$(grep '<Version>' src/War3App.MapAdapter.WinForms/War3App.MapAdapter.WinForms.csproj | cut -d'>' -f2 | cut -d'<' -f1)
+        VERSION=$(grep '<Version>' src/War3App.MapAdapter/War3App.MapAdapter.csproj | cut -d'>' -f2 | cut -d'<' -f1)
         echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Publish project (windows forms)
+      run: dotnet publish src/War3App.MapAdapter.WinForms/War3App.MapAdapter.WinForms.csproj -c Release -r win-x64 --self-contained false -o ./artifacts/map-adapter-winforms
+
+    - name: Create zip (windows forms)
+      run: cd ./artifacts/map-adapter-winforms && zip -r ../MapAdapter-Windows-v${{ env.VERSION }}.zip .
+
+    - name: Publish project (eto forms gtk)
+      run: dotnet publish src/War3App.MapAdapter.EtoForms.Gtk/War3App.MapAdapter.EtoForms.Gtk.csproj -c Release -o ./artifacts/map-adapter-etoforms-gtk
+
+    - name: Create zip (eto forms gtk)
+      run: cd ./artifacts/map-adapter-etoforms-gtk && zip -r ../MapAdapter-Linux-v${{ env.VERSION }}.zip .
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2.3.2
@@ -42,5 +48,6 @@ jobs:
         name: War3App.MapAdapter v${{ env.VERSION }}
         tag_name: mapadapter-v${{ env.VERSION }}
         files: |
-          ./artifacts/MapAdapter.zip
+          ./artifacts/MapAdapter-Windows-v${{ env.VERSION }}.zip
+          ./artifacts/MapAdapter-Linux-v${{ env.VERSION }}.zip
         draft: ${{ github.ref_name != 'master' }}

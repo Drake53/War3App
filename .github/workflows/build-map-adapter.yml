@@ -28,4 +28,4 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Build solution
-      run: dotnet build War3App.MapAdapter.WinForms.slnf -c Release
+      run: dotnet build War3App.MapAdapter.slnf -c Release

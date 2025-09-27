@@ -1,21 +1,19 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Linq;
-using System.Windows.Forms;
 
-using War3App.MapAdapter.WinForms.Extensions;
+using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Common;
 using War3Net.IO.Mpq;
 
-namespace War3App.MapAdapter.WinForms
+namespace War3App.MapAdapter
 {
-    public sealed class ItemTag : IDisposable
+    public sealed class MapFile : IDisposable
     {
         private MapFileStatus _status;
 
-        public ItemTag(MpqArchive archive, MpqEntry mpqEntry, int originalIndex, string? archiveName = null)
+        public MapFile(MpqArchive archive, MpqEntry mpqEntry, int originalIndex, string? archiveName = null)
         {
             MpqArchive = archive;
             MpqEntry = mpqEntry;
@@ -37,7 +35,7 @@ namespace War3App.MapAdapter.WinForms
             }
         }
 
-        public ItemTag(MpqArchive archive, MpqEntry mpqEntry, int originalIndex, ListViewItem[] children, GamePatch? originPatch)
+        public MapFile(MpqArchive archive, MpqEntry mpqEntry, int originalIndex, MapFile[] children, GamePatch? originPatch)
         {
             MpqArchive = archive;
             MpqEntry = mpqEntry;
@@ -47,7 +45,7 @@ namespace War3App.MapAdapter.WinForms
             OriginalFileStream = archive.OpenFile(mpqEntry);
             OriginalIndex = originalIndex;
 
-            Children = children.Select(child => child.GetTag()).ToArray();
+            Children = children;
             foreach (var child in Children)
             {
                 child.Parent = this;
@@ -70,13 +68,11 @@ namespace War3App.MapAdapter.WinForms
 
         public int OriginalIndex { get; }
 
-        public ItemTag? Parent { get; private set; }
+        public MapFile? Parent { get; private set; }
 
-        public ItemTag[]? Children { get; }
+        public MapFile[]? Children { get; }
 
         public GamePatch? OriginPatch { get; }
-
-        public ListViewItem ListViewItem { get; set; }
 
         public AdaptResult? AdaptResult { get; set; }
 
@@ -100,7 +96,7 @@ namespace War3App.MapAdapter.WinForms
                 adaptResult.Merge(AdaptResult);
             }
 
-            ListViewItem.Update(adaptResult);
+            AdaptResult = adaptResult;
         }
 
         public bool TryGetModifiedMpqFile([NotNullWhen(true)] out MpqFile? mpqFile)
@@ -108,7 +104,7 @@ namespace War3App.MapAdapter.WinForms
             if (IsModified)
             {
                 AdaptResult.AdaptedFileStream.Position = 0;
-                mpqFile = MpqFile.New(AdaptResult.AdaptedFileStream, CurrentFileName, true);
+                mpqFile = MpqFile.New(AdaptResult.AdaptedFileStream, CurrentFileName, leaveOpen: true);
                 mpqFile.TargetFlags = MpqEntry.Flags;
 
                 return true;

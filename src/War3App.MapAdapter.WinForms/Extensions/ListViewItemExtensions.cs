@@ -3,7 +3,9 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
+using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.Diagnostics;
+using War3App.MapAdapter.Extensions;
 using War3App.MapAdapter.WinForms.Controls;
 
 namespace War3App.MapAdapter.WinForms.Extensions
@@ -15,51 +17,33 @@ namespace War3App.MapAdapter.WinForms.Extensions
         internal const int FileTypeColumnIndex = 2;
         internal const int ArchiveNameColumnIndex = 3;
 
-        public static ListViewItem Create(ItemTag tag)
+        public static MapFile GetMapFile(this ListViewItem item)
         {
-            var item = new ListViewItem(new[]
-            {
-                string.Empty,
-                tag.OriginalFileName ?? "<unknown filename>",
-                tag.Adapter?.MapFileDescription ?? string.Empty,
-                tag.ArchiveName,
-            });
-
-            item.UseItemStyleForSubItems = false;
-            item.Tag = tag;
-            tag.ListViewItem = item;
-
-            return item;
-        }
-
-        public static ItemTag GetTag(this ListViewItem item)
-        {
-            return (ItemTag)item.Tag;
+            return (MapFile)item.Tag;
         }
 
         public static void Update(this ListViewItem item)
         {
-            var tag = item.GetTag();
-            if (tag.Children is not null)
+            var mapFile = item.GetMapFile();
+            if (mapFile.Children is not null)
             {
-                tag.Status = tag.Children.Max(child => child.Status);
+                mapFile.Status = mapFile.Children.Max(child => child.Status);
             }
 
-            item.SubItems[StatusColumnIndex].Text = tag.Status.ToString();
-            item.SetImageIndex(tag, null);
+            item.SubItems[StatusColumnIndex].Text = mapFile.Status.ToString();
+            item.SetImageIndex(mapFile, null);
         }
 
         public static void Update(this ListViewItem item, AdaptResult? adaptResult)
         {
-            var tag = item.GetTag();
-            tag.AdaptResult = adaptResult;
+            var mapFile = item.GetMapFile();
 
-            item.SubItems[StatusColumnIndex].Text = tag.Status.ToString();
+            item.SubItems[StatusColumnIndex].Text = mapFile.Status.ToString();
             item.SubItems[FileNameColumnIndex].ForeColor = adaptResult?.AdaptedFileStream is not null ? Color.Violet : Color.Black;
 
             if (adaptResult is null || adaptResult.Status == MapFileStatus.Removed)
             {
-                item.SubItems[FileNameColumnIndex].Text = tag.OriginalFileName ?? "<unknown filename>";
+                item.SubItems[FileNameColumnIndex].Text = mapFile.OriginalFileName ?? MiscStrings.UnknownFileName;
             }
             else if (adaptResult.NewFileName is not null)
             {
@@ -67,14 +51,14 @@ namespace War3App.MapAdapter.WinForms.Extensions
                 item.SubItems[FileNameColumnIndex].ForeColor = Color.Blue;
             }
 
-            item.SetImageIndex(tag, adaptResult);
+            item.SetImageIndex(mapFile, adaptResult);
         }
 
         public static int CompareTo(this ListViewItem item, ListViewItem other, int column)
         {
             return column switch
             {
-                -1 => item.GetTag().OriginalIndex.CompareTo(other.GetTag().OriginalIndex),
+                -1 => item.GetMapFile().OriginalIndex.CompareTo(other.GetMapFile().OriginalIndex),
 
                 StatusColumnIndex => other.CompareStatus(item),
 
@@ -86,28 +70,26 @@ namespace War3App.MapAdapter.WinForms.Extensions
 
         private static int CompareStatus(this ListViewItem item, ListViewItem other)
         {
-            var tag1 = item.GetTag();
-            var tag2 = other.GetTag();
+            var mapFile1 = item.GetMapFile();
+            var mapFile2 = other.GetMapFile();
 
-            var result = tag1.Status.CompareTo(tag2.Status);
+            var result = mapFile1.Status.CompareTo(mapFile2.Status);
             if (result != 0)
             {
                 return result;
             }
 
-            var modified1 = tag1.AdaptResult?.AdaptedFileStream is not null;
-            var modified2 = tag2.AdaptResult?.AdaptedFileStream is not null;
+            var modified1 = mapFile1.AdaptResult?.AdaptedFileStream is not null;
+            var modified2 = mapFile2.AdaptResult?.AdaptedFileStream is not null;
 
             return modified1.CompareTo(modified2);
         }
 
-        private static void SetImageIndex(this ListViewItem item, ItemTag tag, AdaptResult? adaptResult)
+        private static void SetImageIndex(this ListViewItem item, MapFile mapFile, AdaptResult? adaptResult)
         {
             if (item.ListView is FileListView fileListView)
             {
-                var severity = adaptResult?.Diagnostics is null
-                    ? DiagnosticSeverity.Info
-                    : adaptResult.Diagnostics.Select(d => d.Descriptor.Severity).Append(DiagnosticSeverity.Info).Max();
+                var severity = adaptResult.GetDiagnosticSeverity();
 
                 if (severity == DiagnosticSeverity.Error)
                 {
@@ -119,7 +101,7 @@ namespace War3App.MapAdapter.WinForms.Extensions
                 }
                 else
                 {
-                    item.ImageIndex = fileListView.GetImageIndexForStatus(tag.Status);
+                    item.ImageIndex = fileListView.GetImageIndexForStatus(mapFile.Status);
                 }
             }
         }

@@ -4,7 +4,10 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
+using War3App.MapAdapter.Constants;
+using War3App.MapAdapter.Extensions;
 using War3App.MapAdapter.WinForms.Extensions;
+using War3App.MapAdapter.WinForms.Forms;
 using War3App.MapAdapter.WinForms.Resources;
 
 namespace War3App.MapAdapter.WinForms.Controls
@@ -32,23 +35,12 @@ namespace War3App.MapAdapter.WinForms.Controls
 
             _fileList = fileList;
 
-            _adaptContextButton = new ToolStripButton("Adapt");
-            _adaptContextButton.Image = Icons.Lightning;
-
-            _editContextButton = new ToolStripButton("Edit");
-            _editContextButton.Image = Icons.Modify;
-
-            _saveContextButton = new ToolStripButton("Save file");
-            _saveContextButton.Image = Icons.Download;
-
-            _diffContextButton = new ToolStripButton("Compare with unmodified");
-            _diffContextButton.Image = Icons.Copy;
-
-            _undoContextButton = new ToolStripButton("Undo changes");
-            _undoContextButton.Image = Icons.Undo;
-
-            _removeContextButton = new ToolStripButton("Remove");
-            _removeContextButton.Image = Icons.Delete;
+            _adaptContextButton = new ToolStripButton(ButtonText.Adapt, Icons.Lightning);
+            _editContextButton = new ToolStripButton(ButtonText.Edit, Icons.Modify);
+            _saveContextButton = new ToolStripButton(ButtonText.SaveFile, Icons.Download);
+            _diffContextButton = new ToolStripButton(ButtonText.Compare, Icons.Copy);
+            _undoContextButton = new ToolStripButton(ButtonText.Undo, Icons.Undo);
+            _removeContextButton = new ToolStripButton(ButtonText.Remove, Icons.Delete);
 
             Items.AddRange(new[]
             {
@@ -65,23 +57,23 @@ namespace War3App.MapAdapter.WinForms.Controls
             Opening += OnOpeningFileListContextMenu;
         }
 
-        public event EventHandler Adapt;
+        public event EventHandler? Adapt;
 
-        public event EventHandler Edit;
+        public event EventHandler? Edit;
 
-        public event EventHandler Save;
+        public event EventHandler? Save;
 
-        public event EventHandler Diff;
+        public event EventHandler? Diff;
 
-        public event EventHandler Undo;
+        public event EventHandler? Undo;
 
-        public event EventHandler Remove;
+        public event EventHandler? Remove;
 
         protected override Size MaxItemSize => new(_itemWidth, _itemHeight);
 
         public void SetMaxItemWidth(int width) => _itemWidth = width;
 
-        public void EnableClickEvents()
+        public void RegisterClickEvents()
         {
             _adaptContextButton.Click += Adapt;
             _editContextButton.Click += Edit;
@@ -91,7 +83,7 @@ namespace War3App.MapAdapter.WinForms.Controls
             _removeContextButton.Click += Remove;
         }
 
-        public void ResizeToFitItems()
+        private void ResizeToFitItems()
         {
             var width = Items.Cast<ToolStripItem>().Max(item => item.GetPreferredSize(MaxItemSize).Width) + Padding.Horizontal + Margin.Horizontal;
 
@@ -101,25 +93,25 @@ namespace War3App.MapAdapter.WinForms.Controls
 
         private void OnOpeningFileListContextMenu(object? sender, EventArgs e)
         {
-            if (_fileList.TryGetSelectedItemTag(out var tag))
+            if (_fileList.TryGetSelectedMapFile(out var mapFile))
             {
-                _adaptContextButton.Enabled = MainForm.TargetPatchSelected && tag.Status == MapFileStatus.Pending;
-                _editContextButton.Enabled = tag.Adapter?.IsTextFile ?? false;
-                _saveContextButton.Enabled = tag.CurrentStream is not null && tag.Children is null;
-                _diffContextButton.Enabled = tag.Adapter is not null && tag.AdaptResult?.AdaptedFileStream is not null && (tag.Adapter.IsTextFile || tag.Adapter.IsJsonSerializationSupported);
-                _undoContextButton.Enabled = tag.Status == MapFileStatus.Removed || tag.AdaptResult?.AdaptedFileStream is not null;
-                _removeContextButton.Enabled = tag.Status != MapFileStatus.Removed;
+                _adaptContextButton.Enabled = MainForm.Instance.CanAdapt && mapFile.Status == MapFileStatus.Pending;
+                _editContextButton.Enabled = mapFile.Adapter?.IsTextFile == true;
+                _saveContextButton.Enabled = mapFile.CurrentStream is not null && mapFile.Children is null;
+                _diffContextButton.Enabled = mapFile.Adapter is not null && mapFile.AdaptResult?.AdaptedFileStream is not null && (mapFile.Adapter.IsTextFile || mapFile.Adapter.IsJsonSerializationSupported);
+                _undoContextButton.Enabled = mapFile.CanUndoChanges();
+                _removeContextButton.Enabled = mapFile.Status != MapFileStatus.Removed;
             }
             else
             {
-                var tags = _fileList.GetSelectedItemTags();
+                var mapFiles = _fileList.GetSelectedMapFiles();
 
-                _adaptContextButton.Enabled = MainForm.TargetPatchSelected && tags.Any(tag => tag.Status == MapFileStatus.Pending);
+                _adaptContextButton.Enabled = MainForm.Instance.CanAdapt && mapFiles.Any(mapFile => mapFile.Status == MapFileStatus.Pending);
                 _editContextButton.Enabled = false;
                 _saveContextButton.Enabled = false;
                 _diffContextButton.Enabled = false;
-                _undoContextButton.Enabled = tags.Any(tag => tag.Status == MapFileStatus.Removed || tag.AdaptResult?.AdaptedFileStream is not null);
-                _removeContextButton.Enabled = tags.Any(tag => tag.Status != MapFileStatus.Removed);
+                _undoContextButton.Enabled = mapFiles.Any(MapFileExtensions.CanUndoChanges);
+                _removeContextButton.Enabled = mapFiles.Any(mapFile => mapFile.Status != MapFileStatus.Removed);
             }
         }
     }

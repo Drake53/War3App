@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 using War3App.Common.WinForms.Extensions;
+using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.Diagnostics;
 
 namespace War3App.MapAdapter.WinForms
@@ -46,8 +47,8 @@ namespace War3App.MapAdapter.WinForms
             _diagnosticsView.View = View.Details;
             _diagnosticsView.Columns.AddRange(new[]
             {
-                new ColumnHeader { Text = "Diagnostic", Width = 300 },
-                new ColumnHeader { Text = "Occurences", Width = 100 },
+                new ColumnHeader { Text = HeaderText.Diagnostic, Width = 300 },
+                new ColumnHeader { Text = HeaderText.Occurrences, Width = 100 },
             });
 
             _diagnosticsView.ItemActivate += (s, e) =>
@@ -68,9 +69,9 @@ namespace War3App.MapAdapter.WinForms
                 {
                     var split = diagnostic.Message.Split('(', 2, StringSplitOptions.TrimEntries);
                     var message = split[0];
-                    var occurences = split.Length == 2 ? split[1][..split[1].IndexOf('x')] : "1";
+                    var occurrences = split.Length == 2 ? split[1][..split[1].IndexOf('x')] : "1";
 
-                    _diagnosticsView.Items.Add(new ListViewItem(new[] { message, occurences }));
+                    _diagnosticsView.Items.Add(new ListViewItem(new[] { message, occurrences }));
                     _regices.Add(diagnostic.Regex);
                 }
             }
@@ -86,7 +87,7 @@ namespace War3App.MapAdapter.WinForms
                 _diagnosticsView.Height = Math.Max(100, _window.Height - 150);
             };
 
-            var okButton = new Button { Text = "OK", };
+            var okButton = new Button { Text = ButtonText.OK, };
             okButton.Size = okButton.PreferredSize;
             okButton.Click += (s, e) =>
             {
@@ -94,7 +95,7 @@ namespace War3App.MapAdapter.WinForms
                 _window.Close();
             };
 
-            var cancelButton = new Button { Text = "Cancel", };
+            var cancelButton = new Button { Text = ButtonText.Cancel, };
             cancelButton.Size = cancelButton.PreferredSize;
             cancelButton.Click += (s, e) =>
             {
@@ -108,7 +109,7 @@ namespace War3App.MapAdapter.WinForms
                 Width = 200,
             };
 
-            var searchButton = new Button{ Text = "Find Next", };
+            var searchButton = new Button{ Text = ButtonText.FindNext, };
             searchButton.Click += (s, e) =>
             {
                 if (!string.IsNullOrEmpty(searchBox.Text))

@@ -7,6 +7,8 @@ using System.Linq;
 using System.Windows.Forms;
 
 using War3App.Common.WinForms.Extensions;
+using War3App.MapAdapter.Constants;
+using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Common;
 
@@ -24,22 +26,22 @@ namespace War3App.MapAdapter.WinForms.Forms
 
         public ConfigureGamePathForm()
         {
-            Text = "Initial setup";
+            Text = TitleText.Setup;
             Size = new Size(600, 200);
             MinimumSize = new Size(400, 200);
 
             _gameDirectoryInput = new TextBox
             {
-                PlaceholderText = "Input path to warcraft III installation...",
+                PlaceholderText = PlaceholderText.GameDirectory,
                 TabIndex = 2,
                 Width = 360,
             };
 
-            _gameDirectoryInput.TextChanged += OnGameDirectoryInputTextChanged;
+            _gameDirectoryInput.TextChanged += OnSettingChanged;
 
             _gameDirectoryInputBrowseButton = new Button
             {
-                Text = "Browse",
+                Text = ButtonText.Browse,
                 TabIndex = 0,
             };
 
@@ -57,9 +59,51 @@ namespace War3App.MapAdapter.WinForms.Forms
                 }
             };
 
+            _saveButton = new Button
+            {
+                Text = ButtonText.Save,
+                Enabled = false,
+                TabIndex = 1,
+                Dock = DockStyle.Bottom,
+            };
+
+            _saveButton.Click += (s, e) =>
+            {
+                if (string.IsNullOrWhiteSpace(_gameDirectoryInput.Text))
+                {
+                    var dialogResult = MessageBox.Show(
+                        MessageText.ContinueWithoutGameFiles,
+                        TitleText.ContinueWithoutGameFiles,
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning);
+
+                    if (dialogResult != DialogResult.Yes)
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    var missingFiles = GetMissingFiles(_gameDirectoryInput.Text).ToList();
+                    if (missingFiles.Count > 0)
+                    {
+                        MessageBox.Show(
+                            string.Join(System.Environment.NewLine, missingFiles.Prepend(MessageText.MissingFiles)),
+                            TitleText.MissingFiles,
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+
+                        return;
+                    }
+                }
+
+                DialogResult = DialogResult.OK;
+                Close();
+            };
+
             var targetPatchLabel = new Label
             {
-                Text = "Target patch",
+                Text = LabelText.TargetPatch,
                 TextAlign = ContentAlignment.BottomRight,
             };
 
@@ -73,48 +117,15 @@ namespace War3App.MapAdapter.WinForms.Forms
 
             _targetPatchesComboBox.Items.AddRange(Enum.GetValues<GamePatch>().OrderByDescending(patch => patch).Cast<object>().ToArray());
 
-            _targetPatchesComboBox.SelectedIndexChanged += (s, e) =>
-            {
-                if (!string.IsNullOrWhiteSpace(_gameDirectoryInput.Text))
-                {
-                    var directoryInfo = new DirectoryInfo(_gameDirectoryInput.Text);
-                    _saveButton.Enabled = directoryInfo.Exists && _targetPatchesComboBox.SelectedItem is not null;
-                }
-            };
+            _targetPatchesComboBox.SelectedIndexChanged += OnSettingChanged;
 
             _targetPatchesComboBox.FormattingEnabled = true;
             _targetPatchesComboBox.Format += (s, e) =>
             {
                 if (e.ListItem is GamePatch gamePatch)
                 {
-                    e.Value = gamePatch.ToString().Replace('_', '.');
+                    e.Value = gamePatch.PrettyPrint();
                 }
-            };
-
-            _saveButton = new Button
-            {
-                Text = "Save",
-                Enabled = false,
-                TabIndex = 1,
-                Dock = DockStyle.Bottom,
-            };
-
-            _saveButton.Click += (s, e) =>
-            {
-                var missingFiles = GetMissingFiles(_gameDirectoryInput.Text).ToList();
-                if (missingFiles.Count > 0)
-                {
-                    MessageBox.Show(
-                        string.Join(System.Environment.NewLine, missingFiles.Prepend("Directory does not contain all files required for adapting. The following files could not be found:")),
-                        "Missing files",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
-
-                    return;
-                }
-
-                DialogResult = DialogResult.OK;
-                Close();
             };
 
             var inputGameDirectoryFlowLayout = new FlowLayoutPanel
@@ -148,16 +159,25 @@ namespace War3App.MapAdapter.WinForms.Forms
 
         public GamePatch GamePatch => (GamePatch)_targetPatchesComboBox.SelectedItem;
 
-        private void OnGameDirectoryInputTextChanged(object sender, EventArgs e)
+        private void OnSettingChanged(object? sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(_gameDirectoryInput.Text))
+            UpdateSaveButtonState();
+        }
+
+        private void UpdateSaveButtonState()
+        {
+            if (_targetPatchesComboBox.SelectedItem is null)
             {
                 _saveButton.Enabled = false;
+            }
+            else if (string.IsNullOrWhiteSpace(_gameDirectoryInput.Text))
+            {
+                _saveButton.Enabled = true;
             }
             else
             {
                 var directoryInfo = new DirectoryInfo(_gameDirectoryInput.Text);
-                _saveButton.Enabled = directoryInfo.Exists && _targetPatchesComboBox.SelectedItem is not null;
+                _saveButton.Enabled = directoryInfo.Exists;
             }
         }
 
