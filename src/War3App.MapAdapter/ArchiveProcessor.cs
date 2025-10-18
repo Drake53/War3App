@@ -252,7 +252,7 @@ namespace War3App.MapAdapter
                             }
                             else if (child.TryGetModifiedMpqFile(out var nestedArchiveAdaptedFile))
                             {
-                                nestedArchiveBuilder.AddFile(nestedArchiveAdaptedFile);
+                                nestedArchiveBuilder.AddFile(nestedArchiveAdaptedFile, nestedArchiveAdaptedFile.TargetFlags);
 
                                 progressReporter.ReportProgress(0, progress);
                             }
@@ -268,7 +268,7 @@ namespace War3App.MapAdapter
                         adaptedNestedArchiveStream.Position = 0;
                         var adaptedFile = MpqFile.New(adaptedNestedArchiveStream, mapFile.CurrentFileName, false);
                         adaptedFile.TargetFlags = mapFile.MpqEntry.Flags;
-                        archiveBuilder.AddFile(adaptedFile);
+                        archiveBuilder.AddFile(adaptedFile, adaptedFile.TargetFlags);
 
                         progressReporter.ReportProgress(0, progress);
                     }
@@ -279,7 +279,7 @@ namespace War3App.MapAdapter
                 }
                 else if (mapFile.TryGetModifiedMpqFile(out var adaptedFile))
                 {
-                    archiveBuilder.AddFile(adaptedFile);
+                    archiveBuilder.AddFile(adaptedFile, adaptedFile.TargetFlags);
 
                     progressReporter.ReportProgress(0, progress);
                 }
