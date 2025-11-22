@@ -37,13 +37,13 @@ jobs:
         echo "VERSION_SUFFIX=$VERSION_SUFFIX" >> $GITHUB_ENV
 
     - name: Publish project (windows forms)
-      run: dotnet publish src/War3App.MapAdapter.WinForms/War3App.MapAdapter.WinForms.csproj -c Release -r win-x64 --self-contained false -o ./artifacts/map-adapter-winforms
+      run: dotnet publish src/War3App.MapAdapter.WinForms/War3App.MapAdapter.WinForms.csproj -c Release -r win-x64 --self-contained false -p:SelfContained=false -o ./artifacts/map-adapter-winforms
 
     - name: Create zip (windows forms)
       run: cd ./artifacts/map-adapter-winforms && zip -r ../MapAdapter-Windows-v${{ env.VERSION }}.zip .
 
     - name: Publish project (eto forms gtk)
-      run: dotnet publish src/War3App.MapAdapter.EtoForms.Gtk/War3App.MapAdapter.EtoForms.Gtk.csproj -c Release -o ./artifacts/map-adapter-etoforms-gtk
+      run: dotnet publish src/War3App.MapAdapter.EtoForms.Gtk/War3App.MapAdapter.EtoForms.Gtk.csproj -c Release -r linux-x64 --self-contained false -p:SelfContained=false -o ./artifacts/map-adapter-etoforms-gtk
 
     - name: Create zip (eto forms gtk)
       run: cd ./artifacts/map-adapter-etoforms-gtk && zip -r ../MapAdapter-Linux-v${{ env.VERSION }}.zip .
