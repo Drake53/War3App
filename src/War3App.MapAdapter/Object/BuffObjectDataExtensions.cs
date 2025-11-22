@@ -32,7 +32,7 @@ namespace War3App.MapAdapter.Object
                     if (isSkinFile)
                     {
                         var nonSkinFileName = context.FileName.Replace($"Skin{BuffObjectData.FileExtension}", BuffObjectData.FileExtension);
-                        
+
                         if (context.Archive.FileExists(nonSkinFileName))
                         {
                             context.ReportDiagnostic(DiagnosticRule.ObjectData.RemovedSkinData, nonSkinFileName);
