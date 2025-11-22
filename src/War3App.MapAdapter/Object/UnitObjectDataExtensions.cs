@@ -69,7 +69,7 @@ namespace War3App.MapAdapter.Object
                 }
             }
 
-            if (!isSkinFileSupported && context.FileName is not null && context.FileName.EndsWith($"Skin{UnitObjectData.FileExtension}"))
+            if (!isSkinFileSupported && context.FileName is not null && !context.FileName.EndsWith($"Skin{UnitObjectData.FileExtension}"))
             {
                 var expectedSkinFileName = context.FileName.Replace(UnitObjectData.FileExtension, $"Skin{UnitObjectData.FileExtension}");
 
