@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using War3App.MapAdapter.EtoForms.Enums;
 
 namespace War3App.MapAdapter.EtoForms.Models

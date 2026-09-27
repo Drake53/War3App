@@ -1,4 +1,4 @@
-namespace War3App.MapAdapter
+﻿namespace War3App.MapAdapter
 {
     public class SaveArchiveProgress
     {

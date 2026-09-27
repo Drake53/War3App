@@ -1,4 +1,4 @@
-namespace War3App.MapAdapter.Extensions
+﻿namespace War3App.MapAdapter.Extensions
 {
     public static class MapFileExtensions
     {

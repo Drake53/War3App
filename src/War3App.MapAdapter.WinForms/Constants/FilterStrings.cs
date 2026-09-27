@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 
 using War3App.MapAdapter.Constants;
 

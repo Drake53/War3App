@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using War3Net.Build.Common;
 using War3Net.IO.Mpq;

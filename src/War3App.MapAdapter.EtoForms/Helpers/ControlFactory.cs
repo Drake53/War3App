@@ -1,4 +1,4 @@
-using Eto.Drawing;
+﻿using Eto.Drawing;
 using Eto.Forms;
 using War3App.Common.EtoForms;
 using War3App.MapAdapter.EtoForms.Controls;

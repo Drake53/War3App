@@ -1,4 +1,4 @@
-namespace War3App.Common.EtoForms
+﻿namespace War3App.Common.EtoForms
 {
     public enum FlowDirection
     {

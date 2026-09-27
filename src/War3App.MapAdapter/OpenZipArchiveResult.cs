@@ -1,4 +1,4 @@
-using War3Net.IO.Mpq;
+﻿using War3Net.IO.Mpq;
 
 namespace War3App.MapAdapter
 {

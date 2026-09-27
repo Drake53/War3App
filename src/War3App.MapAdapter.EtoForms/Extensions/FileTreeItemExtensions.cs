@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.EtoForms.Enums;

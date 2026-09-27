@@ -1,4 +1,4 @@
-namespace War3App.MapAdapter.EtoForms.Constants
+﻿namespace War3App.MapAdapter.EtoForms.Constants
 {
     public static class Styles
     {

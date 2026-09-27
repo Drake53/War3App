@@ -1,4 +1,4 @@
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 
 using War3App.MapAdapter.Constants;
 using War3App.MapAdapter.WinForms.Controls;
