@@ -7,7 +7,11 @@ namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptArrayDeclarator(JassMapScriptAdapterContext context, bool isGlobalVariable, JassArrayDeclaratorSyntax arrayDeclarator, [NotNullWhen(true)] out IVariableDeclaratorSyntax? adaptedArrayDeclarator)
+        private bool TryAdaptArrayDeclarator(
+            JassMapScriptAdapterContext context,
+            bool isGlobalVariable,
+            JassArrayDeclaratorSyntax arrayDeclarator,
+            [NotNullWhen(true)] out JassVariableOrArrayDeclaratorSyntax? adaptedArrayDeclarator)
         {
             adaptedArrayDeclarator = null;
             return false;

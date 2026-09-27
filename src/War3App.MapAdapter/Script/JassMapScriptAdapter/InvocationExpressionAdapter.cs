@@ -9,9 +9,12 @@ namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptInvocationExpression(JassMapScriptAdapterContext context, JassInvocationExpressionSyntax invocationExpression, [NotNullWhen(true)] out IExpressionSyntax? adaptedInvocationExpression)
+        private bool TryAdaptInvocationExpression(
+            JassMapScriptAdapterContext context,
+            JassInvocationExpressionSyntax invocationExpression,
+            [NotNullWhen(true)] out JassExpressionSyntax? adaptedInvocationExpression)
         {
-            if (TryAdaptInvocation(context, invocationExpression, out var adaptedInvocationName, out var adaptedInvocationArguments))
+            if (TryAdaptInvocation(context, invocationExpression.IdentifierName.Token.Text, invocationExpression.ArgumentList, out var adaptedInvocationName, out var adaptedInvocationArguments))
             {
                 if (string.IsNullOrEmpty(adaptedInvocationName))
                 {
@@ -33,9 +36,9 @@ namespace War3App.MapAdapter.Script
 
                 return true;
             }
-            else if (TryAdaptArgumentList(context, invocationExpression.Arguments, out var adaptedArguments))
+            else if (TryAdaptArgumentList(context, invocationExpression.ArgumentList, out var adaptedArguments))
             {
-                adaptedInvocationExpression = new JassInvocationExpressionSyntax(
+                adaptedInvocationExpression = JassSyntaxFactory.InvocationExpression(
                     invocationExpression.IdentifierName,
                     adaptedArguments);
 

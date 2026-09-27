@@ -2,13 +2,17 @@
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 
+using War3Net.CodeAnalysis.Jass;
 using War3Net.CodeAnalysis.Jass.Syntax;
 
 namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        public bool TryAdaptCompilationUnit(JassMapScriptAdapterContext context, JassCompilationUnitSyntax compilationUnit, [NotNullWhen(true)] out JassCompilationUnitSyntax? adaptedCompilationUnit)
+        public bool TryAdaptCompilationUnit(
+            JassMapScriptAdapterContext context,
+            JassCompilationUnitSyntax compilationUnit,
+            [NotNullWhen(true)] out JassCompilationUnitSyntax? adaptedCompilationUnit)
         {
             if (compilationUnit is null)
             {
@@ -17,7 +21,7 @@ namespace War3App.MapAdapter.Script
 
             var isAdapted = false;
 
-            var declarationsBuilder = ImmutableArray.CreateBuilder<ITopLevelDeclarationSyntax>();
+            var declarationsBuilder = ImmutableArray.CreateBuilder<JassTopLevelDeclarationSyntax>();
             foreach (var declaration in compilationUnit.Declarations)
             {
                 if (TryAdaptDeclaration(context, declaration, out var adaptedDeclaration))
@@ -33,7 +37,7 @@ namespace War3App.MapAdapter.Script
 
             if (isAdapted)
             {
-                adaptedCompilationUnit = new JassCompilationUnitSyntax(declarationsBuilder.ToImmutable());
+                adaptedCompilationUnit = JassSyntaxFactory.CompilationUnit(declarationsBuilder.ToImmutable());
                 return true;
             }
 

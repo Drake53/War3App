@@ -1,18 +1,22 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 
+using War3Net.CodeAnalysis.Jass;
 using War3Net.CodeAnalysis.Jass.Syntax;
 
 namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptGlobalDeclarationList(JassMapScriptAdapterContext context, JassGlobalDeclarationListSyntax globalDeclarationList, [NotNullWhen(true)] out ITopLevelDeclarationSyntax? adaptedGlobalDeclarationList)
+        private bool TryAdaptGlobalDeclarationList(
+            JassMapScriptAdapterContext context,
+            JassGlobalsDeclarationSyntax globalDeclarationList,
+            [NotNullWhen(true)] out JassTopLevelDeclarationSyntax? adaptedGlobalDeclarationList)
         {
             var isAdapted = false;
 
-            var declarationsBuilder = ImmutableArray.CreateBuilder<IGlobalDeclarationSyntax>();
-            foreach (var declaration in globalDeclarationList.Globals)
+            var declarationsBuilder = ImmutableArray.CreateBuilder<JassGlobalDeclarationSyntax>();
+            foreach (var declaration in globalDeclarationList.GlobalDeclarations)
             {
                 if (TryAdaptIGlobalDeclaration(context, declaration, out var adaptedDeclaration))
                 {
@@ -27,7 +31,7 @@ namespace War3App.MapAdapter.Script
 
             if (isAdapted)
             {
-                adaptedGlobalDeclarationList = new JassGlobalDeclarationListSyntax(declarationsBuilder.ToImmutable());
+                adaptedGlobalDeclarationList = JassSyntaxFactory.GlobalsDeclaration(declarationsBuilder.ToImmutable());
                 return true;
             }
 

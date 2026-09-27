@@ -2,23 +2,27 @@
 
 using War3App.MapAdapter.Diagnostics;
 
+using War3Net.CodeAnalysis.Jass;
 using War3Net.CodeAnalysis.Jass.Syntax;
 
 namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptArrayReferenceExpression(JassMapScriptAdapterContext context, JassArrayReferenceExpressionSyntax arrayReferenceExpression, [NotNullWhen(true)] out IExpressionSyntax? adaptedArrayReferenceExpression)
+        private bool TryAdaptElementAccessExpression(
+            JassMapScriptAdapterContext context,
+            JassElementAccessExpressionSyntax arrayReferenceExpression,
+            [NotNullWhen(true)] out JassExpressionSyntax? adaptedArrayReferenceExpression)
         {
-            if (!context.KnownLocalVariables.ContainsKey(arrayReferenceExpression.IdentifierName.Name) &&
-                !context.KnownGlobalVariables.ContainsKey(arrayReferenceExpression.IdentifierName.Name))
+            if (!context.KnownLocalVariables.ContainsKey(arrayReferenceExpression.IdentifierName.Token.Text) &&
+                !context.KnownGlobalVariables.ContainsKey(arrayReferenceExpression.IdentifierName.Token.Text))
             {
                 context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.ArrayReferenceUnknownIdentifier, arrayReferenceExpression.IdentifierName);
             }
 
-            if (TryAdaptExpression(context, arrayReferenceExpression.Indexer, out var adaptedIndexer))
+            if (TryAdaptExpression(context, arrayReferenceExpression.ElementAccessClause.Expression, out var adaptedIndexer))
             {
-                adaptedArrayReferenceExpression = new JassArrayReferenceExpressionSyntax(
+                adaptedArrayReferenceExpression = JassSyntaxFactory.ElementAccessExpression(
                     arrayReferenceExpression.IdentifierName,
                     adaptedIndexer);
 

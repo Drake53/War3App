@@ -8,9 +8,12 @@ namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptFunctionReferenceExpression(JassMapScriptAdapterContext context, JassFunctionReferenceExpressionSyntax functionReferenceExpression, [NotNullWhen(true)] out IExpressionSyntax? adaptedFunctionReferenceExpression)
+        private bool TryAdaptFunctionReferenceExpression(
+            JassMapScriptAdapterContext context,
+            JassFunctionReferenceExpressionSyntax functionReferenceExpression,
+            [NotNullWhen(true)] out JassExpressionSyntax? adaptedFunctionReferenceExpression)
         {
-            if (context.KnownFunctions.TryGetValue(functionReferenceExpression.IdentifierName.Name, out var knownFunctionParameters))
+            if (context.KnownFunctions.TryGetValue(functionReferenceExpression.IdentifierName.Token.Text, out var knownFunctionParameters))
             {
                 if (knownFunctionParameters.Length != 0)
                 {

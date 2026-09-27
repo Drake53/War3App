@@ -7,12 +7,15 @@ namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptStatementList(JassMapScriptAdapterContext context, JassStatementListSyntax statementList, [NotNullWhen(true)] out JassStatementListSyntax? adaptedStatementList)
+        private bool TryAdaptStatementList(
+            JassMapScriptAdapterContext context,
+            ImmutableArray<JassStatementSyntax> statementList,
+            [NotNullWhen(true)] out ImmutableArray<JassStatementSyntax>? adaptedStatementList)
         {
             var isAdapted = false;
 
-            var statementsBuilder = ImmutableArray.CreateBuilder<IStatementSyntax>();
-            foreach (var statement in statementList.Statements)
+            var statementsBuilder = ImmutableArray.CreateBuilder<JassStatementSyntax>();
+            foreach (var statement in statementList)
             {
                 if (TryAdaptStatement(context, statement, out var adaptedStatement))
                 {
@@ -27,7 +30,7 @@ namespace War3App.MapAdapter.Script
 
             if (isAdapted)
             {
-                adaptedStatementList = new JassStatementListSyntax(statementsBuilder.ToImmutable());
+                adaptedStatementList = statementsBuilder.ToImmutable();
                 return true;
             }
 

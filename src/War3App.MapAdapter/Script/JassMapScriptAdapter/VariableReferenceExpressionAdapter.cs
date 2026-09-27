@@ -8,15 +8,18 @@ namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptVariableReferenceExpression(JassMapScriptAdapterContext context, JassVariableReferenceExpressionSyntax variableReferenceExpression, [NotNullWhen(true)] out IExpressionSyntax? adaptedVariableReferenceExpression)
+        private bool TryAdaptVariableReferenceExpression(
+            JassMapScriptAdapterContext context,
+            JassIdentifierNameSyntax identifierName,
+            [NotNullWhen(true)] out JassExpressionSyntax? adaptedIdentifierName)
         {
-            if (!context.KnownLocalVariables.ContainsKey(variableReferenceExpression.IdentifierName.Name) &&
-                !context.KnownGlobalVariables.ContainsKey(variableReferenceExpression.IdentifierName.Name))
+            if (!context.KnownLocalVariables.ContainsKey(identifierName.Token.Text) &&
+                !context.KnownGlobalVariables.ContainsKey(identifierName.Token.Text))
             {
-                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableReferenceUnknownIdentifier, variableReferenceExpression.IdentifierName);
+                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableReferenceUnknownIdentifier, identifierName.Token.Text);
             }
 
-            adaptedVariableReferenceExpression = null;
+            adaptedIdentifierName = null;
             return false;
         }
     }

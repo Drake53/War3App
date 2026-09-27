@@ -6,14 +6,17 @@ namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptExpression(JassMapScriptAdapterContext context, IExpressionSyntax? expression, [NotNullWhen(true)] out IExpressionSyntax? adaptedExpression)
+        private bool TryAdaptExpression(
+            JassMapScriptAdapterContext context,
+            JassExpressionSyntax? expression,
+            [NotNullWhen(true)] out JassExpressionSyntax? adaptedExpression)
         {
             return expression switch
             {
                 JassFunctionReferenceExpressionSyntax functionReferenceExpression => TryAdaptFunctionReferenceExpression(context, functionReferenceExpression, out adaptedExpression),
                 JassInvocationExpressionSyntax invocationExpression => TryAdaptInvocationExpression(context, invocationExpression, out adaptedExpression),
-                JassArrayReferenceExpressionSyntax arrayReferenceExpression => TryAdaptArrayReferenceExpression(context, arrayReferenceExpression, out adaptedExpression),
-                JassVariableReferenceExpressionSyntax variableReferenceExpression => TryAdaptVariableReferenceExpression(context, variableReferenceExpression, out adaptedExpression),
+                JassElementAccessExpressionSyntax elementAccessExpression => TryAdaptElementAccessExpression(context, elementAccessExpression, out adaptedExpression),
+                JassIdentifierNameSyntax identifierName => TryAdaptVariableReferenceExpression(context, identifierName, out adaptedExpression),
                 JassParenthesizedExpressionSyntax parenthesizedExpression => TryAdaptParenthesizedExpression(context, parenthesizedExpression, out adaptedExpression),
                 JassUnaryExpressionSyntax unaryExpression => TryAdaptUnaryExpression(context, unaryExpression, out adaptedExpression),
                 JassBinaryExpressionSyntax binaryExpression => TryAdaptBinaryExpression(context, binaryExpression, out adaptedExpression),

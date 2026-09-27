@@ -1,13 +1,17 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 
+using War3Net.CodeAnalysis.Jass;
 using War3Net.CodeAnalysis.Jass.Syntax;
 
 namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptIfStatement(JassMapScriptAdapterContext context, JassIfStatementSyntax ifStatement, [NotNullWhen(true)] out IStatementSyntax? adaptedIfStatement)
+        private bool TryAdaptIfStatement(
+            JassMapScriptAdapterContext context,
+            JassIfStatementSyntax ifStatement,
+            [NotNullWhen(true)] out JassStatementSyntax? adaptedIfStatement)
         {
             var isAdapted = false;
 
@@ -25,14 +29,14 @@ namespace War3App.MapAdapter.Script
                 }
             }
 
-            if (TryAdaptExpression(context, ifStatement.Condition, out var adaptedCondition) |
-                TryAdaptStatementList(context, ifStatement.Body, out var adaptedBody) |
+            if (TryAdaptExpression(context, ifStatement.IfClause.IfClauseDeclarator.Condition, out var adaptedCondition) |
+                TryAdaptStatementList(context, ifStatement.IfClause.Statements, out var adaptedBody) |
                 isAdapted |
                 TryAdaptElseClause(context, ifStatement.ElseClause, out var adaptedElseClause))
             {
-                adaptedIfStatement = new JassIfStatementSyntax(
-                    adaptedCondition ?? ifStatement.Condition,
-                    adaptedBody ?? ifStatement.Body,
+                adaptedIfStatement = JassSyntaxFactory.IfStatement(
+                    adaptedCondition ?? ifStatement.IfClause.IfClauseDeclarator.Condition,
+                    adaptedBody ?? ifStatement.IfClause.Statements,
                     isAdapted ? elseIfClausesBuilder.ToImmutable() : ifStatement.ElseIfClauses,
                     adaptedElseClause ?? ifStatement.ElseClause);
 

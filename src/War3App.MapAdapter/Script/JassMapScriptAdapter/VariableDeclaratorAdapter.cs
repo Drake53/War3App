@@ -2,31 +2,37 @@
 
 using War3App.MapAdapter.Diagnostics;
 
+using War3Net.CodeAnalysis.Jass;
+using War3Net.CodeAnalysis.Jass.Extensions;
 using War3Net.CodeAnalysis.Jass.Syntax;
 
 namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptVariableDeclarator(JassMapScriptAdapterContext context, bool isGlobalVariable, IVariableDeclaratorSyntax declarator, [NotNullWhen(true)] out IVariableDeclaratorSyntax? adaptedDeclarator)
+        private bool TryAdaptVariableDeclarator(
+            JassMapScriptAdapterContext context,
+            bool isGlobalVariable,
+            JassVariableOrArrayDeclaratorSyntax declarator,
+            [NotNullWhen(true)] out JassVariableOrArrayDeclaratorSyntax? adaptedDeclarator)
         {
-            if (!context.KnownTypes.ContainsKey(declarator.Type.TypeName.Name))
+            if (!context.KnownTypes.ContainsKey(declarator.GetVariableType().GetToken().Text))
             {
-                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationUnknownType, declarator.Type, declarator.IdentifierName);
+                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationUnknownType, declarator.GetVariableType(), declarator.GetIdentifierName());
             }
 
             if (isGlobalVariable)
             {
-                if (!context.KnownGlobalVariables.TryAdd(declarator.IdentifierName.Name, declarator.Type.TypeName.Name))
+                if (!context.KnownGlobalVariables.TryAdd(declarator.GetIdentifierName().Token.Text, declarator.GetVariableType().GetToken().Text))
                 {
-                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationConflictingVariableName, declarator.IdentifierName, "global");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationConflictingVariableName, declarator.GetIdentifierName(), "global");
                 }
             }
             else
             {
-                if (!context.KnownLocalVariables.TryAdd(declarator.IdentifierName.Name, declarator.Type.TypeName.Name))
+                if (!context.KnownLocalVariables.TryAdd(declarator.GetIdentifierName().Token.Text, declarator.GetVariableType().GetToken().Text))
                 {
-                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationConflictingVariableName, declarator.IdentifierName, "local");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationConflictingVariableName, declarator.GetIdentifierName(), "local");
                 }
             }
 
@@ -39,11 +45,15 @@ namespace War3App.MapAdapter.Script
             };
         }
 
-        private bool TryAdaptVariableDeclarator(JassMapScriptAdapterContext context, bool isGlobalVariable, JassVariableDeclaratorSyntax variableDeclarator, [NotNullWhen(true)] out IVariableDeclaratorSyntax? adaptedVariableDeclarator)
+        private bool TryAdaptVariableDeclarator(
+            JassMapScriptAdapterContext context,
+            bool isGlobalVariable,
+            JassVariableDeclaratorSyntax variableDeclarator,
+            [NotNullWhen(true)] out JassVariableOrArrayDeclaratorSyntax? adaptedVariableDeclarator)
         {
             if (TryAdaptEqualsValueClause(context, variableDeclarator.Value, out var adaptedValue))
             {
-                adaptedVariableDeclarator = new JassVariableDeclaratorSyntax(
+                adaptedVariableDeclarator = JassSyntaxFactory.VariableDeclarator(
                     variableDeclarator.Type,
                     variableDeclarator.IdentifierName,
                     adaptedValue);

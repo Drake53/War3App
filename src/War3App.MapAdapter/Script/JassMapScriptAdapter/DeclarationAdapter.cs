@@ -6,11 +6,14 @@ namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptDeclaration(JassMapScriptAdapterContext context, ITopLevelDeclarationSyntax declaration, [NotNullWhen(true)] out ITopLevelDeclarationSyntax? adaptedDeclaration)
+        private bool TryAdaptDeclaration(
+            JassMapScriptAdapterContext context,
+            JassTopLevelDeclarationSyntax declaration,
+            [NotNullWhen(true)] out JassTopLevelDeclarationSyntax? adaptedDeclaration)
         {
             return declaration switch
             {
-                JassGlobalDeclarationListSyntax globalDeclarationList => TryAdaptGlobalDeclarationList(context, globalDeclarationList, out adaptedDeclaration),
+                JassGlobalsDeclarationSyntax globalDeclarationList => TryAdaptGlobalDeclarationList(context, globalDeclarationList, out adaptedDeclaration),
                 JassNativeFunctionDeclarationSyntax nativeFunctionDeclaration => TryAdaptNativeFunctionDeclaration(context, nativeFunctionDeclaration, out adaptedDeclaration),
                 JassFunctionDeclarationSyntax functionDeclaration => TryAdaptFunctionDeclaration(context, functionDeclaration, out adaptedDeclaration),
                 JassTypeDeclarationSyntax typeDeclaration => TryAdaptTypeDeclaration(context, typeDeclaration, out adaptedDeclaration),

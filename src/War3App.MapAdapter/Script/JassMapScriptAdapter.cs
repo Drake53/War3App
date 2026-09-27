@@ -1,17 +1,21 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 
 using War3App.MapAdapter.Diagnostics;
 using War3App.MapAdapter.Extensions;
 
+using War3Net.Build.Extensions;
 using War3Net.Build.Script;
 using War3Net.CodeAnalysis.Jass;
+using War3Net.CodeAnalysis.Jass.Extensions;
 using War3Net.CodeAnalysis.Jass.Syntax;
 using War3Net.Common.Providers;
 
 namespace War3App.MapAdapter.Script
 {
+    [Obsolete("Replace with visitor pattern")]
     public sealed partial class JassMapScriptAdapter : IMapFileAdapter
     {
         private static readonly JassMapScriptAdapter _instance = new();
@@ -112,69 +116,69 @@ namespace War3App.MapAdapter.Script
             }
         }
 
-        private static void RegisterDeclaration(ITopLevelDeclarationSyntax declaration, JassMapScriptAdapterContext context)
+        private static void RegisterDeclaration(JassTopLevelDeclarationSyntax declaration, JassMapScriptAdapterContext context)
         {
             if (declaration is JassTypeDeclarationSyntax typeDeclaration)
             {
-                if (!context.KnownTypes.ContainsKey(typeDeclaration.BaseType.TypeName.Name))
+                if (!context.KnownTypes.ContainsKey(typeDeclaration.BaseType.GetToken().Text))
                 {
                     context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.TypeDeclarationUnknownBaseType, typeDeclaration.BaseType, typeDeclaration.IdentifierName);
                 }
 
-                context.KnownTypes.Add(typeDeclaration.IdentifierName.Name, typeDeclaration.BaseType.TypeName.Name);
+                context.KnownTypes.Add(typeDeclaration.IdentifierName.Token.Text, typeDeclaration.BaseType.GetToken().Text);
             }
-            else if (declaration is JassGlobalDeclarationListSyntax globalDeclarationList)
+            else if (declaration is JassGlobalsDeclarationSyntax globalDeclarationList)
             {
-                foreach (var global in globalDeclarationList.Globals)
+                foreach (var global in globalDeclarationList.GlobalDeclarations)
                 {
-                    if (global is JassGlobalDeclarationSyntax globalDeclaration)
+                    if (global is JassGlobalVariableDeclarationSyntax globalVariableDeclaration)
                     {
-                        RegisterVariableDeclarator(globalDeclaration.Declarator, true, context);
+                        RegisterVariableDeclarator(globalVariableDeclaration.Declarator, true, context);
                     }
                 }
             }
             else if (declaration is JassNativeFunctionDeclarationSyntax nativeFunctionDeclaration)
             {
                 if (!context.KnownFunctions.TryAdd(
-                    nativeFunctionDeclaration.FunctionDeclarator.IdentifierName.Name,
-                    nativeFunctionDeclaration.FunctionDeclarator.ParameterList.Parameters.Select(parameter => parameter.Type.TypeName.Name).ToArray()))
+                    nativeFunctionDeclaration.IdentifierName.Token.Text,
+                    nativeFunctionDeclaration.ParameterList.GetParameters().Select(parameter => parameter.Type.GetToken().Text).ToArray()))
                 {
-                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.FunctionDeclarationConflictingFunctionName, nativeFunctionDeclaration.FunctionDeclarator.IdentifierName);
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.FunctionDeclarationConflictingFunctionName, nativeFunctionDeclaration.IdentifierName);
                 }
             }
             else if (declaration is JassFunctionDeclarationSyntax functionDeclaration)
             {
                 if (!context.KnownFunctions.TryAdd(
-                    functionDeclaration.FunctionDeclarator.IdentifierName.Name,
-                    functionDeclaration.FunctionDeclarator.ParameterList.Parameters.Select(parameter => parameter.Type.TypeName.Name).ToArray()))
+                    functionDeclaration.FunctionDeclarator.IdentifierName.Token.Text,
+                    functionDeclaration.FunctionDeclarator.ParameterList.GetParameters().Select(parameter => parameter.Type.GetToken().Text).ToArray()))
                 {
                     context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.FunctionDeclarationConflictingFunctionName, functionDeclaration.FunctionDeclarator.IdentifierName);
                 }
 
-                foreach (var parameter in functionDeclaration.FunctionDeclarator.ParameterList.Parameters)
+                foreach (var parameter in functionDeclaration.FunctionDeclarator.ParameterList.GetParameters())
                 {
-                    if (!context.KnownTypes.ContainsKey(parameter.Type.TypeName.Name))
+                    if (!context.KnownTypes.ContainsKey(parameter.Type.GetToken().Text))
                     {
                         context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.FunctionDeclarationUnknownParameterVariableType, parameter.Type, functionDeclaration.FunctionDeclarator.IdentifierName, parameter.IdentifierName);
                     }
 
-                    if (!context.KnownLocalVariables.TryAdd(parameter.IdentifierName.Name, parameter.Type.TypeName.Name))
+                    if (!context.KnownLocalVariables.TryAdd(parameter.IdentifierName.Token.Text, parameter.Type.GetToken().Text))
                     {
                         context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.FunctionDeclarationConflictingParameterVariableName, parameter.IdentifierName, functionDeclaration.FunctionDeclarator.IdentifierName);
                     }
                 }
 
-                RegisterStatementList(functionDeclaration.Body, context);
+                RegisterStatementList(functionDeclaration.Statements, context);
 
                 context.KnownLocalVariables.Clear();
             }
         }
 
-        private static void RegisterVariableDeclarator(IVariableDeclaratorSyntax declarator, bool isGlobalVariable, JassMapScriptAdapterContext context)
+        private static void RegisterVariableDeclarator(JassVariableOrArrayDeclaratorSyntax declarator, bool isGlobalVariable, JassMapScriptAdapterContext context)
         {
-            if (!context.KnownTypes.ContainsKey(declarator.Type.TypeName.Name))
+            if (!context.KnownTypes.ContainsKey(declarator.GetVariableType().GetToken().Text))
             {
-                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationUnknownType, declarator.Type, declarator.IdentifierName);
+                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationUnknownType, declarator.GetVariableType(), declarator.GetIdentifierName());
             }
 
             if (declarator is JassVariableDeclaratorSyntax variableDeclarator)
@@ -187,21 +191,21 @@ namespace War3App.MapAdapter.Script
 
             if (isGlobalVariable)
             {
-                if (!context.KnownGlobalVariables.TryAdd(declarator.IdentifierName.Name, declarator.Type.TypeName.Name))
+                if (!context.KnownGlobalVariables.TryAdd(declarator.GetIdentifierName().Token.Text, declarator.GetVariableType().GetToken().Text))
                 {
-                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationConflictingVariableName, declarator.IdentifierName, "global");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationConflictingVariableName, declarator.GetIdentifierName(), "global");
                 }
             }
             else
             {
-                if (!context.KnownLocalVariables.TryAdd(declarator.IdentifierName.Name, declarator.Type.TypeName.Name))
+                if (!context.KnownLocalVariables.TryAdd(declarator.GetIdentifierName().Token.Text, declarator.GetVariableType().GetToken().Text))
                 {
-                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationConflictingVariableName, declarator.IdentifierName, "local");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationConflictingVariableName, declarator.GetIdentifierName(), "local");
                 }
             }
         }
 
-        private static void RegisterExpression(IExpressionSyntax expression, JassMapScriptAdapterContext context)
+        private static void RegisterExpression(JassExpressionSyntax expression, JassMapScriptAdapterContext context)
         {
             if (expression is JassBinaryExpressionSyntax binaryExpression)
             {
@@ -218,17 +222,17 @@ namespace War3App.MapAdapter.Script
             }
             else if (expression is JassInvocationExpressionSyntax invocationExpression)
             {
-                if (context.KnownFunctions.TryGetValue(invocationExpression.IdentifierName.Name, out var knownFunctionParameters))
+                if (context.KnownFunctions.TryGetValue(invocationExpression.IdentifierName.Token.Text, out var knownFunctionParameters))
                 {
-                    if (knownFunctionParameters.Length != invocationExpression.Arguments.Arguments.Length)
+                    if (knownFunctionParameters.Length != invocationExpression.ArgumentList.ArgumentList.Items.Length)
                     {
-                        context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationParameterCountMismatch, invocationExpression.IdentifierName, knownFunctionParameters.Length, invocationExpression.Arguments.Arguments.Length);
+                        context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationParameterCountMismatch, invocationExpression.IdentifierName, knownFunctionParameters.Length, invocationExpression.ArgumentList.ArgumentList.Items.Length);
                     }
                     else
                     {
                         for (var i = 0; i < knownFunctionParameters.Length; i++)
                         {
-                            RegisterExpression(invocationExpression.Arguments.Arguments[i], context);
+                            RegisterExpression(invocationExpression.ArgumentList.ArgumentList.Items[i], context);
                         }
                     }
                 }
@@ -239,7 +243,7 @@ namespace War3App.MapAdapter.Script
             }
             else if (expression is JassFunctionReferenceExpressionSyntax functionReferenceExpression)
             {
-                if (context.KnownFunctions.TryGetValue(functionReferenceExpression.IdentifierName.Name, out var knownFunctionParameters))
+                if (context.KnownFunctions.TryGetValue(functionReferenceExpression.IdentifierName.Token.Text, out var knownFunctionParameters))
                 {
                     if (knownFunctionParameters.Length != 0)
                     {
@@ -251,62 +255,62 @@ namespace War3App.MapAdapter.Script
                     context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.FunctionReferenceUnknownIdentifier, functionReferenceExpression.IdentifierName);
                 }
             }
-            else if (expression is JassVariableReferenceExpressionSyntax variableReferenceExpression)
+            else if (expression is JassIdentifierNameSyntax identifierName)
             {
-                if (!context.KnownLocalVariables.ContainsKey(variableReferenceExpression.IdentifierName.Name) &&
-                    !context.KnownGlobalVariables.ContainsKey(variableReferenceExpression.IdentifierName.Name))
+                if (!context.KnownLocalVariables.ContainsKey(identifierName.Token.Text) &&
+                    !context.KnownGlobalVariables.ContainsKey(identifierName.Token.Text))
                 {
-                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableReferenceUnknownIdentifier, variableReferenceExpression.IdentifierName);
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableReferenceUnknownIdentifier, identifierName);
                 }
             }
-            else if (expression is JassArrayReferenceExpressionSyntax arrayReferenceExpression)
+            else if (expression is JassElementAccessExpressionSyntax elementAccessExpression)
             {
-                if (!context.KnownLocalVariables.ContainsKey(arrayReferenceExpression.IdentifierName.Name) &&
-                    !context.KnownGlobalVariables.ContainsKey(arrayReferenceExpression.IdentifierName.Name))
+                if (!context.KnownLocalVariables.ContainsKey(elementAccessExpression.IdentifierName.Token.Text) &&
+                    !context.KnownGlobalVariables.ContainsKey(elementAccessExpression.IdentifierName.Token.Text))
                 {
-                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.ArrayReferenceUnknownIdentifier, arrayReferenceExpression.IdentifierName);
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.ArrayReferenceUnknownIdentifier, elementAccessExpression.IdentifierName);
                 }
             }
         }
 
-        private static void RegisterStatementList(JassStatementListSyntax statementList, JassMapScriptAdapterContext context)
+        private static void RegisterStatementList(ImmutableArray<JassStatementSyntax> statements, JassMapScriptAdapterContext context)
         {
-            foreach (var statement in statementList.Statements)
+            foreach (var statement in statements)
             {
                 RegisterStatement(statement, context);
             }
         }
 
-        private static void RegisterStatement(IStatementSyntax statement, JassMapScriptAdapterContext context)
+        private static void RegisterStatement(JassStatementSyntax statement, JassMapScriptAdapterContext context)
         {
             if (statement is JassSetStatementSyntax setStatement)
             {
-                if (!context.KnownLocalVariables.ContainsKey(setStatement.IdentifierName.Name) &&
-                    !context.KnownGlobalVariables.ContainsKey(setStatement.IdentifierName.Name))
+                if (!context.KnownLocalVariables.ContainsKey(setStatement.IdentifierName.Token.Text) &&
+                    !context.KnownGlobalVariables.ContainsKey(setStatement.IdentifierName.Token.Text))
                 {
                     context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.SetStatementUnknownVariableIdentifier, setStatement.IdentifierName);
                 }
 
-                if (setStatement.Indexer is not null)
+                if (setStatement.ElementAccessClause is not null)
                 {
-                    RegisterExpression(setStatement.Indexer, context);
+                    RegisterExpression(setStatement.ElementAccessClause.Expression, context);
                 }
 
                 RegisterExpression(setStatement.Value.Expression, context);
             }
             else if (statement is JassCallStatementSyntax callStatement)
             {
-                if (context.KnownFunctions.TryGetValue(callStatement.IdentifierName.Name, out var knownFunctionParameters))
+                if (context.KnownFunctions.TryGetValue(callStatement.IdentifierName.Token.Text, out var knownFunctionParameters))
                 {
-                    if (knownFunctionParameters.Length != callStatement.Arguments.Arguments.Length)
+                    if (knownFunctionParameters.Length != callStatement.ArgumentList.ArgumentList.Items.Length)
                     {
-                        context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationParameterCountMismatch, callStatement.IdentifierName, knownFunctionParameters.Length, callStatement.Arguments.Arguments.Length);
+                        context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationParameterCountMismatch, callStatement.IdentifierName, knownFunctionParameters.Length, callStatement.ArgumentList.ArgumentList.Items.Length);
                     }
                     else
                     {
                         for (var i = 0; i < knownFunctionParameters.Length; i++)
                         {
-                            RegisterExpression(callStatement.Arguments.Arguments[i], context);
+                            RegisterExpression(callStatement.ArgumentList.ArgumentList.Items[i], context);
                         }
                     }
                 }
@@ -325,18 +329,18 @@ namespace War3App.MapAdapter.Script
             }
             else if (statement is JassIfStatementSyntax ifStatement)
             {
-                RegisterExpression(ifStatement.Condition, context);
-                RegisterStatementList(ifStatement.Body, context);
+                RegisterExpression(ifStatement.IfClause.IfClauseDeclarator.Condition, context);
+                RegisterStatementList(ifStatement.IfClause.Statements, context);
 
                 foreach (var elseIfClause in ifStatement.ElseIfClauses)
                 {
-                    RegisterExpression(elseIfClause.Condition, context);
-                    RegisterStatementList(elseIfClause.Body, context);
+                    RegisterExpression(elseIfClause.ElseIfClauseDeclarator.Condition, context);
+                    RegisterStatementList(elseIfClause.Statements, context);
                 }
 
                 if (ifStatement.ElseClause is not null)
                 {
-                    RegisterStatementList(ifStatement.ElseClause.Body, context);
+                    RegisterStatementList(ifStatement.ElseClause.Statements, context);
                 }
             }
             else if (statement is JassLocalVariableDeclarationStatementSyntax localVariableDeclarationStatement)
@@ -345,7 +349,7 @@ namespace War3App.MapAdapter.Script
             }
             else if (statement is JassLoopStatementSyntax loopStatement)
             {
-                RegisterStatementList(loopStatement.Body, context);
+                RegisterStatementList(loopStatement.Statements, context);
             }
             else if (statement is JassReturnStatementSyntax returnStatement)
             {

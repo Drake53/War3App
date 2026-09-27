@@ -11,151 +11,155 @@ namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
-        private bool TryAdaptInvocation<TInvocation>(JassMapScriptAdapterContext context, TInvocation invocation, out string? adaptedInvocationName, [NotNullWhen(true)] out JassArgumentListSyntax? adaptedInvocationArguments)
-            where TInvocation : IInvocationSyntax
+        private bool TryAdaptInvocation(
+            JassMapScriptAdapterContext context,
+            string invocationName,
+            JassArgumentListSyntax invocationArguments,
+            out string? adaptedInvocationName,
+            [NotNullWhen(true)] out JassArgumentListSyntax? adaptedInvocationArguments)
         {
-            if (context.KnownFunctions.TryGetValue(invocation.IdentifierName.Name, out var knownFunctionParameters))
+            if (context.KnownFunctions.TryGetValue(invocationName, out var knownFunctionParameters))
             {
-                if (knownFunctionParameters.Length != invocation.Arguments.Arguments.Length)
+                if (knownFunctionParameters.Length != invocationArguments.ArgumentList.Items.Length)
                 {
-                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationParameterCountMismatch, invocation.IdentifierName, knownFunctionParameters.Length, invocation.Arguments.Arguments.Length);
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationParameterCountMismatch, invocationName, knownFunctionParameters.Length, invocationArguments.ArgumentList.Items.Length);
                 }
             }
             else
             {
-                if (string.Equals(invocation.IdentifierName.Name, "BlzCreateItemWithSkin", StringComparison.Ordinal))
+                if (string.Equals(invocationName, "BlzCreateItemWithSkin", StringComparison.Ordinal))
                 {
-                    return TryAdaptBlzCreateInvocation(context, invocation, out adaptedInvocationName, out adaptedInvocationArguments, "CreateItem", 4, 0, 3);
+                    return TryAdaptBlzCreateInvocation(context, invocationName, invocationArguments, out adaptedInvocationName, out adaptedInvocationArguments, "CreateItem", 4, 0, 3);
                 }
-                else if (string.Equals(invocation.IdentifierName.Name, "BlzCreateUnitWithSkin", StringComparison.Ordinal))
+                else if (string.Equals(invocationName, "BlzCreateUnitWithSkin", StringComparison.Ordinal))
                 {
-                    return TryAdaptBlzCreateInvocation(context, invocation, out adaptedInvocationName, out adaptedInvocationArguments, "CreateUnit", 6, 1, 5);
+                    return TryAdaptBlzCreateInvocation(context, invocationName, invocationArguments, out adaptedInvocationName, out adaptedInvocationArguments, "CreateUnit", 6, 1, 5);
                 }
-                else if (string.Equals(invocation.IdentifierName.Name, "BlzCreateDestructableWithSkin", StringComparison.Ordinal))
+                else if (string.Equals(invocationName, "BlzCreateDestructableWithSkin", StringComparison.Ordinal))
                 {
-                    return TryAdaptBlzCreateInvocation(context, invocation, out adaptedInvocationName, out adaptedInvocationArguments, "CreateDestructable", 7, 0, 6);
+                    return TryAdaptBlzCreateInvocation(context, invocationName, invocationArguments, out adaptedInvocationName, out adaptedInvocationArguments, "CreateDestructable", 7, 0, 6);
                 }
-                else if (string.Equals(invocation.IdentifierName.Name, "BlzCreateDestructableZWithSkin", StringComparison.Ordinal))
+                else if (string.Equals(invocationName, "BlzCreateDestructableZWithSkin", StringComparison.Ordinal))
                 {
-                    return TryAdaptBlzCreateInvocation(context, invocation, out adaptedInvocationName, out adaptedInvocationArguments, "CreateDestructableZ", 8, 0, 7);
+                    return TryAdaptBlzCreateInvocation(context, invocationName, invocationArguments, out adaptedInvocationName, out adaptedInvocationArguments, "CreateDestructableZ", 8, 0, 7);
                 }
-                else if (string.Equals(invocation.IdentifierName.Name, "BlzCreateDeadDestructableWithSkin", StringComparison.Ordinal))
+                else if (string.Equals(invocationName, "BlzCreateDeadDestructableWithSkin", StringComparison.Ordinal))
                 {
-                    return TryAdaptBlzCreateInvocation(context, invocation, out adaptedInvocationName, out adaptedInvocationArguments, "CreateDeadDestructable", 7, 0, 6);
+                    return TryAdaptBlzCreateInvocation(context, invocationName, invocationArguments, out adaptedInvocationName, out adaptedInvocationArguments, "CreateDeadDestructable", 7, 0, 6);
                 }
-                else if (string.Equals(invocation.IdentifierName.Name, "BlzCreateDeadDestructableZWithSkin", StringComparison.Ordinal))
+                else if (string.Equals(invocationName, "BlzCreateDeadDestructableZWithSkin", StringComparison.Ordinal))
                 {
-                    return TryAdaptBlzCreateInvocation(context, invocation, out adaptedInvocationName, out adaptedInvocationArguments, "CreateDeadDestructableZ", 8, 0, 7);
+                    return TryAdaptBlzCreateInvocation(context, invocationName, invocationArguments, out adaptedInvocationName, out adaptedInvocationArguments, "CreateDeadDestructableZ", 8, 0, 7);
                 }
-                else if (string.Equals(invocation.IdentifierName.Name, "SetSoundFacialAnimationLabel", StringComparison.Ordinal))
+                else if (string.Equals(invocationName, "SetSoundFacialAnimationLabel", StringComparison.Ordinal))
                 {
                     adaptedInvocationName = null;
-                    adaptedInvocationArguments = invocation.Arguments;
+                    adaptedInvocationArguments = invocationArguments;
                     return true;
                 }
-                else if (string.Equals(invocation.IdentifierName.Name, "SetSoundFacialAnimationGroupLabel", StringComparison.Ordinal))
+                else if (string.Equals(invocationName, "SetSoundFacialAnimationGroupLabel", StringComparison.Ordinal))
                 {
                     adaptedInvocationName = null;
-                    adaptedInvocationArguments = invocation.Arguments;
+                    adaptedInvocationArguments = invocationArguments;
                     return true;
                 }
-                else if (string.Equals(invocation.IdentifierName.Name, "SetSoundFacialAnimationSetFilepath", StringComparison.Ordinal))
+                else if (string.Equals(invocationName, "SetSoundFacialAnimationSetFilepath", StringComparison.Ordinal))
                 {
                     adaptedInvocationName = null;
-                    adaptedInvocationArguments = invocation.Arguments;
+                    adaptedInvocationArguments = invocationArguments;
                     return true;
                 }
-                else if (string.Equals(invocation.IdentifierName.Name, "SetDialogueSpeakerNameKey", StringComparison.Ordinal))
+                else if (string.Equals(invocationName, "SetDialogueSpeakerNameKey", StringComparison.Ordinal))
                 {
-                    if (invocation.Arguments.Arguments.Length == 2 &&
-                        invocation.Arguments.Arguments[0] is JassVariableReferenceExpressionSyntax variableReferenceExpression &&
-                        invocation.Arguments.Arguments[1] is JassStringLiteralExpressionSyntax stringLiteralExpression)
+                    if (invocationArguments.ArgumentList.Items.Length == 2 &&
+                        invocationArguments.ArgumentList.Items[0] is JassIdentifierNameSyntax identifierName &&
+                        invocationArguments.ArgumentList.Items[1].TryGetStringExpressionValue(out var stringValue))
                     {
-                        if (!context.DialogueTitles.TryAdd(variableReferenceExpression.IdentifierName.Name, stringLiteralExpression.Value))
+                        if (!context.DialogueTitles.TryAdd(identifierName.Token.Text, stringValue))
                         {
-                            context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationConflictingDialogueTitle, stringLiteralExpression.Value, variableReferenceExpression.IdentifierName);
+                            context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationConflictingDialogueTitle, stringValue, identifierName);
                         }
                     }
 
                     adaptedInvocationName = null;
-                    adaptedInvocationArguments = invocation.Arguments;
+                    adaptedInvocationArguments = invocationArguments;
                     return true;
                 }
-                else if (string.Equals(invocation.IdentifierName.Name, "SetDialogueTextKey", StringComparison.Ordinal))
+                else if (string.Equals(invocationName, "SetDialogueTextKey", StringComparison.Ordinal))
                 {
-                    if (invocation.Arguments.Arguments.Length == 2 &&
-                        invocation.Arguments.Arguments[0] is JassVariableReferenceExpressionSyntax variableReferenceExpression &&
-                        invocation.Arguments.Arguments[1] is JassStringLiteralExpressionSyntax stringLiteralExpression)
+                    if (invocationArguments.ArgumentList.Items.Length == 2 &&
+                        invocationArguments.ArgumentList.Items[0] is JassIdentifierNameSyntax identifierName &&
+                        invocationArguments.ArgumentList.Items[1].TryGetStringExpressionValue(out var stringValue))
                     {
-                        if (!context.DialogueTexts.TryAdd(variableReferenceExpression.IdentifierName.Name, stringLiteralExpression.Value))
+                        if (!context.DialogueTexts.TryAdd(identifierName.Token.Text, stringValue))
                         {
-                            context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationConflictingDialogueText, stringLiteralExpression.Value, variableReferenceExpression.IdentifierName);
+                            context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationConflictingDialogueText, stringValue, identifierName);
                         }
                     }
 
                     adaptedInvocationName = null;
-                    adaptedInvocationArguments = invocation.Arguments;
+                    adaptedInvocationArguments = invocationArguments;
                     return true;
                 }
-                else if (string.Equals(invocation.IdentifierName.Name, "PlayDialogueFromSpeakerEx", StringComparison.Ordinal))
+                else if (string.Equals(invocationName, "PlayDialogueFromSpeakerEx", StringComparison.Ordinal))
                 {
-                    if (invocation.Arguments.Arguments.Length == 7 &&
-                        invocation.Arguments.Arguments[3] is JassVariableReferenceExpressionSyntax variableReferenceExpression &&
-                        context.DialogueTitles.TryGetValue(variableReferenceExpression.IdentifierName.Name, out var dialogueTitle) &&
-                        context.DialogueTexts.TryGetValue(variableReferenceExpression.IdentifierName.Name, out var dialogueText))
+                    if (invocationArguments.ArgumentList.Items.Length == 7 &&
+                        invocationArguments.ArgumentList.Items[3] is JassIdentifierNameSyntax identifierName &&
+                        context.DialogueTitles.TryGetValue(identifierName.Token.Text, out var dialogueTitle) &&
+                        context.DialogueTexts.TryGetValue(identifierName.Token.Text, out var dialogueText))
                     {
                         adaptedInvocationName = "TransmissionFromUnitWithNameBJ";
                         adaptedInvocationArguments = JassSyntaxFactory.ArgumentList(
-                            invocation.Arguments.Arguments[0],
-                            invocation.Arguments.Arguments[1],
-                            JassSyntaxFactory.LiteralExpression(dialogueTitle),
-                            invocation.Arguments.Arguments[3],
-                            JassSyntaxFactory.LiteralExpression(dialogueText),
-                            invocation.Arguments.Arguments[4],
-                            invocation.Arguments.Arguments[5],
-                            invocation.Arguments.Arguments[6]);
+                            invocationArguments.ArgumentList.Items[0],
+                            invocationArguments.ArgumentList.Items[1],
+                            JassSyntaxFactory.LiteralExpression(JassSyntaxFactory.Literal(dialogueTitle)),
+                            invocationArguments.ArgumentList.Items[3],
+                            JassSyntaxFactory.LiteralExpression(JassSyntaxFactory.Literal(dialogueText)),
+                            invocationArguments.ArgumentList.Items[4],
+                            invocationArguments.ArgumentList.Items[5],
+                            invocationArguments.ArgumentList.Items[6]);
 
                         return true;
                     }
                 }
-                else if (string.Equals(invocation.IdentifierName.Name, "PlayDialogueFromSpeakerTypeEx", StringComparison.Ordinal))
+                else if (string.Equals(invocationName, "PlayDialogueFromSpeakerTypeEx", StringComparison.Ordinal))
                 {
-                    if (invocation.Arguments.Arguments.Length == 8 &&
-                        invocation.Arguments.Arguments[4] is JassVariableReferenceExpressionSyntax variableReferenceExpression &&
-                        context.DialogueTitles.TryGetValue(variableReferenceExpression.IdentifierName.Name, out var dialogueTitle) &&
-                        context.DialogueTexts.TryGetValue(variableReferenceExpression.IdentifierName.Name, out var dialogueText))
+                    if (invocationArguments.ArgumentList.Items.Length == 8 &&
+                        invocationArguments.ArgumentList.Items[4] is JassIdentifierNameSyntax identifierName &&
+                        context.DialogueTitles.TryGetValue(identifierName.Token.Text, out var dialogueTitle) &&
+                        context.DialogueTexts.TryGetValue(identifierName.Token.Text, out var dialogueText))
                     {
                         adaptedInvocationName = "TransmissionFromUnitTypeWithNameBJ";
                         adaptedInvocationArguments = JassSyntaxFactory.ArgumentList(
-                            invocation.Arguments.Arguments[0],
-                            invocation.Arguments.Arguments[1],
-                            invocation.Arguments.Arguments[2],
-                            JassSyntaxFactory.LiteralExpression(dialogueTitle),
-                            invocation.Arguments.Arguments[3],
-                            invocation.Arguments.Arguments[4],
-                            JassSyntaxFactory.LiteralExpression(dialogueText),
-                            invocation.Arguments.Arguments[5],
-                            invocation.Arguments.Arguments[6],
-                            invocation.Arguments.Arguments[7]);
+                            invocationArguments.ArgumentList.Items[0],
+                            invocationArguments.ArgumentList.Items[1],
+                            invocationArguments.ArgumentList.Items[2],
+                            JassSyntaxFactory.LiteralExpression(JassSyntaxFactory.Literal(dialogueTitle)),
+                            invocationArguments.ArgumentList.Items[3],
+                            invocationArguments.ArgumentList.Items[4],
+                            JassSyntaxFactory.LiteralExpression(JassSyntaxFactory.Literal(dialogueText)),
+                            invocationArguments.ArgumentList.Items[5],
+                            invocationArguments.ArgumentList.Items[6],
+                            invocationArguments.ArgumentList.Items[7]);
 
                         return true;
                     }
                 }
-                else if (string.Equals(invocation.IdentifierName.Name, "SetEnemyStartLocPrioCount", StringComparison.Ordinal))
+                else if (string.Equals(invocationName, "SetEnemyStartLocPrioCount", StringComparison.Ordinal))
                 {
                     adaptedInvocationName = null;
-                    adaptedInvocationArguments = invocation.Arguments;
+                    adaptedInvocationArguments = invocationArguments;
                     return true;
                 }
-                else if (string.Equals(invocation.IdentifierName.Name, "SetEnemyStartLocPrio", StringComparison.Ordinal))
+                else if (string.Equals(invocationName, "SetEnemyStartLocPrio", StringComparison.Ordinal))
                 {
                     adaptedInvocationName = null;
-                    adaptedInvocationArguments = invocation.Arguments;
+                    adaptedInvocationArguments = invocationArguments;
                     return true;
                 }
                 else
                 {
-                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationUnknownFunctionIdentifier, invocation.IdentifierName, invocation is JassCallStatementSyntax ? "call statement" : "invocation expression");
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationUnknownFunctionIdentifier, invocationName, "call statement or invocation expression");
 
                     adaptedInvocationName = null;
                     adaptedInvocationArguments = null;
@@ -168,32 +172,32 @@ namespace War3App.MapAdapter.Script
             return false;
         }
 
-        private bool TryAdaptBlzCreateInvocation<TInvocation>(
+        private bool TryAdaptBlzCreateInvocation(
             JassMapScriptAdapterContext context,
-            TInvocation invocation,
+            string invocationName,
+            JassArgumentListSyntax invocationArguments,
             [NotNullWhen(true)] out string? adaptedInvocationName,
             [NotNullWhen(true)] out JassArgumentListSyntax? adaptedInvocationArguments,
             string replacementFunctionName,
             int expectedArgumentCount,
             int typeIdArgumentIndex,
             int skinIdArgumentIndex)
-            where TInvocation : IInvocationSyntax
         {
-            if (invocation.Arguments.Arguments.Length == expectedArgumentCount)
+            if (invocationArguments.ArgumentList.Items.Length == expectedArgumentCount)
             {
-                var typeId = invocation.Arguments.Arguments[typeIdArgumentIndex];
-                var skinId = invocation.Arguments.Arguments[skinIdArgumentIndex];
+                var typeId = invocationArguments.ArgumentList.Items[typeIdArgumentIndex];
+                var skinId = invocationArguments.ArgumentList.Items[skinIdArgumentIndex];
 
-                if (typeId.NullableEquals(skinId))
+                if (typeId.NullableEquivalentTo(skinId))
                 {
-                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationBlzCreateWithSkinIdRemoved, invocation.IdentifierName, replacementFunctionName);
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationBlzCreateWithSkinIdRemoved, invocationName, replacementFunctionName);
                 }
                 else
                 {
-                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationBlzCreateWithSkinIdDeleted, invocation.IdentifierName, replacementFunctionName, skinId, typeId);
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationBlzCreateWithSkinIdDeleted, invocationName, replacementFunctionName, skinId, typeId);
                 }
 
-                var arguments = new IExpressionSyntax[expectedArgumentCount - 1];
+                var arguments = new JassExpressionSyntax[expectedArgumentCount - 1];
                 for (var i = 0; i < expectedArgumentCount; i++)
                 {
                     if (i == skinIdArgumentIndex)
@@ -201,7 +205,7 @@ namespace War3App.MapAdapter.Script
                         continue;
                     }
 
-                    arguments[i > skinIdArgumentIndex ? i - 1 : i] = invocation.Arguments.Arguments[i];
+                    arguments[i > skinIdArgumentIndex ? i - 1 : i] = invocationArguments.ArgumentList.Items[i];
                 }
 
                 adaptedInvocationName = replacementFunctionName;
@@ -210,7 +214,7 @@ namespace War3App.MapAdapter.Script
             }
             else
             {
-                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationParameterCountMismatch, invocation.IdentifierName, expectedArgumentCount, invocation.Arguments.Arguments.Length);
+                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationParameterCountMismatch, invocationName, expectedArgumentCount, invocationArguments.ArgumentList.Items.Length);
 
                 adaptedInvocationName = null;
                 adaptedInvocationArguments = null;
