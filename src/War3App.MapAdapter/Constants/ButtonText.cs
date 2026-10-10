@@ -1,4 +1,4 @@
-namespace War3App.MapAdapter.Constants
+﻿namespace War3App.MapAdapter.Constants
 {
     public static class ButtonText
     {
