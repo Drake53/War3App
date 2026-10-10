@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFrameworks>$(TfmGroupDotNetWindowsOnly)</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 

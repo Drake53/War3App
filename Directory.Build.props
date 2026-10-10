@@ -1,0 +1,17 @@
+<Project>
+  <ItemGroup Condition="'$(PUBLISH)'=='true'">
+    <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(PUBLISH)'!='true'">
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <AnalysisLevel>5</AnalysisLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TfmGroupDotNet>net6.0;net10.0</TfmGroupDotNet>
+    <TfmGroupDotNetWindowsOnly>net6.0-windows;net10.0-windows</TfmGroupDotNetWindowsOnly>
+  </PropertyGroup>
+</Project>

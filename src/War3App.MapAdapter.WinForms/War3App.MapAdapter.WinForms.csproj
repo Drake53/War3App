@@ -2,9 +2,7 @@
 
   <PropertyGroup>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <TargetFramework>net6.0-windows</TargetFramework>
-    <LangVersion>9.0</LangVersion>
-    <Nullable>enable</Nullable>
+    <TargetFrameworks>$(TfmGroupDotNetWindowsOnly)</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
     <OutputType>WinExe</OutputType>
     <Version>1.6.2</Version>
