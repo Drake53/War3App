@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
+    <PackageReference Include="Eto.Platform.Gtk" />
   </ItemGroup>
 
   <ItemGroup>

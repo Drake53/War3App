@@ -8,9 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Pfim" Version="0.11.1" />
-    <PackageReference Include="War3Net.Build.Core" Version="5.5.0" />
-    <PackageReference Include="War3Net.Drawing.Blp" Version="5.5.0" />
+    <PackageReference Include="Pfim" />
+    <PackageReference Include="War3Net.Build.Core" />
+    <PackageReference Include="War3Net.Drawing.Blp" />
   </ItemGroup>
 
 </Project>
