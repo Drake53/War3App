@@ -11,6 +11,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <PropertyGroup>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
+    <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
     <TfmGroupDotNet>net6.0;net10.0</TfmGroupDotNet>
     <TfmGroupDotNetWindowsOnly>net6.0-windows;net10.0-windows</TfmGroupDotNetWindowsOnly>
   </PropertyGroup>
