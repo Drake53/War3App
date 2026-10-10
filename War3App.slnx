@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/War3App.Common.EtoForms/War3App.Common.EtoForms.csproj" />
+    <Project Path="src/War3App.Common.WinForms/War3App.Common.WinForms.csproj" />
+  </Folder>
+  <Folder Name="/src/MapAdapter/">
+    <Project Path="src/War3App.MapAdapter/War3App.MapAdapter.csproj" />
+    <Project Path="src/War3App.MapAdapter.Console/War3App.MapAdapter.Console.csproj" />
+    <Project Path="src/War3App.MapAdapter.EtoForms/War3App.MapAdapter.EtoForms.csproj" />
+    <Project Path="src/War3App.MapAdapter.EtoForms.Gtk/War3App.MapAdapter.EtoForms.Gtk.csproj" />
+    <Project Path="src/War3App.MapAdapter.WinForms/War3App.MapAdapter.WinForms.csproj" />
+  </Folder>
+  <Folder Name="/src/MapGallery/">
+    <Project Path="src/War3App.MapGallery/War3App.MapGallery.csproj" />
+    <Project Path="src/War3App.MapGallery.WinForms/War3App.MapGallery.WinForms.csproj" />
+  </Folder>
+  <Folder Name="/src/MapTranspiler/">
+    <Project Path="src/War3App.MapTranspiler/War3App.MapTranspiler.csproj" />
+    <Project Path="src/War3App.MapTranspiler.WinForms/War3App.MapTranspiler.WinForms.csproj" />
+  </Folder>
+</Solution>
