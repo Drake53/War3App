@@ -39,9 +39,9 @@ namespace War3App.MapTranspiler
 
             var mapInfo = map.Info;
             mapInfo.ScriptLanguage = targetLanguage;
-            if (mapInfo.FormatVersion < MapInfoFormatVersion.Lua)
+            if (mapInfo.FormatVersion < MapInfoFormatVersion.v28)
             {
-                mapInfo.FormatVersion = MapInfoFormatVersion.Lua;
+                mapInfo.FormatVersion = MapInfoFormatVersion.v28;
                 if (mapInfo.GameVersion is null)
                 {
                     mapInfo.GameVersion = GameBuildsProvider.GetGameBuilds(GamePatch.v1_31_1)[0].Version;
