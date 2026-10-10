@@ -15,20 +15,22 @@ namespace War3App.MapAdapter.Environment
                 return false;
             }
 
-            status = mapCameras.TryDowngrade(context.TargetPatch.Patch)
+            status = mapCameras.TryDowngrade(context)
                 ? MapFileStatus.Compatible
                 : MapFileStatus.Incompatible;
 
             return status == MapFileStatus.Compatible;
         }
 
-        public static bool TryDowngrade(this MapCameras mapCameras, GamePatch targetPatch)
+        public static bool TryDowngrade(
+            this MapCameras mapCameras,
+            AdaptFileContext context)
         {
             try
             {
-                while (mapCameras.GetMinimumPatch() > targetPatch)
+                while (mapCameras.GetMinimumPatch() > context.TargetPatch.Patch)
                 {
-                    mapCameras.DowngradeOnce();
+                    mapCameras.DowngradeOnce(context);
                 }
 
                 return true;
@@ -43,7 +45,9 @@ namespace War3App.MapAdapter.Environment
             }
         }
 
-        public static void DowngradeOnce(this MapCameras mapCameras)
+        public static void DowngradeOnce(
+            this MapCameras mapCameras,
+            AdaptFileContext context)
         {
             if (mapCameras.UseNewFormat)
             {

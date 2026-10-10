@@ -59,7 +59,7 @@ namespace War3App.MapAdapter.Object
 
             if (buffObjectData.GetMinimumPatch() > context.TargetPatch.Patch)
             {
-                if (buffObjectData.TryDowngrade(context.TargetPatch.Patch))
+                if (buffObjectData.TryDowngrade(context))
                 {
                     isAdapted = true;
                 }
@@ -168,13 +168,15 @@ namespace War3App.MapAdapter.Object
             return isAdapted;
         }
 
-        public static bool TryDowngrade(this BuffObjectData buffObjectData, GamePatch targetPatch)
+        public static bool TryDowngrade(
+            this BuffObjectData buffObjectData,
+            AdaptFileContext context)
         {
             try
             {
-                while (buffObjectData.GetMinimumPatch() > targetPatch)
+                while (buffObjectData.GetMinimumPatch() > context.TargetPatch.Patch)
                 {
-                    buffObjectData.DowngradeOnce();
+                    buffObjectData.DowngradeOnce(context);
                 }
 
                 return true;
@@ -185,7 +187,9 @@ namespace War3App.MapAdapter.Object
             }
         }
 
-        public static void DowngradeOnce(this BuffObjectData buffObjectData)
+        public static void DowngradeOnce(
+            this BuffObjectData buffObjectData,
+            AdaptFileContext context)
         {
             switch (buffObjectData.FormatVersion)
             {

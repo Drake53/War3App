@@ -31,20 +31,23 @@ namespace War3App.MapAdapter.Script
                 }
             }
 
-            status = mapCustomTextTriggers.TryDowngrade(mapTriggers, context.TargetPatch.Patch)
+            status = mapCustomTextTriggers.TryDowngrade(mapTriggers, context)
                 ? MapFileStatus.Compatible
                 : MapFileStatus.Incompatible;
 
             return status == MapFileStatus.Compatible;
         }
 
-        public static bool TryDowngrade(this MapCustomTextTriggers mapCustomTextTriggers, MapTriggers? mapTriggers, GamePatch targetPatch)
+        public static bool TryDowngrade(
+            this MapCustomTextTriggers mapCustomTextTriggers,
+            MapTriggers? mapTriggers,
+            AdaptFileContext context)
         {
             try
             {
-                while (mapCustomTextTriggers.GetMinimumPatch() > targetPatch)
+                while (mapCustomTextTriggers.GetMinimumPatch() > context.TargetPatch.Patch)
                 {
-                    mapCustomTextTriggers.DowngradeOnce(mapTriggers);
+                    mapCustomTextTriggers.DowngradeOnce(mapTriggers, context);
                 }
 
                 return true;
@@ -59,7 +62,10 @@ namespace War3App.MapAdapter.Script
             }
         }
 
-        public static void DowngradeOnce(this MapCustomTextTriggers mapCustomTextTriggers, MapTriggers? mapTriggers)
+        public static void DowngradeOnce(
+            this MapCustomTextTriggers mapCustomTextTriggers,
+            MapTriggers? mapTriggers,
+            AdaptFileContext context)
         {
             if (mapCustomTextTriggers.SubVersion.HasValue)
             {

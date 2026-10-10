@@ -15,20 +15,22 @@ namespace War3App.MapAdapter.Audio
                 return false;
             }
 
-            status = mapSounds.TryDowngrade(context.TargetPatch.Patch)
+            status = mapSounds.TryDowngrade(context)
                 ? MapFileStatus.Compatible
                 : MapFileStatus.Incompatible;
 
             return status == MapFileStatus.Compatible;
         }
 
-        public static bool TryDowngrade(this MapSounds mapSounds, GamePatch targetPatch)
+        public static bool TryDowngrade(
+            this MapSounds mapSounds,
+            AdaptFileContext context)
         {
             try
             {
-                while (mapSounds.GetMinimumPatch() > targetPatch)
+                while (mapSounds.GetMinimumPatch() > context.TargetPatch.Patch)
                 {
-                    mapSounds.DowngradeOnce();
+                    mapSounds.DowngradeOnce(context);
                 }
 
                 return true;
@@ -43,7 +45,9 @@ namespace War3App.MapAdapter.Audio
             }
         }
 
-        public static void DowngradeOnce(this MapSounds mapSounds)
+        public static void DowngradeOnce(
+            this MapSounds mapSounds,
+            AdaptFileContext context)
         {
             switch (mapSounds.FormatVersion)
             {

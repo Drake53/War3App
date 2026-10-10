@@ -124,7 +124,7 @@ namespace War3App.MapAdapter.Script
                 return false;
             }
 
-            if (mustDowngrade && !mapTriggers.TryDowngrade(context.TargetPatch.Patch))
+            if (mustDowngrade && !mapTriggers.TryDowngrade(context))
             {
                 status = MapFileStatus.Incompatible;
                 return false;
@@ -134,13 +134,15 @@ namespace War3App.MapAdapter.Script
             return true;
         }
 
-        public static bool TryDowngrade(this MapTriggers mapTriggers, GamePatch targetPatch)
+        public static bool TryDowngrade(
+            this MapTriggers mapTriggers,
+            AdaptFileContext context)
         {
             try
             {
-                while (mapTriggers.GetMinimumPatch() > targetPatch)
+                while (mapTriggers.GetMinimumPatch() > context.TargetPatch.Patch)
                 {
-                    mapTriggers.DowngradeOnce();
+                    mapTriggers.DowngradeOnce(context);
                 }
 
                 return true;
@@ -155,7 +157,9 @@ namespace War3App.MapAdapter.Script
             }
         }
 
-        public static void DowngradeOnce(this MapTriggers mapTriggers)
+        public static void DowngradeOnce(
+            this MapTriggers mapTriggers,
+            AdaptFileContext context)
         {
             if (mapTriggers.SubVersion.HasValue)
             {

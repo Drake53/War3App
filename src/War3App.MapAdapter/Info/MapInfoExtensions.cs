@@ -16,7 +16,7 @@ namespace War3App.MapAdapter.Info
                 return false;
             }
 
-            status = mapInfo.TryDowngrade(context.TargetPatch.Patch)
+            status = mapInfo.TryDowngrade(context)
                 ? MapFileStatus.Compatible
                 : MapFileStatus.Incompatible;
 
@@ -32,16 +32,18 @@ namespace War3App.MapAdapter.Info
             return gameBuilds.Count == 1 ? gameBuilds[0].GamePatch : null;
         }
 
-        public static bool TryDowngrade(this MapInfo mapInfo, GamePatch targetPatch)
+        public static bool TryDowngrade(
+            this MapInfo mapInfo,
+            AdaptFileContext context)
         {
             try
             {
-                while (mapInfo.GetMinimumPatch() > targetPatch)
+                while (mapInfo.GetMinimumPatch() > context.TargetPatch.Patch)
                 {
-                    mapInfo.DowngradeOnce();
+                    mapInfo.DowngradeOnce(context);
                 }
 
-                var targetGameBuild = GameBuildsProvider.GetGameBuilds(targetPatch)[0];
+                var targetGameBuild = GameBuildsProvider.GetGameBuilds(context.TargetPatch.Patch)[0];
 
                 mapInfo.EditorVersion = targetGameBuild.EditorVersion.Value;
                 if (mapInfo.FormatVersion >= MapInfoFormatVersion.v28)
@@ -57,7 +59,9 @@ namespace War3App.MapAdapter.Info
             }
         }
 
-        public static void DowngradeOnce(this MapInfo mapInfo)
+        public static void DowngradeOnce(
+            this MapInfo mapInfo,
+            AdaptFileContext context)
         {
             switch (mapInfo.FormatVersion)
             {

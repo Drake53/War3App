@@ -15,20 +15,22 @@ namespace War3App.MapAdapter.Widget
                 return false;
             }
 
-            status = mapUnits.TryDowngrade(context.TargetPatch.Patch)
+            status = mapUnits.TryDowngrade(context)
                 ? MapFileStatus.Compatible
                 : MapFileStatus.Incompatible;
 
             return status == MapFileStatus.Compatible;
         }
 
-        public static bool TryDowngrade(this MapUnits mapUnits, GamePatch targetPatch)
+        public static bool TryDowngrade(
+            this MapUnits mapUnits,
+            AdaptFileContext context)
         {
             try
             {
-                while (mapUnits.GetMinimumPatch() > targetPatch)
+                while (mapUnits.GetMinimumPatch() > context.TargetPatch.Patch)
                 {
-                    mapUnits.DowngradeOnce();
+                    mapUnits.DowngradeOnce(context);
                 }
 
                 return true;
@@ -43,7 +45,9 @@ namespace War3App.MapAdapter.Widget
             }
         }
 
-        public static void DowngradeOnce(this MapUnits mapUnits)
+        public static void DowngradeOnce(
+            this MapUnits mapUnits,
+            AdaptFileContext context)
         {
             if (mapUnits.UseNewFormat)
             {

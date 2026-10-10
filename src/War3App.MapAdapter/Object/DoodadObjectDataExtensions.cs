@@ -59,7 +59,7 @@ namespace War3App.MapAdapter.Object
 
             if (doodadObjectData.GetMinimumPatch() > context.TargetPatch.Patch)
             {
-                if (doodadObjectData.TryDowngrade(context.TargetPatch.Patch))
+                if (doodadObjectData.TryDowngrade(context))
                 {
                     isAdapted = true;
                 }
@@ -168,13 +168,15 @@ namespace War3App.MapAdapter.Object
             return isAdapted;
         }
 
-        public static bool TryDowngrade(this DoodadObjectData doodadObjectData, GamePatch targetPatch)
+        public static bool TryDowngrade(
+            this DoodadObjectData doodadObjectData,
+            AdaptFileContext context)
         {
             try
             {
-                while (doodadObjectData.GetMinimumPatch() > targetPatch)
+                while (doodadObjectData.GetMinimumPatch() > context.TargetPatch.Patch)
                 {
-                    doodadObjectData.DowngradeOnce();
+                    doodadObjectData.DowngradeOnce(context);
                 }
 
                 return true;
@@ -185,7 +187,9 @@ namespace War3App.MapAdapter.Object
             }
         }
 
-        public static void DowngradeOnce(this DoodadObjectData doodadObjectData)
+        public static void DowngradeOnce(
+            this DoodadObjectData doodadObjectData,
+            AdaptFileContext context)
         {
             switch (doodadObjectData.FormatVersion)
             {
