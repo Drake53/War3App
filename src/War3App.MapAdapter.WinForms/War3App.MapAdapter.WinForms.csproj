@@ -5,7 +5,7 @@
     <TargetFrameworks>$(TfmGroupDotNetWindowsOnly)</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
     <OutputType>WinExe</OutputType>
-    <Version>1.6.2</Version>
+    <Version>$(MapAdapterVersion)</Version>
   </PropertyGroup>
 
   <ItemGroup>

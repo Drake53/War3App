@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>$(TfmGroupDotNet)</TargetFrameworks>
-    <Version>1.6.2</Version>
+    <Version>$(MapAdapterVersion)</Version>
   </PropertyGroup>
 
   <ItemGroup>

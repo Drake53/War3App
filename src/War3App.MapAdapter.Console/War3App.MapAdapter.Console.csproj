@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>$(TfmGroupDotNet)</TargetFrameworks>
     <OutputType>Exe</OutputType>
+    <Version>$(MapAdapterVersion)</Version>
   </PropertyGroup>
 
   <ItemGroup>

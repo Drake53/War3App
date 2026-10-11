@@ -25,9 +25,9 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Get version from csproj
+    - name: Get version from Directory.Build.props
       run: |
-        VERSION=$(grep '<Version>' src/War3App.MapAdapter/War3App.MapAdapter.csproj | cut -d'>' -f2 | cut -d'<' -f1)
+        VERSION=$(grep '<MapAdapterVersion>' Directory.Build.props | cut -d'>' -f2 | cut -d'<' -f1)
         echo "VERSION=$VERSION" >> $GITHUB_ENV
         if [ "${{ github.ref_name }}" != "master" ]; then
           VERSION_SUFFIX="-${{ github.ref_name }}"

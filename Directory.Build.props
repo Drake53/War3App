@@ -19,5 +19,6 @@
     <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
     <TfmGroupDotNet>net6.0;net10.0</TfmGroupDotNet>
     <TfmGroupDotNetWindowsOnly>net6.0-windows;net10.0-windows</TfmGroupDotNetWindowsOnly>
+    <MapAdapterVersion>1.7.0</MapAdapterVersion>
   </PropertyGroup>
 </Project>
