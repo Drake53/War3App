@@ -49,7 +49,12 @@ namespace War3App.MapAdapter.Widget
             this MapUnits mapUnits,
             AdaptFileContext context)
         {
-            if (mapUnits.UseNewFormat)
+            if (mapUnits.FormatVersion == MapWidgetsFormatVersion.v12 ||
+                mapUnits.FormatVersion == MapWidgetsFormatVersion.v13)
+            {
+                mapUnits.FormatVersion = MapWidgetsFormatVersion.v8;
+            }
+            else if (mapUnits.UseNewFormat)
             {
                 mapUnits.UseNewFormat = false;
             }
@@ -62,6 +67,12 @@ namespace War3App.MapAdapter.Widget
 
         public static GamePatch GetMinimumPatch(this MapUnits mapUnits)
         {
+            if (mapUnits.FormatVersion == MapWidgetsFormatVersion.v12 ||
+                mapUnits.FormatVersion == MapWidgetsFormatVersion.v13)
+            {
+                return GamePatch.v3_0_0;
+            }
+
             if (mapUnits.UseNewFormat)
             {
                 return GamePatch.v1_32_0;

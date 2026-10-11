@@ -61,6 +61,10 @@ namespace War3App.MapAdapter.Info
         {
             switch (campaignInfo.FormatVersion)
             {
+                case CampaignInfoFormatVersion.v3:
+                    campaignInfo.FormatVersion = CampaignInfoFormatVersion.v2;
+                    break;
+
                 case CampaignInfoFormatVersion.v2:
                     campaignInfo.BackgroundVersion = CampaignBackgroundVersion.Default;
                     campaignInfo.FormatVersion = CampaignInfoFormatVersion.v1;
@@ -77,6 +81,7 @@ namespace War3App.MapAdapter.Info
             {
                 CampaignInfoFormatVersion.v1 => GamePatch.v1_00,
                 CampaignInfoFormatVersion.v2 => GamePatch.v2_0_3,
+                CampaignInfoFormatVersion.v3 => GamePatch.v3_0_0,
             };
         }
     }

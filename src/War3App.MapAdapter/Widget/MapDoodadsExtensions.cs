@@ -49,7 +49,17 @@ namespace War3App.MapAdapter.Widget
             this MapDoodads mapDoodads,
             AdaptFileContext context)
         {
-            if (mapDoodads.UseNewFormat)
+            if (mapDoodads.FormatVersion == MapWidgetsFormatVersion.v12 ||
+                mapDoodads.FormatVersion == MapWidgetsFormatVersion.v13)
+            {
+                foreach (var doodad in mapDoodads.Doodads)
+                {
+                    doodad.State &= ~DoodadState.Flag7;
+                }
+
+                mapDoodads.FormatVersion = MapWidgetsFormatVersion.v8;
+            }
+            else if (mapDoodads.UseNewFormat)
             {
                 mapDoodads.UseNewFormat = false;
             }
@@ -62,6 +72,12 @@ namespace War3App.MapAdapter.Widget
 
         public static GamePatch GetMinimumPatch(this MapDoodads mapDoodads)
         {
+            if (mapDoodads.FormatVersion == MapWidgetsFormatVersion.v12 ||
+                mapDoodads.FormatVersion == MapWidgetsFormatVersion.v13)
+            {
+                return GamePatch.v3_0_0;
+            }
+
             if (mapDoodads.UseNewFormat)
             {
                 return GamePatch.v1_32_0;

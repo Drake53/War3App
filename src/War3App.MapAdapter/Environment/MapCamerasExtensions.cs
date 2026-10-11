@@ -49,7 +49,11 @@ namespace War3App.MapAdapter.Environment
             this MapCameras mapCameras,
             AdaptFileContext context)
         {
-            if (mapCameras.UseNewFormat)
+            if (mapCameras.FormatVersion == MapCamerasFormatVersion.v3)
+            {
+                mapCameras.FormatVersion = MapCamerasFormatVersion.v0;
+            }
+            else if (mapCameras.UseNewFormat)
             {
                 mapCameras.UseNewFormat = false;
             }
@@ -61,6 +65,11 @@ namespace War3App.MapAdapter.Environment
 
         public static GamePatch GetMinimumPatch(this MapCameras mapCameras)
         {
+            if (mapCameras.FormatVersion == MapCamerasFormatVersion.v3)
+            {
+                return GamePatch.v3_0_0;
+            }
+
             return mapCameras.UseNewFormat && mapCameras.Cameras.Count > 0 ? GamePatch.v1_31_0 : GamePatch.v1_00;
         }
     }

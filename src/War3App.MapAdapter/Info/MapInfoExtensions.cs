@@ -65,6 +65,12 @@ namespace War3App.MapAdapter.Info
         {
             switch (mapInfo.FormatVersion)
             {
+                case MapInfoFormatVersion.v39:
+                    mapInfo.MapFlags &= ~(MapFlags.HasWaterColorHD | MapFlags.HasAlphaTileDefaultMinimapColor | MapFlags.DynamicMinimap);
+                    mapInfo.SupportedModes &= ~SupportedModes.DE;
+                    mapInfo.FormatVersion = MapInfoFormatVersion.v33;
+                    break;
+
                 case MapInfoFormatVersion.v32:
                 case MapInfoFormatVersion.v33:
                     mapInfo.MapFlags &= ~(MapFlags.DisableDenyIcon | MapFlags.ForceDefaultCameraZoom | MapFlags.ForceMaxCameraZoom | MapFlags.ForceMinCameraZoom);
@@ -115,6 +121,7 @@ namespace War3App.MapAdapter.Info
                 MapInfoFormatVersion.v28 => GamePatch.v1_31_0,
                 MapInfoFormatVersion.v31 => GamePatch.v1_32_0,
                 MapInfoFormatVersion.v33 => GamePatch.v2_0_3,
+                MapInfoFormatVersion.v39 => GamePatch.v3_0_0,
 
                 MapInfoFormatVersion.v8 => GamePatch.v1_00,
                 MapInfoFormatVersion.v10 => GamePatch.v1_00,
