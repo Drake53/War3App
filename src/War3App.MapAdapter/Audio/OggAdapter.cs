@@ -26,7 +26,9 @@ namespace War3App.MapAdapter.Audio
 
         public AdaptResult AdaptFile(Stream stream, AdaptFileContext context)
         {
-            if (context.TargetPatch.Patch < GamePatch.v1_30_0 || context.TargetPatch.Patch > GamePatch.v1_30_4)
+            if (context.TargetPatch.Patch < GamePatch.v1_30_0 ||
+                (context.TargetPatch.Patch > GamePatch.v1_30_4 &&
+                 context.TargetPatch.Patch < GamePatch.v3_0_0))
             {
                 context.ReportDiagnostic(DiagnosticRule.Ogg.NotSupported);
 
