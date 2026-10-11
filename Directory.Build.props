@@ -20,6 +20,6 @@
     <TfmGroupDotNet>net6.0;net10.0</TfmGroupDotNet>
     <TfmGroupDotNetLinux>net10.0</TfmGroupDotNetLinux>
     <TfmGroupDotNetWindowsOnly>net6.0-windows;net10.0-windows</TfmGroupDotNetWindowsOnly>
-    <MapAdapterVersion>1.7.0</MapAdapterVersion>
+    <MapAdapterVersion>1.7.1</MapAdapterVersion>
   </PropertyGroup>
 </Project>
