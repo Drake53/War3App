@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>$(TfmGroupDotNet)</TargetFrameworks>
+    <TargetFrameworks>$(TfmGroupDotNetLinux)</TargetFrameworks>
     <OutputType>WinExe</OutputType>
     <Version>$(MapAdapterVersion)</Version>
   </PropertyGroup>
