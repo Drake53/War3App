@@ -37,13 +37,19 @@ jobs:
         echo "VERSION_SUFFIX=$VERSION_SUFFIX" >> $GITHUB_ENV
 
     - name: Publish project (windows forms)
-      run: dotnet publish src/War3App.MapAdapter.WinForms/War3App.MapAdapter.WinForms.csproj -c Release -r win-x64 --self-contained false -p:SelfContained=false -o ./artifacts/map-adapter-winforms
+      run: dotnet publish src/War3App.MapAdapter.WinForms/War3App.MapAdapter.WinForms.csproj -c Release -f net10.0-windows -r win-x64 --self-contained false -p:SelfContained=false -o ./artifacts/map-adapter-winforms
 
     - name: Create zip (windows forms)
       run: cd ./artifacts/map-adapter-winforms && zip -r ../MapAdapter-Windows-v${{ env.VERSION }}.zip .
 
+    - name: Publish project (windows forms legacy)
+      run: dotnet publish src/War3App.MapAdapter.WinForms/War3App.MapAdapter.WinForms.csproj -c Release -f net6.0-windows -r win-x64 --self-contained false -p:SelfContained=false -o ./artifacts/map-adapter-winforms-legacy
+
+    - name: Create zip (windows forms legacy)
+      run: cd ./artifacts/map-adapter-winforms-legacy && zip -r ../MapAdapter-Windows-Legacy-v${{ env.VERSION }}.zip .
+
     - name: Publish project (eto forms gtk)
-      run: dotnet publish src/War3App.MapAdapter.EtoForms.Gtk/War3App.MapAdapter.EtoForms.Gtk.csproj -c Release -r linux-x64 --self-contained false -p:SelfContained=false -o ./artifacts/map-adapter-etoforms-gtk
+      run: dotnet publish src/War3App.MapAdapter.EtoForms.Gtk/War3App.MapAdapter.EtoForms.Gtk.csproj -c Release -f net10.0 -r linux-x64 --self-contained false -p:SelfContained=false -o ./artifacts/map-adapter-etoforms-gtk
 
     - name: Create zip (eto forms gtk)
       run: cd ./artifacts/map-adapter-etoforms-gtk && zip -r ../MapAdapter-Linux-v${{ env.VERSION }}.zip .
@@ -55,5 +61,6 @@ jobs:
         tag_name: mapadapter-v${{ env.VERSION }}${{ env.VERSION_SUFFIX }}
         files: |
           ./artifacts/MapAdapter-Windows-v${{ env.VERSION }}.zip
+          ./artifacts/MapAdapter-Windows-Legacy-v${{ env.VERSION }}.zip
           ./artifacts/MapAdapter-Linux-v${{ env.VERSION }}.zip
         draft: ${{ github.ref_name != 'master' }}
