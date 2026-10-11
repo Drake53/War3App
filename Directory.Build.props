@@ -2,6 +2,10 @@
   <ItemGroup Condition="'$(PUBLISH)'=='true'">
     <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
   </ItemGroup>
+  <ItemGroup Condition="'$(PUBLISH)'!='true'">
+    <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).config/analyzers/CA.globalconfig" />
+    <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).config/analyzers/IDE.globalconfig" />
+  </ItemGroup>
   <PropertyGroup Condition="'$(PUBLISH)'!='true'">
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <AnalysisLevel>5</AnalysisLevel>
