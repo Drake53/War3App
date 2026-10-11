@@ -135,6 +135,10 @@ namespace War3App.MapAdapter.Script
                     {
                         RegisterVariableDeclarator(globalVariableDeclaration.Declarator, true, context);
                     }
+                    else if (global is JassGlobalConstantDeclarationSyntax globalConstantDeclaration)
+                    {
+                        RegisterConstant(globalConstantDeclaration, context);
+                    }
                 }
             }
             else if (declaration is JassNativeFunctionDeclarationSyntax nativeFunctionDeclaration)
@@ -202,6 +206,21 @@ namespace War3App.MapAdapter.Script
                 {
                     context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationConflictingVariableName, declarator.GetIdentifierName(), "local");
                 }
+            }
+        }
+
+        private static void RegisterConstant(JassGlobalConstantDeclarationSyntax globalConstantDeclaration, JassMapScriptAdapterContext context)
+        {
+            if (!context.KnownTypes.ContainsKey(globalConstantDeclaration.Type.GetToken().Text))
+            {
+                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationUnknownType, globalConstantDeclaration.Type, globalConstantDeclaration.IdentifierName);
+            }
+
+            RegisterExpression(globalConstantDeclaration.Value.Expression, context);
+
+            if (!context.KnownGlobalVariables.TryAdd(globalConstantDeclaration.IdentifierName.Token.Text, globalConstantDeclaration.Type.GetToken().Text))
+            {
+                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.VariableDeclarationConflictingVariableName, globalConstantDeclaration.IdentifierName, "global");
             }
         }
 

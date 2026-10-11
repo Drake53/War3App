@@ -20,12 +20,12 @@ namespace War3App.MapAdapter.Script
                 context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.SetStatementUnknownVariableIdentifier, setStatement.IdentifierName);
             }
 
-            if (TryAdaptExpression(context, setStatement.ElementAccessClause.Expression, out var adaptedElementAccessExpression) |
+            if (TryAdaptElementAccessClause(context, setStatement.ElementAccessClause, out var adaptedElementAccessClause) |
                 TryAdaptEqualsValueClause(context, setStatement.Value, out var adaptedValue))
             {
                 adaptedSetStatement = JassSyntaxFactory.SetStatement(
                     setStatement.IdentifierName,
-                    adaptedElementAccessExpression ?? setStatement.ElementAccessClause.Expression,
+                    adaptedElementAccessClause ?? setStatement.ElementAccessClause,
                     adaptedValue ?? setStatement.Value);
 
                 return true;
