@@ -31,7 +31,7 @@ namespace War3App.Common.WinForms
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
         }
 
-        [Description("If it's empty, % will be shown"), Category("Additional Options"), Browsable(true), EditorBrowsable(EditorBrowsableState.Always)]
+        [Description("If it's empty, % will be shown"), Category("Additional Options"), Browsable(true), EditorBrowsable(EditorBrowsableState.Always), DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
         public string CustomText
         {
             get => _text;
@@ -42,7 +42,7 @@ namespace War3App.Common.WinForms
             }
         }
 
-        [Category("Additional Options"), Browsable(true), EditorBrowsable(EditorBrowsableState.Always)]
+        [Category("Additional Options"), Browsable(true), EditorBrowsable(EditorBrowsableState.Always), DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
         public Color ProgressColor
         {
             get => _progressColourBrush.Color;
@@ -53,7 +53,7 @@ namespace War3App.Common.WinForms
             }
         }
 
-        [Category("Additional Options")]
+        [Category("Additional Options"), DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
         public Color TextColor
         {
             get => _textColourBrush.Color;
@@ -64,14 +64,14 @@ namespace War3App.Common.WinForms
             }
         }
 
-        [Description("Font of the text on ProgressBar"), Category("Additional Options")]
+        [Description("Font of the text on ProgressBar"), Category("Additional Options"), DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
         public Font TextFont
         {
             get => _textFont;
             set => _textFont = value;
         }
 
-        [Category("Additional Options"), Browsable(true)]
+        [Category("Additional Options"), Browsable(true), DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
         public ProgressBarDisplayMode VisualMode
         {
             get => _visualMode;
