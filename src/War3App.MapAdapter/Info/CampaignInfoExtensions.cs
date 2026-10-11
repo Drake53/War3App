@@ -62,6 +62,7 @@ namespace War3App.MapAdapter.Info
             switch (campaignInfo.FormatVersion)
             {
                 case CampaignInfoFormatVersion.v3:
+                    campaignInfo.CampaignFlags &= ~CampaignFlags.UseMapMinimap;
                     campaignInfo.FormatVersion = CampaignInfoFormatVersion.v2;
                     break;
 
