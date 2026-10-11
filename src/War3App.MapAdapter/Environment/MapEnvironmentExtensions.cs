@@ -1,4 +1,7 @@
-﻿using War3Net.Build.Common;
+﻿using System;
+using System.Linq;
+
+using War3Net.Build.Common;
 using War3Net.Build.Environment;
 
 namespace War3App.MapAdapter.Environment
@@ -29,6 +32,21 @@ namespace War3App.MapAdapter.Environment
                 while (mapEnvironment.GetMinimumPatch() > context.TargetPatch.Patch)
                 {
                     mapEnvironment.DowngradeOnce(context);
+                }
+
+                if (EnumSupport.GetMinimumPatch(mapEnvironment.Tileset) > context.TargetPatch.Patch)
+                {
+                    throw new NotSupportedException("Cannot downgrade, because the map uses an unsupported tileset.");
+                }
+
+                if (mapEnvironment.TerrainTypes.Any(terrainType => EnumSupport.GetMinimumPatch(terrainType) > context.TargetPatch.Patch))
+                {
+                    throw new NotSupportedException("Cannot downgrade, because the map uses one or more unsupported terrain types.");
+                }
+
+                if (mapEnvironment.CliffTypes.Any(cliffType => EnumSupport.GetMinimumPatch(cliffType) > context.TargetPatch.Patch))
+                {
+                    throw new NotSupportedException("Cannot downgrade, because the map uses one or more unsupported cliff types.");
                 }
 
                 return true;

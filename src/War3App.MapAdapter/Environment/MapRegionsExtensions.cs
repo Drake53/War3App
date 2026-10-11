@@ -1,4 +1,7 @@
-﻿using War3Net.Build.Common;
+﻿using System;
+using System.Linq;
+
+using War3Net.Build.Common;
 using War3Net.Build.Environment;
 
 namespace War3App.MapAdapter.Environment
@@ -29,6 +32,11 @@ namespace War3App.MapAdapter.Environment
                 while (mapRegions.GetMinimumPatch() > context.TargetPatch.Patch)
                 {
                     mapRegions.DowngradeOnce(context);
+                }
+
+                if (mapRegions.Regions.Any(region => EnumSupport.GetMinimumPatch(region.WeatherType) > context.TargetPatch.Patch))
+                {
+                    throw new NotSupportedException("Cannot downgrade, because one or more regions use an unsupported weather type.");
                 }
 
                 return true;

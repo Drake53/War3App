@@ -51,6 +51,21 @@ namespace War3App.MapAdapter.Info
                     mapInfo.GameVersion = targetGameBuild.Version;
                 }
 
+                if (EnumSupport.GetMinimumPatch(mapInfo.Tileset) > context.TargetPatch.Patch)
+                {
+                    throw new NotSupportedException("Cannot downgrade, because the map uses an unsupported tileset.");
+                }
+
+                if (EnumSupport.GetMinimumPatch(mapInfo.FogStyle) > context.TargetPatch.Patch)
+                {
+                    throw new NotSupportedException("Cannot downgrade, because the map uses an unsupported fog style.");
+                }
+
+                if (EnumSupport.GetMinimumPatch(mapInfo.GlobalWeather) > context.TargetPatch.Patch)
+                {
+                    throw new NotSupportedException("Cannot downgrade, because the map uses an unsupported weather type.");
+                }
+
                 return true;
             }
             catch
@@ -87,7 +102,7 @@ namespace War3App.MapAdapter.Info
                 case MapInfoFormatVersion.v28:
                     if (mapInfo.ScriptLanguage == ScriptLanguage.Lua)
                     {
-                        throw new NotSupportedException("Cannot downgrade, because map is set to use Lua as script language.");
+                        throw new NotSupportedException("Cannot downgrade, because the map is set to use Lua as script language.");
                     }
 
                     mapInfo.GameVersion = null;

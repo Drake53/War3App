@@ -1,4 +1,6 @@
-﻿using War3App.MapAdapter.Extensions;
+﻿using System;
+
+using War3App.MapAdapter.Extensions;
 
 using War3Net.Build.Common;
 using War3Net.Build.Info;
@@ -45,6 +47,16 @@ namespace War3App.MapAdapter.Info
                 while (campaignInfo.GetMinimumPatch() > context.TargetPatch.Patch)
                 {
                     campaignInfo.DowngradeOnce(context);
+                }
+
+                if (EnumSupport.GetMinimumPatch(campaignInfo.FogStyle) > context.TargetPatch.Patch)
+                {
+                    throw new NotSupportedException("Cannot downgrade, because the campaign uses an unsupported fog style.");
+                }
+
+                if (EnumSupport.GetMinimumPatch(campaignInfo.Race) > context.TargetPatch.Patch)
+                {
+                    throw new NotSupportedException("Cannot downgrade, because the campaign uses an unsupported race.");
                 }
 
                 return true;
