@@ -118,16 +118,16 @@
                 Description = "Invocation of function '{0}' should be removed.",
             };
 
-            public static readonly DiagnosticDescriptor InvocationBlzCreateWithSkinIdRemoved = new()
+            public static readonly DiagnosticDescriptor InvocationParameterRemoved = new()
             {
                 Severity = DiagnosticSeverity.Info,
-                Description = "Function invocation '{0}' changed to '{1}' by removing the skinId parameter.",
+                Description = "Function invocation '{0}' changed to '{1}' by removing the redundant {2} parameter.",
             };
 
-            public static readonly DiagnosticDescriptor InvocationBlzCreateWithSkinIdDeleted = new()
+            public static readonly DiagnosticDescriptor InvocationParameterDeleted = new()
             {
                 Severity = DiagnosticSeverity.Warning,
-                Description = "Function invocation '{0}' changed to '{1}' by deleting the skinId parameter {2}, which is different from the typeId {3}.",
+                Description = "Function invocation '{0}' changed to '{1}' by deleting the {2} parameter {3}.",
             };
         }
 

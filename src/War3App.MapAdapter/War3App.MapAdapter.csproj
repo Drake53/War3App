@@ -11,4 +11,8 @@
     <PackageReference Include="War3Net.Build.Core" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\vendor\common.j" LogicalName="vendor/common.j" />
+  </ItemGroup>
+
 </Project>

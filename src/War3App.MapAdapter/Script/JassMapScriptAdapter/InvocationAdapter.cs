@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Linq;
 
 using War3App.MapAdapter.Diagnostics;
 
@@ -11,6 +14,55 @@ namespace War3App.MapAdapter.Script
 {
     public partial class JassMapScriptAdapter
     {
+        private const string FallbackNativeFunctionDeclarationsResourceName = "vendor/common.j";
+
+        private static readonly Dictionary<string, string> FallbackFunctionNames = new(StringComparer.Ordinal)
+        {
+            ["BlzCreateItemWithSkin"] = "CreateItem",
+            ["BlzCreateUnitWithSkin"] = "CreateUnit",
+
+            ["BlzCreateDestructableWithSkin"] = "CreateDestructable",
+            ["BlzCreateDestructablePitchRoll"] = "CreateDestructable",
+            ["BlzCreateDestructableWithColor"] = "CreateDestructable",
+            ["BlzCreateDestructableWithSkinPitchRoll"] = "BlzCreateDestructableWithSkin",
+            ["BlzCreateDestructableWithSkinColor"] = "BlzCreateDestructableWithSkin",
+            ["BlzCreateDestructablePitchRollWithColor"] = "BlzCreateDestructablePitchRoll",
+            ["BlzCreateDestructableWithSkinPitchRollColor"] = "BlzCreateDestructableWithSkinPitchRoll",
+
+            ["BlzCreateDestructableZWithSkin"] = "CreateDestructableZ",
+            ["BlzCreateDestructableZPitchRoll"] = "CreateDestructableZ",
+            ["BlzCreateDestructableZWithColor"] = "CreateDestructableZ",
+            ["BlzCreateDestructableZWithSkinPitchRoll"] = "BlzCreateDestructableZWithSkin",
+            ["BlzCreateDestructableZWithSkinColor"] = "BlzCreateDestructableZWithSkin",
+            ["BlzCreateDestructableZPitchRollWithColor"] = "BlzCreateDestructableZPitchRoll",
+            ["BlzCreateDestructableZWithSkinPitchRollColor"] = "BlzCreateDestructableZWithSkinPitchRoll",
+
+            ["BlzCreateDeadDestructableWithSkin"] = "CreateDeadDestructable",
+            ["BlzCreateDeadDestructablePitchRoll"] = "CreateDeadDestructable",
+            ["BlzCreateDeadDestructableWithColor"] = "CreateDeadDestructable",
+            ["BlzCreateDeadDestructableWithSkinPitchRoll"] = "BlzCreateDeadDestructableWithSkin",
+            ["BlzCreateDeadDestructableWithSkinColor"] = "BlzCreateDeadDestructableWithSkin",
+            ["BlzCreateDeadDestructablePitchRollWithColor"] = "BlzCreateDeadDestructablePitchRoll",
+            ["BlzCreateDeadDestructableWithSkinPitchRollColor"] = "BlzCreateDeadDestructableWithSkinPitchRoll",
+
+            ["BlzCreateDeadDestructableZWithSkin"] = "CreateDeadDestructableZ",
+            ["BlzCreateDeadDestructableZPitchRoll"] = "CreateDeadDestructableZ",
+            ["BlzCreateDeadDestructableZWithColor"] = "CreateDeadDestructableZ",
+            ["BlzCreateDeadDestructableZWithSkinPitchRoll"] = "BlzCreateDeadDestructableZWithSkin",
+            ["BlzCreateDeadDestructableZWithSkinColor"] = "BlzCreateDeadDestructableZWithSkin",
+            ["BlzCreateDeadDestructableZPitchRollWithColor"] = "BlzCreateDeadDestructableZPitchRoll",
+            ["BlzCreateDeadDestructableZWithSkinPitchRollColor"] = "BlzCreateDeadDestructableZWithSkinPitchRoll",
+        };
+
+        private static readonly Dictionary<string, JassNativeFunctionDeclarationSyntax> FallbackNativeFunctionDeclarations = LoadFallbackNativeFunctionDeclarations();
+
+        private static readonly HashSet<string> TypeIdParameterNames = new(StringComparer.Ordinal)
+        {
+            "itemid",
+            "unitid",
+            "objectid",
+        };
+
         private bool TryAdaptInvocation(
             JassMapScriptAdapterContext context,
             string invocationName,
@@ -27,29 +79,9 @@ namespace War3App.MapAdapter.Script
             }
             else
             {
-                if (string.Equals(invocationName, "BlzCreateItemWithSkin", StringComparison.Ordinal))
+                if (FallbackNativeFunctionDeclarations.TryGetValue(invocationName, out var nativeFunctionDeclaration))
                 {
-                    return TryAdaptBlzCreateInvocation(context, invocationName, invocationArguments, out adaptedInvocationName, out adaptedInvocationArguments, "CreateItem", 4, 0, 3);
-                }
-                else if (string.Equals(invocationName, "BlzCreateUnitWithSkin", StringComparison.Ordinal))
-                {
-                    return TryAdaptBlzCreateInvocation(context, invocationName, invocationArguments, out adaptedInvocationName, out adaptedInvocationArguments, "CreateUnit", 6, 1, 5);
-                }
-                else if (string.Equals(invocationName, "BlzCreateDestructableWithSkin", StringComparison.Ordinal))
-                {
-                    return TryAdaptBlzCreateInvocation(context, invocationName, invocationArguments, out adaptedInvocationName, out adaptedInvocationArguments, "CreateDestructable", 7, 0, 6);
-                }
-                else if (string.Equals(invocationName, "BlzCreateDestructableZWithSkin", StringComparison.Ordinal))
-                {
-                    return TryAdaptBlzCreateInvocation(context, invocationName, invocationArguments, out adaptedInvocationName, out adaptedInvocationArguments, "CreateDestructableZ", 8, 0, 7);
-                }
-                else if (string.Equals(invocationName, "BlzCreateDeadDestructableWithSkin", StringComparison.Ordinal))
-                {
-                    return TryAdaptBlzCreateInvocation(context, invocationName, invocationArguments, out adaptedInvocationName, out adaptedInvocationArguments, "CreateDeadDestructable", 7, 0, 6);
-                }
-                else if (string.Equals(invocationName, "BlzCreateDeadDestructableZWithSkin", StringComparison.Ordinal))
-                {
-                    return TryAdaptBlzCreateInvocation(context, invocationName, invocationArguments, out adaptedInvocationName, out adaptedInvocationArguments, "CreateDeadDestructableZ", 8, 0, 7);
+                    return TryAdaptFallbackInvocation(context, nativeFunctionDeclaration, invocationArguments, out adaptedInvocationName, out adaptedInvocationArguments);
                 }
                 else if (string.Equals(invocationName, "SetSoundFacialAnimationLabel", StringComparison.Ordinal))
                 {
@@ -172,54 +204,102 @@ namespace War3App.MapAdapter.Script
             return false;
         }
 
-        private bool TryAdaptBlzCreateInvocation(
+        private bool TryAdaptFallbackInvocation(
             JassMapScriptAdapterContext context,
-            string invocationName,
+            JassNativeFunctionDeclarationSyntax nativeFunctionDeclaration,
             JassArgumentListSyntax invocationArguments,
             [NotNullWhen(true)] out string? adaptedInvocationName,
-            [NotNullWhen(true)] out JassArgumentListSyntax? adaptedInvocationArguments,
-            string replacementFunctionName,
-            int expectedArgumentCount,
-            int typeIdArgumentIndex,
-            int skinIdArgumentIndex)
+            [NotNullWhen(true)] out JassArgumentListSyntax? adaptedInvocationArguments)
         {
-            if (invocationArguments.ArgumentList.Items.Length == expectedArgumentCount)
+            var invocationName = nativeFunctionDeclaration.IdentifierName.Token.Text;
+            var parameters = nativeFunctionDeclaration.ParameterList.GetParameters().ToArray();
+            var arguments = invocationArguments.ArgumentList.Items;
+            if (arguments.Length != parameters.Length)
             {
-                var typeId = invocationArguments.ArgumentList.Items[typeIdArgumentIndex];
-                var skinId = invocationArguments.ArgumentList.Items[skinIdArgumentIndex];
-
-                if (typeId.NullableEquivalentTo(skinId))
-                {
-                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationBlzCreateWithSkinIdRemoved, invocationName, replacementFunctionName);
-                }
-                else
-                {
-                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationBlzCreateWithSkinIdDeleted, invocationName, replacementFunctionName, skinId, typeId);
-                }
-
-                var arguments = new JassExpressionSyntax[expectedArgumentCount - 1];
-                for (var i = 0; i < expectedArgumentCount; i++)
-                {
-                    if (i == skinIdArgumentIndex)
-                    {
-                        continue;
-                    }
-
-                    arguments[i > skinIdArgumentIndex ? i - 1 : i] = invocationArguments.ArgumentList.Items[i];
-                }
-
-                adaptedInvocationName = replacementFunctionName;
-                adaptedInvocationArguments = JassSyntaxFactory.ArgumentList(arguments);
-                return true;
-            }
-            else
-            {
-                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationParameterCountMismatch, invocationName, expectedArgumentCount, invocationArguments.ArgumentList.Items.Length);
+                context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationParameterCountMismatch, invocationName, parameters.Length, arguments.Length);
 
                 adaptedInvocationName = null;
                 adaptedInvocationArguments = null;
                 return false;
             }
+
+            var fallbackNativeFunctionDeclaration = nativeFunctionDeclaration;
+            do
+            {
+                if (!FallbackFunctionNames.TryGetValue(fallbackNativeFunctionDeclaration.IdentifierName.Token.Text, out var nextFallbackFunctionName) ||
+                    !FallbackNativeFunctionDeclarations.TryGetValue(nextFallbackFunctionName, out fallbackNativeFunctionDeclaration))
+                {
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationUnknownFunctionIdentifier, invocationName, "call statement or invocation expression");
+
+                    adaptedInvocationName = null;
+                    adaptedInvocationArguments = null;
+                    return false;
+                }
+            }
+            while (!context.KnownFunctions.ContainsKey(fallbackNativeFunctionDeclaration.IdentifierName.Token.Text));
+
+            var fallbackFunctionName = fallbackNativeFunctionDeclaration.IdentifierName.Token.Text;
+
+            var argumentsByParameterName = new Dictionary<string, JassExpressionSyntax>(StringComparer.Ordinal);
+            for (var i = 0; i < parameters.Length; i++)
+            {
+                argumentsByParameterName.Add(parameters[i].IdentifierName.Token.Text, arguments[i]);
+            }
+
+            var fallbackParameterNames = fallbackNativeFunctionDeclaration.ParameterList.GetParameters()
+                .Select(parameter => parameter.IdentifierName.Token.Text)
+                .ToArray();
+
+            var adaptedArguments = fallbackParameterNames
+                .Select(parameterName => argumentsByParameterName[parameterName])
+                .ToArray();
+
+            for (var i = 0; i < parameters.Length; i++)
+            {
+                var parameterName = parameters[i].IdentifierName.Token.Text;
+                if (fallbackParameterNames.Contains(parameterName, StringComparer.Ordinal))
+                {
+                    continue;
+                }
+
+                var argument = arguments[i];
+                if (string.Equals(parameterName, "skinId", StringComparison.Ordinal) &&
+                    argumentsByParameterName.Any(parameterArgument => TypeIdParameterNames.Contains(parameterArgument.Key) && parameterArgument.Value.NullableEquivalentTo(argument)))
+                {
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationParameterRemoved, invocationName, fallbackFunctionName, parameterName);
+                }
+                else
+                {
+                    context.AdaptFileContext.ReportDiagnostic(DiagnosticRule.MapScript.InvocationParameterDeleted, invocationName, fallbackFunctionName, parameterName, argument);
+                }
+            }
+
+            adaptedInvocationName = fallbackFunctionName;
+            adaptedInvocationArguments = JassSyntaxFactory.ArgumentList(adaptedArguments);
+            return true;
+        }
+
+        private static Dictionary<string, JassNativeFunctionDeclarationSyntax> LoadFallbackNativeFunctionDeclarations()
+        {
+            using var stream = typeof(JassMapScriptAdapter).Assembly.GetManifestResourceStream(FallbackNativeFunctionDeclarationsResourceName);
+            if (stream is null)
+            {
+                throw new InvalidOperationException($"Embedded resource '{FallbackNativeFunctionDeclarationsResourceName}' not found.");
+            }
+
+            using var reader = new StreamReader(stream);
+            var compilationUnit = JassSyntaxFactory.ParseCompilationUnit(reader.ReadToEnd());
+
+            var nativeFunctionDeclarations = new Dictionary<string, JassNativeFunctionDeclarationSyntax>(StringComparer.Ordinal);
+            foreach (var declaration in compilationUnit.Declarations)
+            {
+                if (declaration is JassNativeFunctionDeclarationSyntax nativeFunctionDeclaration)
+                {
+                    nativeFunctionDeclarations.Add(nativeFunctionDeclaration.IdentifierName.Token.Text, nativeFunctionDeclaration);
+                }
+            }
+
+            return nativeFunctionDeclarations;
         }
     }
 }
