@@ -1,4 +1,6 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 using War3Net.CodeAnalysis.Jass;
 using War3Net.CodeAnalysis.Jass.Extensions;
@@ -17,9 +19,25 @@ namespace War3App.MapAdapter.Script
             {
                 if (string.IsNullOrEmpty(adaptedInvocationName))
                 {
-                    adaptedCallStatement = JassSyntaxFactory.CallStatement("DoNothing")
-                        .WithTrailingTrivia(JassSyntaxFactory.SyntaxTriviaList(
-                            JassSyntaxFactory.SingleLineCommentTrivia($"//{callStatement.ToFullString()}")));
+                    var originalLeadingTrivia = callStatement.GetLeadingTrivia();
+                    var originalTrailingTrivia = callStatement.GetTrailingTrivia();
+                    var strippedCallStatement = callStatement
+                        .WithLeadingTrivia(JassSyntaxTriviaList.Empty)
+                        .WithTrailingTrivia(JassSyntaxTriviaList.Empty)
+                        .ToFullString()
+                        .Replace("\r", "\\r", StringComparison.Ordinal)
+                        .Replace("\n", "\\n", StringComparison.Ordinal);
+
+                    var callStatementAsComment = JassSyntaxFactory.SingleLineCommentTrivia($"//{strippedCallStatement}");
+                    var trailingTrivia = JassSyntaxFactory.SyntaxTriviaList(
+                        originalTrailingTrivia.Trivia.Prepend(callStatementAsComment));
+
+                    adaptedCallStatement = JassSyntaxFactory.CallStatement(
+                        JassSyntaxFactory.Token(JassSyntaxKind.CallKeyword, JassSyntaxTriviaList.SingleSpace),
+                        JassSyntaxFactory.IdentifierName("DoNothing"),
+                        JassArgumentListSyntax.Empty)
+                        .WithLeadingTrivia(originalLeadingTrivia)
+                        .WithTrailingTrivia(trailingTrivia);
                 }
                 else if (TryAdaptArgumentList(context, adaptedInvocationArguments, out var adaptedArguments))
                 {
